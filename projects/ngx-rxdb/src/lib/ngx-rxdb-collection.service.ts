@@ -4,8 +4,8 @@ import { RxCollection, RxDocument, RxLocalDocument } from 'rxdb';
 import RxDB from 'rxdb/plugins/core';
 import { defer, from, Observable, ReplaySubject } from 'rxjs';
 import { filter, switchMap } from 'rxjs/operators';
-import { NgxRxdbCollectionConfig } from './ngx-rxdb-lib.interface';
-import { NgxRxdbLibService } from './ngx-rxdb-lib.service';
+import { NgxRxdbCollectionConfig } from './ngx-rxdb.interface';
+import { NgxRxdbLibService } from './ngx-rxdb.service';
 
 @Injectable()
 export class NgxRxdbCollectionService<T> implements OnDestroy {

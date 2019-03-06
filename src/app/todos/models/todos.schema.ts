@@ -1,4 +1,4 @@
-import { NgxRxdbCollectionConfig } from 'ngx-rxdb-lib';
+import { NgxRxdbCollectionConfig } from 'ngx-rxdb';
 
 export async function percentageDoneFn() {
   const allDocs = await this.find().exec();

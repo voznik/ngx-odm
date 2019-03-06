@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { LocalStorageService } from '@app/core/services';
 import { noop } from 'micro-dash';
-import { NgxRxdbCollectionService } from 'ngx-rxdb-lib';
+import { NgxRxdbCollectionService } from 'ngx-rxdb';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { filter, switchMap } from 'rxjs/operators';
 import { v4 as uuid } from 'uuid';

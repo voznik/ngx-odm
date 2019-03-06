@@ -4,8 +4,8 @@ import { APP_INITIALIZER, Inject, InjectionToken, Injector, ModuleWithProviders,
 import RxDB from 'rxdb/plugins/core';
 import { forkJoin, Observable } from 'rxjs';
 import { NgxRxdbCollectionService } from './ngx-rxdb-collection.service';
-import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './ngx-rxdb-lib.interface';
-import { NgxRxdbLibService } from './ngx-rxdb-lib.service';
+import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './ngx-rxdb.interface';
+import { NgxRxdbLibService } from './ngx-rxdb.service';
 
 export const RXDB_CONFIG = new InjectionToken<NgxRxdbConfig>('RXDB_CONFIG');
 

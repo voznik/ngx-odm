@@ -1,6 +1,6 @@
 // tslint:disable:ban-types
 import { RxJsonSchema } from 'rxdb';
-import { NgxRxdbCollectionConfig } from './ngx-rxdb-lib.interface';
+import { NgxRxdbCollectionConfig } from './ngx-rxdb.interface';
 
 function idLengthFn() {
   return this.primary.length;

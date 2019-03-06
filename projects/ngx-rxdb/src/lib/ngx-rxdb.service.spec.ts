@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { NgxRxdbLibService } from './ngx-rxdb-lib.service';
+import { NgxRxdbLibService } from './ngx-rxdb.service';
 
 describe('NgxRxdbLibService', () => {
   beforeEach(() => TestBed.configureTestingModule({}));

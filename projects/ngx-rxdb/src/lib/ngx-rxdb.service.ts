@@ -9,7 +9,7 @@ import * as dumpPlugin from 'rxdb/plugins/json-dump';
 import RxDBValidateModule from 'rxdb/plugins/validate';
 import { Observable, of } from 'rxjs';
 import { isEmpty } from 'micro-dash';
-import { NgxRxdbCollectionConfig, NgxRxdbDump, NgxRxdbConfig } from './ngx-rxdb-lib.interface';
+import { NgxRxdbCollectionConfig, NgxRxdbDump, NgxRxdbConfig } from './ngx-rxdb.interface';
 import { NgxRxdbCollectionCreator } from './ngx-rxdb-collection.class';
 
 RxDB.plugin(RxDBErrorMessagesModule);

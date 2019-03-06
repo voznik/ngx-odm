@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Inject, NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SharedModule } from '@app/shared/shared.module';
-import { NgxRxdbLibModule, NgxRxdbCollectionConfig } from 'ngx-rxdb-lib';
+import { NgxRxdbLibModule, NgxRxdbCollectionConfig } from 'ngx-rxdb';
 import { TodosContainerComponent } from './components';
 import { initialState, Todo, TODO_SCHEMA } from './models';
 import { TodosService } from './services';
