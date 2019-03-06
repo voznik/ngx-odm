@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule, Routes } from '@angular/router';
-import { NgxRxdbLibModule } from 'ngx-rxdb';
+import { NgxRxdbModule } from 'ngx-rxdb';
 import { AppComponent } from './app.component';
 import { CoreModule } from './core/core.module';
 import { SharedModule } from './shared/shared.module';
@@ -24,7 +24,7 @@ const routes: Routes = [
     RouterModule.forRoot(routes),
     CoreModule,
     SharedModule,
-    NgxRxdbLibModule.forRoot({ name: 'ngx'}),
+    NgxRxdbModule.forRoot({ name: 'ngx'}),
   ],
   providers: [],
   bootstrap: [AppComponent]

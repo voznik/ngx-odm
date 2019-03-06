@@ -30,7 +30,7 @@ const DEFAULT_CONFIG = {
 export type RxDbCollections = { [key: string]: RxCollection };
 
 @Injectable()
-export class NgxRxdbLibService implements OnDestroy {
+export class NgxRxdbService implements OnDestroy {
   private dbInstance: RxDatabase;
 
   get db(): RxDatabase {

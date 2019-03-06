@@ -5,7 +5,7 @@ import RxDB from 'rxdb/plugins/core';
 import { defer, from, Observable, ReplaySubject } from 'rxjs';
 import { filter, switchMap } from 'rxjs/operators';
 import { NgxRxdbCollectionConfig } from './ngx-rxdb.interface';
-import { NgxRxdbLibService } from './ngx-rxdb.service';
+import { NgxRxdbService } from './ngx-rxdb.service';
 
 @Injectable()
 export class NgxRxdbCollectionService<T> implements OnDestroy {
@@ -24,7 +24,7 @@ export class NgxRxdbCollectionService<T> implements OnDestroy {
     return this.dbService.db;
   }
 
-  constructor(private dbService: NgxRxdbLibService, @Inject('RXDB_FEATURE_CONFIG') private config: NgxRxdbCollectionConfig) {
+  constructor(private dbService: NgxRxdbService, @Inject('RXDB_FEATURE_CONFIG') private config: NgxRxdbCollectionConfig) {
     this._config = config;
   }
 

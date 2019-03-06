@@ -28,11 +28,11 @@
       "@env/*": [
         "src/environments/*"
       ],
-      "ngx-rxdb-lib": [
-        "dist/ngx-rxdb-lib"
+      "ngx-rxdb": [
+        "dist/ngx-rxdb"
       ],
-      "ngx-rxdb-lib/*": [
-        "dist/ngx-rxdb-lib/*"
+      "ngx-rxdb/*": [
+        "dist/ngx-rxdb/*"
       ]
     }
   }

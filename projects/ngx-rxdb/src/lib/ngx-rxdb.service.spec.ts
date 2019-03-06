@@ -1,12 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 
-import { NgxRxdbLibService } from './ngx-rxdb.service';
+import { NgxRxdbService } from './ngx-rxdb.service';
 
-describe('NgxRxdbLibService', () => {
+describe('NgxRxdbService', () => {
   beforeEach(() => TestBed.configureTestingModule({}));
 
   it('should be created', () => {
-    const service: NgxRxdbLibService = TestBed.get(NgxRxdbLibService);
+    const service: NgxRxdbService = TestBed.get(NgxRxdbService);
     expect(service).toBeTruthy();
   });
 });
