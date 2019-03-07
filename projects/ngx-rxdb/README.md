@@ -2,6 +2,10 @@
 
 > Angular 7+ wrapper for **RxDB** - A realtime Database for the Web
 
+## Demo
+
+[demo](https://voznik.github.io/ngx-rxdb/)
+
 ## Table of contents
 
 * [General info](#general-info)
@@ -133,6 +137,10 @@ export class TodosService {
   // ...
 }
 ```
+
+### AOT
+
+ATM, set **"buildOptimizer": false** in your `angular.json` _production_ configuration
 
 ## Features
 

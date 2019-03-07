@@ -3,11 +3,5 @@
   "dest": "../../dist/ngx-rxdb",
   "lib": {
     "entryFile": "src/public_api.ts"
-  },
-  "whitelistedNonPeerDependencies": [
-    "micro-dash",
-    "rxdb",
-    "pouchdb-adapter-idb",
-    "pouchdb-adapter-http"
-  ]
+  }
 }

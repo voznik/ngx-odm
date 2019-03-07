@@ -810,6 +810,7 @@ modifyjs
 ISC
 
 ngx-rxdb
+Apache-2.0
 
 object-path
 MIT

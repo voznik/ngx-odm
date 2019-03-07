@@ -1,5 +1,5 @@
 // tslint:disable:array-type member-access no-console no-string-literal interface-over-type-literal
-import { Inject, Injectable, OnDestroy } from '@angular/core';
+import { isDevMode, Injectable, OnDestroy } from '@angular/core';
 import * as PouchdbAdapterIdb from 'pouchdb-adapter-idb';
 import { RxCollection, RxDatabase, RxDocument, RxJsonSchema } from 'rxdb';
 import RxDB from 'rxdb/plugins/core';
@@ -120,6 +120,9 @@ export class NgxRxdbService implements OnDestroy {
   }
 
   async createCollection(schemaConfig: NgxRxdbCollectionConfig) {
+    if (isEmpty(schemaConfig) || isEmpty(schemaConfig.schema)) {
+      throw new Error('RxdbService: missing schema object');
+    }
     let collection: RxCollection = this.db[name];
     // delete collection if exists
     if (RxDB.isRxCollection(collection)) {
