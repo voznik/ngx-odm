@@ -28,15 +28,13 @@
     "bootstrap": "^4.3.1",
     "browser-detect": "^0.2.28",
     "core-js": "^2.5.4",
-    "gridlex": "^2.7.1",
-    "micro-dash": "^5.3.0",
-    "pouchdb-adapter-http": "^7.0.0",
-    "pouchdb-adapter-idb": "^7.0.0",
-    "rxdb": "^8.0.5",
     "rxjs": "~6.3.3",
     "tslib": "^1.9.0",
     "uuid": "^3.3.2",
     "zone.js": "~0.8.26"
+  },
+  "optionalDependencies": {
+    "ngx-rxdb": "file:dist/ngx-rxdb"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~0.13.0",
