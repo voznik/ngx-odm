@@ -35,6 +35,7 @@
           },
           "configurations": {
             "production": {
+              "baseHref": "/ngx-rxdb",
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
