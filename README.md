@@ -124,12 +124,12 @@ export class TodosService {
     this.collectionService.insert(payload).subscribe(doc => console.log(doc));
   }
 
-  // update prop od existing document
+  // update prop of existing document
   toggle(guid: string, done: boolean): void {
     this.collectionService.update(guid, { done }).subscribe(doc => console.log(doc));
   }
 
-  // use `pouchdb.bulkDocs` to delete all dcouments by qeury
+  // use `pouchdb.bulkDocs` to delete all documents by query
   removeDoneTodos(): void {
     const rulesObject = { done: { $eq: true } };
     this.collectionService.removeBulkBy(rulesObject).subscribe(res => this.changeFilter('ALL'));
