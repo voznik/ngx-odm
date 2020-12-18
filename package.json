@@ -11,6 +11,15 @@
   },
   "version": "2.0.0-alpha",
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/voznik/ngx-odm/issues"
+  },
+  "homepage": "https://github.com/voznik/ngx-odm#readme",
+  "packageScope": "@ngx-odm",
+  "packages": [
+    "libs/kinto",
+    "libs/rxdb"
+  ],
   "keywords": [
     "angular9",
     "angular10",
