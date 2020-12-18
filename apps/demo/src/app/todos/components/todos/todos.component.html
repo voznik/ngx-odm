@@ -1,0 +1,96 @@
+<section class="todoapp" *ngIf="todos$ | async as todos">
+  <header class="header">
+    <h1>todos</h1>
+    <input
+      class="new-todo"
+      placeholder="What needs to be done?"
+      autofocus=""
+      [(ngModel)]="newTodo"
+      (keyup)="newTodoChange($event.target.value)"
+      (keyup.enter)="!isAddTodoDisabled && addTodo()"
+      (keyup.escape)="newTodoClear()"
+    />
+  </header>
+  <main class="main">
+    <input
+      id="toggle-all"
+      class="toggle-all"
+      type="checkbox"
+      *ngIf="todos.length"
+      #toggleall
+      [checked]="(filter$ | async) === 'ALL'"
+      (click)="filterTodos('')"
+    />
+    <ul class="todo-list">
+      <li *ngFor="let todo of todos" [class.completed]="todo.completed">
+        <div class="view">
+          <input
+            class="toggle"
+            [class.editing]="isEditing"
+            type="checkbox"
+            [checked]="todo.completed"
+            (change)="toggleTodo(todo)"
+          />
+          <label (dblclick)="newTodoChange(todo)">{{ todo.title }}</label>
+          <button class="destroy" (click)="toggleTodo(todo)"></button>
+        </div>
+        <input
+          class="edit"
+          *ngIf="isEditing"
+          [value]="todo.title"
+          #editedtodo
+          (blur)="stopEditing(todo, editedtodo.value)"
+          (keyup.enter)="updateEditingTodo(todo, editedtodo.value)"
+          (keyup.escape)="cancelEditingTodo(todo)"
+        />
+      </li>
+    </ul>
+  </main>
+  <footer class="footer" *ngIf="filter$ | async as filter">
+    <ng-container *ngIf="remainig$ | async as remainig">
+      <span class="todo-count" [ngPlural]="remainig.length">
+        <ng-template ngPluralCase="other">
+          {{ remainig.length }} items left
+        </ng-template>
+        <ng-template ngPluralCase="=1">one item left</ng-template>
+        <ng-template ngPluralCase="=0">no items left</ng-template>
+      </span>
+      <ul class="filters">
+        <li>
+          <a
+            href="javascript:void(0);"
+            (click)="filterTodos('ALL')"
+            [ngClass]="{ selected: filter == 'ALL' }"
+          >
+            All
+          </a>
+        </li>
+        <li>
+          <a
+            href="javascript:void(0);"
+            (click)="filterTodos('ACTIVE')"
+            [ngClass]="{ selected: filter == 'ACTIVE' }"
+          >
+            Active
+          </a>
+        </li>
+        <li>
+          <a
+            href="javascript:void(0);"
+            (click)="filterTodos('COMPLETED')"
+            [ngClass]="{ selected: filter == 'COMPLETED' }"
+          >
+            Completed
+          </a>
+        </li>
+      </ul>
+      <button
+        class="clear-completed"
+        (click)="removeCompletedTodos()"
+        *ngIf="todos.length > remainig.length"
+      >
+        Clear completed
+      </button>
+    </ng-container>
+  </footer>
+</section>

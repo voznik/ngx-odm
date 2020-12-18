@@ -1,0 +1,44 @@
+{
+  "name": "@ngx-odm/kinto",
+  "version": "1.0.1",
+  "description": "An RxJs Angular client for Kinto (https://kinto.readthedocs.io/)",
+  "author": "voznik",
+  "contributors": [
+    {
+      "name": "Vadym P.",
+      "url": "https://github.com/voznik"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/voznik/ngx-kinto.git"
+  },
+  "keywords": [
+    "angular9",
+    "angular10",
+    "angular11",
+    "rxjs",
+    "typescript",
+    "kinto",
+    "kinto-server"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/voznik/ngx-kinto/issues"
+  },
+  "homepage": "https://github.com/voznik/ngx-kinto",
+  "engines": {
+    "node": ">=8.9.4",
+    "npm": ">=5.6.0"
+  },
+  "peerDependencies": {
+    "@angular/common": "^10.0.14",
+    "@angular/core": "^10.0.14",
+    "kinto": "^14.0.0",
+    "kinto-http": "^5.1.1",
+    "rxjs": "6.x"
+  },
+  "dependencies": {
+    "tslib": "^2.0.0"
+  }
+}

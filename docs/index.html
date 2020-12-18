@@ -1,82 +1,13 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>NgxRxdbApp</title>
-  <base href="https://voznik.github.io/ngx-rxdb/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="icon" type="image/png" href="./assets/logo.png">
-  <style type="text/css">
-    body, html {
-      height: 100%;
-    }
-    .app-loading {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-    }
-
-    .app-loading .spinner {
-      height: 200px;
-      width: 200px;
-      animation: rotate 2s linear infinite;
-      transform-origin: center center;
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      margin: auto;
-    }
-
-    .app-loading .spinner .path {
-      stroke-dasharray: 1, 200;
-      stroke-dashoffset: 0;
-      animation: dash 1.5s ease-in-out infinite;
-      stroke-linecap: round;
-      stroke: #ddd;
-    }
-
-    @keyframes rotate {
-      100% {
-        transform: rotate(360deg);
-      }
-    }
-
-    @keyframes dash {
-      0% {
-        stroke-dasharray: 1, 200;
-        stroke-dashoffset: 0;
-      }
-      50% {
-        stroke-dasharray: 89, 200;
-        stroke-dashoffset: -35px;
-      }
-      100% {
-        stroke-dasharray: 89, 200;
-        stroke-dashoffset: -124px;
-      }
-    }
-  </style>
-<link rel="stylesheet" href="styles.520d952382366368aa85.css"></head>
-<body>
-  <app-root>
-    <div class="app-loading">
-      <div class="logo">
-      <svg class="spinner" viewBox="25 25 50 50">
-        <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10"/>
-      </svg>
-    </div>
-  </app-root>
-  <!--  Fix RxDb global -->
-  <script>
-    if (global === undefined) {
-      var global = window;
-    }
-  </script>
-<script type="text/javascript" src="runtime.2f90bce3ac62785e7f2f.js"></script><script type="text/javascript" src="es2015-polyfills.eeae1758f110ad01bef3.js" nomodule></script><script type="text/javascript" src="polyfills.6666d6f036b0cc510933.js"></script><script type="text/javascript" src="main.aa552a525d8215c2fbf2.js"></script></body>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Demo</title>
+    <base href="/"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+  <link rel="stylesheet" href="styles.0f0fdb2067483971ff00.css"></head>
+  <body>
+    <demo-root></demo-root>
+  <script src="runtime-es2015.847775fda14a7834797b.js" type="module"></script><script src="runtime-es5.847775fda14a7834797b.js" nomodule defer></script><script src="polyfills-es5.192fbc265eb4a492fea4.js" nomodule defer></script><script src="polyfills-es2015.22536bba76e17bcf2bec.js" type="module"></script><script src="vendor-es2015.d1b23a1d943689ba417d.js" type="module"></script><script src="vendor-es5.d1b23a1d943689ba417d.js" nomodule defer></script><script src="main-es2015.076d6ed27ed47ac32762.js" type="module"></script><script src="main-es5.076d6ed27ed47ac32762.js" nomodule defer></script></body>
 </html>

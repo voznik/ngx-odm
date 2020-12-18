@@ -1,24 +1,35 @@
 {
-  "extends": "tslint:recommended",
-  "rulesDirectory": [
-    "codelyzer"
+  "extends": [
+    "tslint:recommended",
+    "tslint-angular",
+    "tslint-config-prettier",
+    "rxjs-tslint-rules"
   ],
+  "rulesDirectory": [
+    "node_modules/@nrwl/workspace/src/tslint",
+    "node_modules/codelyzer"
+  ],
+  "linterOptions": {
+    "exclude": ["**/*"]
+  },
   "rules": {
-    "array-type": false,
-    "arrow-parens": false,
+    "arrow-return-shorthand": true,
+    "callable-types": true,
+    "class-name": true,
     "deprecation": {
       "severity": "warn"
     },
-    "import-blacklist": [
+    "forin": true,
+    "import-blacklist": [true, "rxjs/Rx"],
+    "import-spacing": true,
+    "ordered-imports": [
       true,
-      "rxjs/Rx"
+      {
+        "import-sources-order": "case-insensitive",
+        "named-imports-order": "any"
+      }
     ],
-    "interface-name": false,
-    "max-classes-per-file": false,
-    "max-line-length": [
-      true,
-      140
-    ],
+    "interface-over-type-literal": true,
     "member-access": false,
     "member-ordering": [
       true,
@@ -31,45 +42,109 @@
         ]
       }
     ],
-    "no-consecutive-blank-lines": false,
-    "no-console": [
-      true,
-      "debug",
-      "info",
-      "time",
-      "timeEnd",
-      "trace"
-    ],
+    "no-arg": true,
+    "no-bitwise": true,
+    "no-console": [true, "log", "debug", "info", "time", "timeEnd", "trace"],
+    "no-construct": true,
+    "no-debugger": true,
+    "no-duplicate-super": true,
     "no-empty": false,
-    "no-inferrable-types": [
-      true,
-      "ignore-params"
-    ],
+    "no-empty-interface": true,
+    "no-eval": true,
+    "no-inferrable-types": [true, "ignore-params"],
+    "no-misused-new": true,
     "no-non-null-assertion": true,
-    "no-redundant-jsdoc": true,
+    "no-shadowed-variable": true,
+    "no-string-literal": false,
+    "no-string-throw": true,
     "no-switch-case-fall-through": true,
-    "no-use-before-declare": true,
-    "no-var-requires": false,
-    "object-literal-key-quotes": [
-      true,
-      "as-needed"
-    ],
+    "no-unnecessary-initializer": true,
+    "no-unused-expression": true,
+    "no-var-keyword": true,
     "object-literal-sort-keys": false,
-    "ordered-imports": false,
-    "quotemark": [
+    "prefer-const": true,
+    "radix": true,
+    "triple-equals": [true, "allow-null-check"],
+    "unified-signatures": true,
+    "variable-name": false,
+    "nx-enforce-module-boundaries": [
       true,
-      "single"
+      {
+        "enforceBuildableLibDependency": true,
+        "allow": [
+          "@workspace/shared/testing",
+          "@workspace/shared/utils",
+          "@workspace/shared/auth",
+          "@workspace/shared/ui",
+          "@workspace/shared/core"
+        ],
+        "depConstraints": [
+          {
+            "sourceTag": "*",
+            "onlyDependOnLibsWithTags": ["*"]
+          }
+        ]
+      }
     ],
-    "trailing-comma": false,
-    "no-output-on-prefix": true,
-    "use-input-property-decorator": true,
-    "use-output-property-decorator": true,
-    "use-host-property-decorator": true,
+    "directive-selector": [true, "attribute", "app", "camelCase"],
+    "component-selector": [true, "element", "app", "kebab-case"],
+    "no-conflicting-lifecycle": true,
+    "no-host-metadata-property": true,
     "no-input-rename": true,
+    "no-inputs-metadata-property": true,
+    "no-output-native": true,
+    "no-output-on-prefix": true,
     "no-output-rename": true,
-    "use-life-cycle-interface": true,
+    "no-outputs-metadata-property": true,
+    "no-reference": false,
+    "template-banana-in-box": true,
+    "template-no-negated-async": true,
+    "use-lifecycle-interface": true,
     "use-pipe-transform-interface": true,
-    "component-class-suffix": true,
-    "directive-class-suffix": true
+    "rxjs-no-exposed-subjects": true,
+    "rxjs-no-nested-subscribe": true,
+    "rxjs-no-unsafe-takeuntil": {
+      "options": [
+        {
+          "allow": [
+            "defaultIfEmpty",
+            "finalize",
+            "isEmpty",
+            "publish",
+            "publishReplay",
+            "reduce",
+            "share",
+            "shareReplay",
+            "skipLast",
+            "takeLast",
+            "throwIfEmpty",
+            "toArray"
+          ]
+        }
+      ],
+      "severity": "error"
+    },
+    "rxjs-prefer-angular-takeuntil": {
+      "options": [
+        {
+          "alias": ["takeUntilDestroy"],
+          "checkDecorators": ["TakeUntilDestroy"],
+          "checkDestroy": true
+        }
+      ],
+      "severity": "error"
+    },
+    "rxjs-finnish": {
+      "options": [
+        {
+          "functions": false,
+          "methods": false,
+          "parameters": false,
+          "properties": true,
+          "variables": true
+        }
+      ],
+      "severity": "error"
+    }
   }
 }

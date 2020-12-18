@@ -1,61 +1,70 @@
 {
-  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
-  "newProjectRoot": "projects",
   "projects": {
-    "ngx-rxdb-app": {
-      "root": "",
-      "sourceRoot": "src",
+    "demo": {
       "projectType": "application",
-      "prefix": "app",
-      "schematics": {},
+      "root": "apps/demo",
+      "sourceRoot": "apps/demo/src",
+      "prefix": "ngx-rxdb",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
             "outputPath": "docs",
-            "index": "src/index.html",
-            "main": "src/main.ts",
-            "polyfills": "src/polyfills.ts",
-            "tsConfig": "src/tsconfig.app.json",
+            "index": "apps/demo/src/index.html",
+            "main": "apps/demo/src/main.ts",
+            "polyfills": "apps/demo/src/polyfills.ts",
+            "tsConfig": "apps/demo/tsconfig.app.json",
+            "aot": true,
+            "extractCss": true,
             "assets": [
-              "src/favicon.ico",
-              "src/assets"
+              "apps/demo/src/favicon.ico",
+              "apps/demo/src/assets"
             ],
             "styles": [
-              {
-                "input": "src/styles-app-loading.scss"
-              },
-              {
-                "input": "src/styles.scss"
-              }
+              "node_modules/todomvc-common/base.css",
+              "node_modules/todomvc-app-css/index.css",
+              "apps/demo/src/styles.scss"
             ],
             "scripts": [],
-            "es5BrowserSupport": true
+            "allowedCommonJsDependencies": [
+              "rxdb",
+              "pouchdb-utils",
+              "crypto-js",
+              "immediate",
+              "modifyjs",
+              "deep-equal",
+              "object-path",
+              "@babel/runtime/regenerator",
+              "@babel/runtime/helpers/wrapNativeSuper",
+              "is-my-json-valid"
+            ]
           },
           "configurations": {
             "production": {
-              "baseHref": "https://voznik.github.io/ngx-rxdb/",
               "fileReplacements": [
                 {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
+                  "replace": "apps/demo/src/environments/environment.ts",
+                  "with": "apps/demo/src/environments/environment.prod.ts"
                 }
               ],
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
-              "extractCss": true,
               "namedChunks": false,
-              "aot": true,
-              "extractLicenses": true,
-              "vendorChunk": false,
+              "extractLicenses": false,
+              "vendorChunk": true,
               "buildOptimizer": true,
               "budgets": [
                 {
                   "type": "initial",
                   "maximumWarning": "2mb",
                   "maximumError": "5mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb",
+                  "maximumError": "10kb"
                 }
               ]
             }
@@ -64,114 +73,205 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "ngx-rxdb-app:build"
+            "browserTarget": "demo:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "ngx-rxdb-app:build:production"
+              "browserTarget": "demo:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "ngx-rxdb-app:build"
-          }
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "main": "src/test.ts",
-            "polyfills": "src/polyfills.ts",
-            "tsConfig": "src/tsconfig.spec.json",
-            "karmaConfig": "src/karma.conf.js",
-            "styles": [
-              "src/styles.css"
-            ],
-            "scripts": [],
-            "assets": [
-              "src/favicon.ico",
-              "src/assets"
-            ]
+            "browserTarget": "demo:build"
           }
         },
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
             "tsConfig": [
-              "src/tsconfig.app.json",
-              "src/tsconfig.spec.json"
+              "apps/demo/tsconfig.app.json",
+              "apps/demo/tsconfig.spec.json",
+              "apps/demo/tsconfig.editor.json"
             ],
             "exclude": [
-              "**/node_modules/**"
+              "**/node_modules/**",
+              "!apps/demo/**/*"
             ]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": [
+            "coverage/apps/demo"
+          ],
+          "options": {
+            "jestConfig": "apps/demo/jest.config.js",
+            "passWithNoTests": true
           }
         }
       }
     },
-    "ngx-rxdb-app-e2e": {
-      "root": "e2e/",
-      "projectType": "application",
-      "prefix": "",
+    "rxdb": {
+      "projectType": "library",
+      "root": "libs/rxdb",
+      "sourceRoot": "libs/rxdb/src",
+      "prefix": "ngx",
       "architect": {
-        "e2e": {
-          "builder": "@angular-devkit/build-angular:protractor",
+        "build": {
+          "builder": "@nrwl/angular:package",
           "options": {
-            "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "ngx-rxdb-app:serve"
+            "tsConfig": "libs/rxdb/tsconfig.lib.json",
+            "project": "libs/rxdb/ng-package.json"
           },
           "configurations": {
             "production": {
-              "devServerTarget": "ngx-rxdb-app:serve:production"
+              "tsConfig": "libs/rxdb/tsconfig.lib.prod.json"
             }
           }
         },
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
-            "tsConfig": "e2e/tsconfig.e2e.json",
+            "tsConfig": [
+              "libs/rxdb/tsconfig.lib.json",
+              "libs/rxdb/tsconfig.spec.json"
+            ],
             "exclude": [
-              "**/node_modules/**"
+              "**/node_modules/**",
+              "!libs/rxdb/**/*"
             ]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/rxdb/jest.config.js",
+            "tsConfig": "libs/rxdb/tsconfig.spec.json",
+            "passWithNoTests": true,
+            "setupFile": "libs/rxdb/src/test-setup.ts"
+          }
+        },
+        "compodoc": {
+          "builder": "@twittwer/compodoc:compodoc",
+          "options": {
+            "tsConfig": "libs/rxdb/tsconfig.lib.json",
+            "outputPath": "dist/compodoc/ngx-rxdb"
+          },
+          "configurations": {
+            "json": {
+              "exportFormat": "json"
+            }
           }
         }
       }
     },
-    "ngx-rxdb": {
-      "root": "projects/ngx-rxdb",
-      "sourceRoot": "projects/ngx-rxdb/src",
+    "kinto": {
       "projectType": "library",
-      "prefix": "rxdb",
+      "root": "libs/kinto",
+      "sourceRoot": "libs/kinto/src",
+      "prefix": "ngx",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-ng-packagr:build",
+          "builder": "@nrwl/angular:package",
           "options": {
-            "tsConfig": "projects/ngx-rxdb/tsconfig.lib.json",
-            "project": "projects/ngx-rxdb/ng-package.json"
-          }
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "main": "projects/ngx-rxdb/src/test.ts",
-            "tsConfig": "projects/ngx-rxdb/tsconfig.spec.json",
-            "karmaConfig": "projects/ngx-rxdb/karma.conf.js"
+            "tsConfig": "libs/kinto/tsconfig.lib.json",
+            "project": "libs/kinto/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "libs/kinto/tsconfig.lib.prod.json"
+            }
           }
         },
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
             "tsConfig": [
-              "projects/ngx-rxdb/tsconfig.lib.json",
-              "projects/ngx-rxdb/tsconfig.spec.json"
+              "libs/kinto/tsconfig.lib.json",
+              "libs/kinto/tsconfig.spec.json"
             ],
             "exclude": [
-              "**/node_modules/**"
+              "**/node_modules/**",
+              "!libs/kinto/**/*"
             ]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/kinto/jest.config.js",
+            "tsConfig": "libs/kinto/tsconfig.spec.json",
+            "passWithNoTests": true,
+            "setupFile": "libs/kinto/src/test-setup.ts"
+          }
+        },
+        "compodoc": {
+          "builder": "@twittwer/compodoc:compodoc",
+          "options": {
+            "tsConfig": "libs/kinto/tsconfig.lib.json",
+            "outputPath": "dist/compodoc/ngx-rxdb"
+          },
+          "configurations": {
+            "json": {
+              "exportFormat": "json"
+            }
           }
         }
       }
     }
   },
-  "defaultProject": "ngx-rxdb-app"
+  "cli": {
+    "defaultCollection": "@nrwl/angular",
+    "packageManager": "npm"
+  },
+  "schematics": {
+    "@nrwl/workspace": {
+      "library": {
+        "linter": "tslint"
+      }
+    },
+    "@nrwl/cypress": {
+      "cypress-project": {
+        "linter": "tslint"
+      }
+    },
+    "@nrwl/node": {
+      "application": {
+        "linter": "tslint"
+      },
+      "library": {
+        "linter": "tslint"
+      }
+    },
+    "@nrwl/nest": {
+      "application": {
+        "linter": "tslint"
+      },
+      "library": {
+        "linter": "tslint"
+      }
+    },
+    "@nrwl/express": {
+      "application": {
+        "linter": "tslint"
+      },
+      "library": {
+        "linter": "tslint"
+      }
+    },
+    "@nrwl/angular:application": {
+      "unitTestRunner": "jest",
+      "e2eTestRunner": "cypress"
+    },
+    "@nrwl/angular:library": {
+      "unitTestRunner": "jest",
+      "prefix": "ngx"
+    },
+    "@nrwl/angular:component": {
+      "style": "scss"
+    }
+  },
+  "defaultProject": "demo"
 }

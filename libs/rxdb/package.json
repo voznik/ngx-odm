@@ -1,0 +1,33 @@
+{
+  "name": "@ngx-odm/rxdb",
+  "description": "Angular ODMs for NoSql DB - RxDB",
+  "author": {
+    "name": "voznik",
+    "url": "https://about.me/voznik"
+  },
+  "keywords": [
+    "angular9",
+    "angular10",
+    "angular11",
+    "rxjs",
+    "rxdb",
+    "nosql",
+    "pouchdb",
+    "typescript",
+    "replication"
+  ],
+  "version": "2.0.0",
+  "peerDependencies": {
+    "@angular/common": "^11.0.4",
+    "@angular/core": "^11.0.4",
+    "micro-dash": "^8.1.0",
+    "pouchdb-adapter-http": "^7.2.2",
+    "pouchdb-adapter-idb": "^7.2.2",
+    "pouchdb-adapter-memory": "^7.2.2",
+    "rxdb": "^9.11.0",
+    "rxjs": "~6.6.2"
+  },
+  "dependencies": {
+    "tslib": "^2.0.0"
+  }
+}
