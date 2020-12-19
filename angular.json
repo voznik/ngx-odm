@@ -10,7 +10,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "docs",
+            "outputPath": "dist/demo",
             "index": "apps/demo/src/index.html",
             "main": "apps/demo/src/main.ts",
             "polyfills": "apps/demo/src/polyfills.ts",
@@ -48,6 +48,7 @@
                   "with": "apps/demo/src/environments/environment.prod.ts"
                 }
               ],
+              "baseHref": "https://voznik.github.io/ngx-odm",
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
@@ -212,6 +213,38 @@
           "options": {
             "tsConfig": "libs/kinto/tsconfig.lib.json",
             "outputPath": "dist/compodoc/ngx-rxdb"
+          },
+          "configurations": {
+            "json": {
+              "exportFormat": "json"
+            }
+          }
+        }
+      }
+    },
+    "tools": {
+      "root": "tools",
+      "sourceRoot": "tools",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "tools/tsconfig.tools.json"
+            ],
+            "exclude": [
+              "**/node_modules/**",
+              "!tools/**/*"
+            ]
+          }
+        },
+        "compodoc": {
+          "builder": "@twittwer/compodoc:compodoc",
+          "options": {
+            "tsConfig": "tools/tsconfig.compodoc.json",
+            "outputPath": "dist/demo/documentation",
+            "workspaceDocs": true
           },
           "configurations": {
             "json": {

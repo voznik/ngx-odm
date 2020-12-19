@@ -5,6 +5,12 @@
     "name": "voznik",
     "url": "https://about.me/voznik"
   },
+  "contributors": [
+    {
+      "name": "Vadym P.",
+      "url": "https://github.com/voznik"
+    }
+  ],
   "keywords": [
     "angular9",
     "angular10",
@@ -16,7 +22,19 @@
     "typescript",
     "replication"
   ],
-  "version": "2.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/voznik/ngx-odm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/voznik/ngx-odm/issues"
+  },
+  "homepage": "https://github.com/voznik/ngx-odm",
+  "version": "2.0.0-alpha",
+  "engines": {
+    "node": ">=10.x",
+    "npm": ">=6.x"
+  },
   "peerDependencies": {
     "@angular/common": "^11.0.4",
     "@angular/core": "^11.0.4",

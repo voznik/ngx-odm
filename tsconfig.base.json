@@ -10,10 +10,7 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "importHelpers": true,
-    "lib": [
-      "es2018",
-      "dom"
-    ],
+    "lib": ["es2018", "dom"],
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
@@ -22,25 +19,11 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "target": "es2015",
-    "typeRoots": [
-      "node_modules/@types"
-    ],
-    "types": [
-      "node"
-    ],
+    "typeRoots": ["node_modules/@types"],
+    "types": ["node"],
     "paths": {
-      // https://github.com/pouchdb/pouchdb/issues/8206#issuecomment-722996015
-      // "stream": ["node_modules/stream-browserify"],
-      // "process": ["node_modules/process"],
-      //
-      "@ngx-odm/rxdb": [
-        "dist/packages/@ngx-odm/rxdb",
-        "libs/rxdb/src/index.ts"
-      ],
-      "@ngx-odm/kinto": [
-        "dist/packages/@ngx-odm/kinto",
-        "libs/kinto/src/index.ts"
-      ]
+      "@ngx-odm/rxdb": [ "dist/packages/@ngx-odm/rxdb", "libs/rxdb/src/index.ts" ],
+      "@ngx-odm/kinto": [ "dist/packages/@ngx-odm/kinto", "libs/kinto/src/index.ts" ]
     },
     "plugins": [
       {
@@ -49,8 +32,5 @@
       }
     ]
   },
-  "exclude": [
-    "node_modules",
-    "tmp"
-  ]
+  "exclude": ["node_modules", "tmp"]
 }

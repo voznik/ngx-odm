@@ -5,10 +5,7 @@
   },
   "name": "ngx-odm",
   "description": "Angular ODMs for NoSql DBs like RxDB, Kinto",
-  "author": {
-    "name": "voznik",
-    "url": "https://about.me/voznik"
-  },
+  "author": "voznik (https://about.me/voznik)",
   "version": "2.0.0-alpha",
   "license": "MIT",
   "bugs": {
@@ -33,7 +30,7 @@
     "replication"
   ],
   "scripts": {
-    "nx": "./node_modules/.bin/nx",
+    "nx": "nx",
     "ng-high-memory": "node --max_old_space_size=8192 ./node_modules/@angular/cli/bin/ng",
     "postinstall": "node ./decorate-angular-cli.js && npm run ngcc",
     "postbuild": "node ./tools/scripts/postbuild_replace.js",
@@ -41,6 +38,7 @@
     "start": "nx serve",
     "build:prod": "npm run ng-high-memory -- build --prod",
     "build:sourcemaps": "npm run ng-high-memory -- build --prod --sourceMap=true --statsJson",
+    "compodoc": "nx run tools:compodoc",
     "test": "nx test",
     "test:ci": "npm run nx -- run-many --target=test --projects=web,shared-core,shared-ui --ci --run-in-band --parallel --pass-with-no-tests",
     "test:hook": "npm run affected:test -- --reporters='jest-junit' --parallel --pass-with-no-tests --base=develop --head=HEAD",
@@ -146,5 +144,17 @@
       "pre-commit": "pretty-quick --staged",
       "pre-push": "npm run lint:hook"
     }
-  }
+  },
+  "main": "decorate-angular-cli.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/voznik/ngx-odm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/voznik/ngx-odm/issues"
+  },
+  "homepage": "https://github.com/voznik/ngx-odm#readme"
 }

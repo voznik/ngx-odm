@@ -18,27 +18,22 @@
     "default": {
       "runner": "@nrwl/workspace/tasks-runners/default",
       "options": {
-        "cacheableOperations": [
-          "build",
-          "lint",
-          "test",
-          "e2e",
-          "compodoc"
-        ]
+        "cacheableOperations": ["build", "lint", "test", "e2e", "compodoc"]
       }
     }
   },
   "projects": {
     "demo": {
       "tags": [],
-      "implicitDependencies": [
-        "rxdb"
-      ]
+      "implicitDependencies": ["rxdb"]
     },
     "rxdb": {
       "tags": []
     },
     "kinto": {
+      "tags": []
+    },
+    "tools": {
       "tags": []
     }
   }

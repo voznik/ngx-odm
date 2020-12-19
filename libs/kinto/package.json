@@ -1,6 +1,6 @@
 {
   "name": "@ngx-odm/kinto",
-  "version": "1.0.1",
+  "version": "2.0.0-alpha",
   "description": "An RxJs Angular client for Kinto (https://kinto.readthedocs.io/)",
   "author": "voznik",
   "contributors": [
@@ -11,7 +11,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/voznik/ngx-kinto.git"
+    "url": "git+https://github.com/voznik/ngx-odm.git"
   },
   "keywords": [
     "angular9",
@@ -24,12 +24,12 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/voznik/ngx-kinto/issues"
+    "url": "https://github.com/voznik/ngx-odm/issues"
   },
-  "homepage": "https://github.com/voznik/ngx-kinto",
+  "homepage": "https://github.com/voznik/ngx-odm",
   "engines": {
-    "node": ">=8.9.4",
-    "npm": ">=5.6.0"
+    "node": ">=10.x",
+    "npm": ">=6.x"
   },
   "peerDependencies": {
     "@angular/common": "^10.0.14",
