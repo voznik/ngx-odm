@@ -10,9 +10,9 @@ cache:
     - $HOME/.npm
 env:
   - ENV=TEST
-branches:
+# branches:
   # except: ['..']
-  only: ['master']
+  # only: ['master']
 before_install:
   - export CHROME_BIN=chromium-browser
   - export DISPLAY=:99.0
