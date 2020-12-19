@@ -67,7 +67,10 @@ import 'zone.js/dist/zone'; // Included with Angular CLI.
 import '@babel/polyfill';
 (window as any).global = window;
 (window as any).process = {
-  env: { DEBUG: true, TEST: undefined },
+  env: {
+    DEBUG: true,
+    TEST: undefined,
+  },
 };
 // https://github.com/pouchdb/pouchdb/issues/8206#issuecomment-722996015
 // global.Buffer = global.Buffer || require('buffer').Buffer;

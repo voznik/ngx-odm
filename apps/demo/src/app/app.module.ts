@@ -10,7 +10,7 @@ const APP_RXDB_CONFIG: NgxRxdbConfig = {
   adapter: 'idb', // <- storage-adapter (required, default: 'idb')
   multiInstance: true,
   options: {
-    dumpPath: 'assets/data/db.dump.json',
+    // dumpPath: 'assets/data/db.dump.json', // <- remote url (optional)
   },
 };
 

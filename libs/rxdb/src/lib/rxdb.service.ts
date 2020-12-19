@@ -39,8 +39,7 @@ addRxPlugin(RxDBUpdatePlugin);
 // only in development environment
 if ((window as any).process?.env?.TEST) {
   logFn('dev or test mode');
-  // addRxPlugin(require('pouchdb-adapter-memory'));
-  // addRxPlugin(RxDBDevModePlugin); // FIXME: is it duplicate import ?
+  // addRxPlugin(require('pouchdb-adapter-memory')); // FIXME: is it duplicate import ?
 }
 
 const IMPORTED_FLAG = '_ngx_rxdb_imported';
@@ -235,17 +234,16 @@ export class NgxRxdbService {
   /**
    * imports pouchdb dump to the database, must be used only after db init
    */
-  async importDbDump(dumpObj: Partial<NgxRxdbDump>) {
+  async importDbDump(dump: Partial<NgxRxdbDump>) {
     try {
-      const dump = this.prepareDbDump(dumpObj);
-      await this.db.importDump(dump);
+      await this.db.importDump(this.prepareDbDump(dump));
       this._imported = dump.timestamp;
     } catch (error) {
       if (error.status !== 409) {
         throw new NgxRxdbError(error.message ?? error);
       } else {
         // impoted but were conflicts with old docs - mark as imported
-        this._imported = dumpObj.timestamp;
+        this._imported = dump.timestamp;
       }
     }
   }

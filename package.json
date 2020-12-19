@@ -6,7 +6,7 @@
   "name": "ngx-odm",
   "description": "Angular ODMs for NoSql DBs like RxDB, Kinto",
   "author": "voznik (https://about.me/voznik)",
-  "version": "2.0.1-alpha",
+  "version": "2.0.2-alpha",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/voznik/ngx-odm/issues"
