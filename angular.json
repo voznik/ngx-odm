@@ -248,7 +248,7 @@
           "builder": "@twittwer/compodoc:compodoc",
           "options": {
             "tsConfig": "tools/tsconfig.compodoc.json",
-            "outputPath": "docs/documentation",
+            "outputPath": "dist/demo/documentation",
             "theme": "readthedocs",
             "unitTestCoverage": "coverage/coverage-summary.json",
             "navTabConfig": [],
