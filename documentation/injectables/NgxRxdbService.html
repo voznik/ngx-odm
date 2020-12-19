@@ -1,0 +1,1348 @@
+<!doctype html>
+<html class="no-js" lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>ngx-odm</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+	      <link rel="stylesheet" href="../styles/style.css">
+    </head>
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top visible-xs">
+            <a href="../" class="navbar-brand">ngx-odm</a>
+            <button type="button" class="btn btn-default btn-menu ion-ios-menu" id="btn-menu"></button>
+        </div>
+
+        <div class="xs-menu menu" id="mobile-menu">
+                <div id="book-search-input" role="search"><input type="text" placeholder="Type to search"></div>            <compodoc-menu></compodoc-menu>
+        </div>
+
+        <div class="container-fluid main">
+           <div class="row main">
+               <div class="hidden-xs menu">
+                   <compodoc-menu mode="normal"></compodoc-menu>
+               </div>
+               <!-- START CONTENT -->
+               <div class="content injectable">
+                   <div class="content-data">
+
+
+
+
+
+
+
+<ol class="breadcrumb">
+  <li>Injectables</li>
+  <li>NgxRxdbService</li>
+</ol>
+
+<ul class="nav nav-tabs" role="tablist">
+        <li class="active">
+            <a href="#info" role="tab" id="info-tab" data-toggle="tab" data-link="info">Info</a>
+        </li>
+        <li >
+            <a href="#source" role="tab" id="source-tab" data-toggle="tab" data-link="source">Source</a>
+        </li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade active in" id="c-info">
+        <p class="comment">
+            <h3>File</h3>
+        </p>
+        <p class="comment">
+            <code>libs/rxdb/src/lib/rxdb.service.ts</code>
+        </p>
+
+
+
+
+            <section>
+    <h3 id="index">Index</h3>
+    <table class="table table-sm table-bordered index-table">
+        <tbody>
+
+                <tr>
+                    <td class="col-md-4">
+                        <h6><b>Methods</b></h6>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col-md-4">
+                        <ul class="index-list">
+                            <li>
+                                    <span class="modifier">Async</span>
+                                <a href="#destroyDb">destroyDb</a>
+                            </li>
+                            <li>
+                                <a href="#getCollection">getCollection</a>
+                            </li>
+                            <li>
+                                    <span class="modifier">Static</span>
+                                <a href="#getCouchAuthProxyHeaders">getCouchAuthProxyHeaders</a>
+                            </li>
+                            <li>
+                                    <span class="modifier">Async</span>
+                                <a href="#importDbDump">importDbDump</a>
+                            </li>
+                            <li>
+                                    <span class="modifier">Async</span>
+                                <a href="#initCollection">initCollection</a>
+                            </li>
+                            <li>
+                                    <span class="modifier">Async</span>
+                                <a href="#initCollections">initCollections</a>
+                            </li>
+                            <li>
+                                    <span class="modifier">Async</span>
+                                <a href="#initDb">initDb</a>
+                            </li>
+                            <li>
+                                <a href="#syncAllCollections">syncAllCollections</a>
+                            </li>
+                            <li>
+                                <a href="#syncCollection">syncCollection</a>
+                            </li>
+                        </ul>
+                    </td>
+                </tr>
+
+
+
+
+
+                    <tr>
+                        <td class="col-md-4">
+                            <h6><b>Accessors</b></h6>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-md-4">
+                            <ul class="index-list">
+                                <li>
+                                    <a href="#db">db</a>
+                                </li>
+                                <li>
+                                    <a href="#collections">collections</a>
+                                </li>
+                                <li>
+                                    <a href="#_imported">_imported</a>
+                                </li>
+                            </ul>
+                        </td>
+                    </tr>
+        </tbody>
+    </table>
+</section>
+
+            <section>
+    <h3 id="constructor">Constructor</h3>
+        <table class="table table-sm table-bordered">
+            <tbody>
+                <tr>
+                    <td class="col-md-4">
+<code>constructor()</code>
+                    </td>
+                </tr>
+                        <tr>
+                            <td class="col-md-4">
+                                <div class="io-line">Defined in <a href="" data-line="79" class="link-to-prism">libs/rxdb/src/lib/rxdb.service.ts:79</a></div>
+                            </td>
+                        </tr>
+
+            </tbody>
+        </table>
+</section>
+
+            <section>
+    
+    <h3 id="methods">
+        Methods
+    </h3>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="destroyDb"></a>
+                    <span class="name">
+                        <b>
+                            <span class="modifier">Async</span>
+                            destroyDb
+                        </b>
+                        <a href="#destroyDb"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                    <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>destroyDb()</code>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+                    <div class="io-line">Defined in <a href="" data-line="85"
+                            class="link-to-prism">libs/rxdb/src/lib/rxdb.service.ts:85</a></div>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                    <div class="io-description">
+                        <b>Returns : </b>        <code><a href="https://www.typescriptlang.org/docs/handbook/basic-types.html" target="_blank" >any</a></code>
+
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="getCollection"></a>
+                    <span class="name">
+                        <b>
+                            getCollection
+                        </b>
+                        <a href="#getCollection"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+<code>getCollection(name: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>)</code>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+                    <div class="io-line">Defined in <a href="" data-line="177"
+                            class="link-to-prism">libs/rxdb/src/lib/rxdb.service.ts:177</a></div>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                    <div class="io-description">
+                        <b>Parameters :</b>
+                        <table class="params">
+                            <thead>
+                                <tr>
+                                    <td>Name</td>
+                                    <td>Type</td>
+                                    <td>Optional</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>name</td>
+                                    <td>
+                                                <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank" >string</a></code>
+                                    </td>
+
+                                    <td>
+                                        No
+                                    </td>
+
+
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                    </div>
+                    <div class="io-description">
+                        <b>Returns : </b>    <code>RxCollection</code>
+
+                    </div>
+                    <div class="io-description">
+                        
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="getCouchAuthProxyHeaders"></a>
+                    <span class="name">
+                        <b>
+                            <span class="modifier">Static</span>
+                            getCouchAuthProxyHeaders
+                        </b>
+                        <a href="#getCouchAuthProxyHeaders"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                    <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>getCouchAuthProxyHeaders(userName: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>, roles: string[], token: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>)</code>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+                    <div class="io-line">Defined in <a href="" data-line="54"
+                            class="link-to-prism">libs/rxdb/src/lib/rxdb.service.ts:54</a></div>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                    <div class="io-description">
+                        <b>Parameters :</b>
+                        <table class="params">
+                            <thead>
+                                <tr>
+                                    <td>Name</td>
+                                    <td>Type</td>
+                                    <td>Optional</td>
+                                    <td>Default value</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>userName</td>
+                                    <td>
+                                                <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank" >string</a></code>
+                                    </td>
+
+                                    <td>
+                                        No
+                                    </td>
+
+                                    <td>
+                                        <code>&#x27;&#x27;</code>
+                                    </td>
+
+                                </tr>
+                                <tr>
+                                    <td>roles</td>
+                                    <td>
+                                            <code>string[]</code>
+                                    </td>
+
+                                    <td>
+                                        No
+                                    </td>
+
+                                    <td>
+                                        <code>[]</code>
+                                    </td>
+
+                                </tr>
+                                <tr>
+                                    <td>token</td>
+                                    <td>
+                                                <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank" >string</a></code>
+                                    </td>
+
+                                    <td>
+                                        No
+                                    </td>
+
+                                    <td>
+                                        <code>&#x27;&#x27;</code>
+                                    </td>
+
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                    </div>
+                    <div class="io-description">
+                        <b>Returns : </b>    <code>literal type</code>
+
+                    </div>
+                    <div class="io-description">
+                        
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="importDbDump"></a>
+                    <span class="name">
+                        <b>
+                            <span class="modifier">Async</span>
+                            importDbDump
+                        </b>
+                        <a href="#importDbDump"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                    <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>importDbDump(dumpObj: <a href="../interfaces/NgxRxdbDump.html">NgxRxdbDump</a>)</code>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+                    <div class="io-line">Defined in <a href="" data-line="243"
+                            class="link-to-prism">libs/rxdb/src/lib/rxdb.service.ts:243</a></div>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+                    <div class="io-description"><p>imports pouchdb dump to the database, must be used only after db init</p>
+</div>
+
+                    <div class="io-description">
+                        <b>Parameters :</b>
+                        <table class="params">
+                            <thead>
+                                <tr>
+                                    <td>Name</td>
+                                    <td>Type</td>
+                                    <td>Optional</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>dumpObj</td>
+                                    <td>
+                                                <code><a href="../interfaces/NgxRxdbDump.html" target="_self" >NgxRxdbDump</a></code>
+                                    </td>
+
+                                    <td>
+                                        No
+                                    </td>
+
+
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                    </div>
+                    <div class="io-description">
+                        <b>Returns : </b>        <code><a href="https://www.typescriptlang.org/docs/handbook/basic-types.html" target="_blank" >any</a></code>
+
+                    </div>
+                    <div class="io-description">
+                        
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="initCollection"></a>
+                    <span class="name">
+                        <b>
+                            <span class="modifier">Async</span>
+                            initCollection
+                        </b>
+                        <a href="#initCollection"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                    <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>initCollection(schemaConfig: <a href="../interfaces/NgxRxdbCollectionConfig.html">NgxRxdbCollectionConfig</a>)</code>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+                    <div class="io-line">Defined in <a href="" data-line="139"
+                            class="link-to-prism">libs/rxdb/src/lib/rxdb.service.ts:139</a></div>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                    <div class="io-description">
+                        <b>Parameters :</b>
+                        <table class="params">
+                            <thead>
+                                <tr>
+                                    <td>Name</td>
+                                    <td>Type</td>
+                                    <td>Optional</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>schemaConfig</td>
+                                    <td>
+                                                <code><a href="../interfaces/NgxRxdbCollectionConfig.html" target="_self" >NgxRxdbCollectionConfig</a></code>
+                                    </td>
+
+                                    <td>
+                                        No
+                                    </td>
+
+
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                    </div>
+                    <div class="io-description">
+                        <b>Returns : </b>    <code>{}</code>
+
+                    </div>
+                    <div class="io-description">
+                        
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="initCollections"></a>
+                    <span class="name">
+                        <b>
+                            <span class="modifier">Async</span>
+                            initCollections
+                        </b>
+                        <a href="#initCollections"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                    <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>initCollections(schemaConfigs: literal type)</code>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+                    <div class="io-line">Defined in <a href="" data-line="123"
+                            class="link-to-prism">libs/rxdb/src/lib/rxdb.service.ts:123</a></div>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                    <div class="io-description">
+                        <b>Parameters :</b>
+                        <table class="params">
+                            <thead>
+                                <tr>
+                                    <td>Name</td>
+                                    <td>Type</td>
+                                    <td>Optional</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>schemaConfigs</td>
+                                    <td>
+                                            <code>literal type</code>
+                                    </td>
+
+                                    <td>
+                                        No
+                                    </td>
+
+
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                    </div>
+                    <div class="io-description">
+                        <b>Returns : </b>        <code><a href="https://www.typescriptlang.org/docs/handbook/basic-types.html" target="_blank" >any</a></code>
+
+                    </div>
+                    <div class="io-description">
+                        
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="initDb"></a>
+                    <span class="name">
+                        <b>
+                            <span class="modifier">Async</span>
+                            initDb
+                        </b>
+                        <a href="#initDb"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                    <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>initDb(config: <a href="../interfaces/NgxRxdbConfig.html">NgxRxdbConfig</a>)</code>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+                    <div class="io-line">Defined in <a href="" data-line="97"
+                            class="link-to-prism">libs/rxdb/src/lib/rxdb.service.ts:97</a></div>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+                    <div class="io-description"><p>This is run via APP_INITIALIZER in app.module.ts
+to ensure the database exists before the angular-app starts up</p>
+</div>
+
+                    <div class="io-description">
+                        <b>Parameters :</b>
+                        <table class="params">
+                            <thead>
+                                <tr>
+                                    <td>Name</td>
+                                    <td>Type</td>
+                                    <td>Optional</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>config</td>
+                                    <td>
+                                                <code><a href="../interfaces/NgxRxdbConfig.html" target="_self" >NgxRxdbConfig</a></code>
+                                    </td>
+
+                                    <td>
+                                        No
+                                    </td>
+
+
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                    </div>
+                    <div class="io-description">
+                        <b>Returns : </b>        <code><a href="https://www.typescriptlang.org/docs/handbook/basic-types.html" target="_blank" >any</a></code>
+
+                    </div>
+                    <div class="io-description">
+                        
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="syncAllCollections"></a>
+                    <span class="name">
+                        <b>
+                            syncAllCollections
+                        </b>
+                        <a href="#syncAllCollections"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+<code>syncAllCollections(remoteDbName: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>, customHeaders?: literal type)</code>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+                    <div class="io-line">Defined in <a href="" data-line="220"
+                            class="link-to-prism">libs/rxdb/src/lib/rxdb.service.ts:220</a></div>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                    <div class="io-description">
+                        <b>Parameters :</b>
+                        <table class="params">
+                            <thead>
+                                <tr>
+                                    <td>Name</td>
+                                    <td>Type</td>
+                                    <td>Optional</td>
+                                    <td>Default value</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>remoteDbName</td>
+                                    <td>
+                                                <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank" >string</a></code>
+                                    </td>
+
+                                    <td>
+                                        No
+                                    </td>
+
+                                    <td>
+                                        <code>&#x27;db&#x27;</code>
+                                    </td>
+
+                                </tr>
+                                <tr>
+                                    <td>customHeaders</td>
+                                    <td>
+                                            <code>literal type</code>
+                                    </td>
+
+                                    <td>
+                                        Yes
+                                    </td>
+
+                                    <td>
+                                    </td>
+
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                    </div>
+                    <div class="io-description">
+                        <b>Returns : </b>    <code>RxReplicationState[]</code>
+
+                    </div>
+                    <div class="io-description">
+                        
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="syncCollection"></a>
+                    <span class="name">
+                        <b>
+                            syncCollection
+                        </b>
+                        <a href="#syncCollection"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+<code>syncCollection(col: RxCollection, remoteDbName: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>, customHeaders?: literal type)</code>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+                    <div class="io-line">Defined in <a href="" data-line="187"
+                            class="link-to-prism">libs/rxdb/src/lib/rxdb.service.ts:187</a></div>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                    <div class="io-description">
+                        <b>Parameters :</b>
+                        <table class="params">
+                            <thead>
+                                <tr>
+                                    <td>Name</td>
+                                    <td>Type</td>
+                                    <td>Optional</td>
+                                    <td>Default value</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>col</td>
+                                    <td>
+                                            <code>RxCollection</code>
+                                    </td>
+
+                                    <td>
+                                        No
+                                    </td>
+
+                                    <td>
+                                    </td>
+
+                                </tr>
+                                <tr>
+                                    <td>remoteDbName</td>
+                                    <td>
+                                                <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank" >string</a></code>
+                                    </td>
+
+                                    <td>
+                                        No
+                                    </td>
+
+                                    <td>
+                                        <code>&#x27;db&#x27;</code>
+                                    </td>
+
+                                </tr>
+                                <tr>
+                                    <td>customHeaders</td>
+                                    <td>
+                                            <code>literal type</code>
+                                    </td>
+
+                                    <td>
+                                        Yes
+                                    </td>
+
+                                    <td>
+                                    </td>
+
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                    </div>
+                    <div class="io-description">
+                        <b>Returns : </b>    <code>RxReplicationState</code>
+
+                    </div>
+                    <div class="io-description">
+                        
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+            <section>
+    <h3 id="accessors">
+        Accessors
+    </h3>
+        <table class="table table-sm table-bordered">
+            <tbody>
+                <tr>
+                    <td class="col-md-4">
+                        <a name="db"></a>
+                        <span class="name"><b>db</b><a href="#db"><span class="icon ion-ios-link"></span></a></span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="col-md-4">
+                        <span class="accessor"><b>get</b><code>db()</code></span>
+                    </td>
+                </tr>
+                            <tr>
+                                <td class="col-md-4">
+                                    <div class="io-line">Defined in <a href="" data-line="66" class="link-to-prism">libs/rxdb/src/lib/rxdb.service.ts:66</a></div>
+                                </td>
+                            </tr>
+
+            </tbody>
+        </table>
+        <table class="table table-sm table-bordered">
+            <tbody>
+                <tr>
+                    <td class="col-md-4">
+                        <a name="collections"></a>
+                        <span class="name"><b>collections</b><a href="#collections"><span class="icon ion-ios-link"></span></a></span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="col-md-4">
+                        <span class="accessor"><b>get</b><code>collections()</code></span>
+                    </td>
+                </tr>
+                            <tr>
+                                <td class="col-md-4">
+                                    <div class="io-line">Defined in <a href="" data-line="70" class="link-to-prism">libs/rxdb/src/lib/rxdb.service.ts:70</a></div>
+                                </td>
+                            </tr>
+
+            </tbody>
+        </table>
+        <table class="table table-sm table-bordered">
+            <tbody>
+                <tr>
+                    <td class="col-md-4">
+                        <a name="_imported"></a>
+                        <span class="name"><b>_imported</b><a href="#_imported"><span class="icon ion-ios-link"></span></a></span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="col-md-4">
+                        <span class="accessor"><b>get</b><code>_imported()</code></span>
+                    </td>
+                </tr>
+                            <tr>
+                                <td class="col-md-4">
+                                    <div class="io-line">Defined in <a href="" data-line="74" class="link-to-prism">libs/rxdb/src/lib/rxdb.service.ts:74</a></div>
+                                </td>
+                            </tr>
+
+                <tr>
+                    <td class="col-md-4">
+                        <span class="accessor"><b>set</b><code>_imported(v)</code></span>
+                    </td>
+                </tr>
+                            <tr>
+                                <td class="col-md-4">
+                                    <div class="io-line">Defined in <a href="" data-line="77" class="link-to-prism">libs/rxdb/src/lib/rxdb.service.ts:77</a></div>
+                                </td>
+                            </tr>
+                    <tr>
+                        <td class="col-md-4">
+
+                                <div class="io-description">
+                                        <b>Parameters :</b>
+                                        <table class="params">
+                                            <thead>
+                                                <tr>
+                                                    <td>Name</td>
+                                                    <td>Optional</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                    <tr>
+                                                            <td>v</td>
+                                                    
+                                                    
+                                                        <td>
+                                                                No
+                                                        </td>
+                                                        
+                                                    </tr>
+                                            </tbody>
+                                        </table>
+                                </div>
+                                <div>
+                                </div>
+                                <div class="io-description">
+                                    <b>Returns : </b>        <code><a href="https://www.typescriptlang.org/docs/handbook/basic-types.html" target="_blank" >void</a></code>
+
+                                </div>
+                        </td>
+                    </tr>
+            </tbody>
+        </table>
+</section>
+    </div>
+
+
+    <div class="tab-pane fade  tab-source-code" id="c-source">
+        <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { Injectable } from &#x27;@angular/core&#x27;;
+import {
+  addRxPlugin,
+  createRxDatabase,
+  isRxCollection,
+  RxCollection,
+  RxCollectionCreator,
+  RxDatabase,
+  RxReplicationState,
+} from &#x27;rxdb&#x27;;
+import { RxDBAdapterCheckPlugin } from &#x27;rxdb/plugins/adapter-check&#x27;;
+import { checkSchema } from &#x27;rxdb/plugins/dev-mode&#x27;;
+import { RxDBJsonDumpPlugin } from &#x27;rxdb/plugins/json-dump&#x27;;
+import { RxDBMigrationPlugin } from &#x27;rxdb/plugins/migration&#x27;;
+import { RxDBQueryBuilderPlugin } from &#x27;rxdb/plugins/query-builder&#x27;;
+import { RxDBReplicationPlugin } from &#x27;rxdb/plugins/replication&#x27;;
+import { RxDBValidatePlugin } from &#x27;rxdb/plugins/validate&#x27;;
+// NgxRxdb
+import { NgxRxdbCollectionCreator } from &#x27;./rxdb-collection.class&#x27;;
+import {
+  NgxRxdbCollectionConfig,
+  NgxRxdbConfig,
+  NgxRxdbDump,
+} from &#x27;./rxdb.interface&#x27;;
+import { DEFAULT_BACKOFF_FN, RXDB_DEFAULT_CONFIG } from &#x27;./rxdb.model&#x27;;
+import { isEmpty, logFn, NgxRxdbError } from &#x27;./utils&#x27;;
+
+addRxPlugin(require(&#x27;pouchdb-adapter-http&#x27;)); // enable syncing over http (remote database)
+addRxPlugin(require(&#x27;pouchdb-adapter-idb&#x27;));
+addRxPlugin(RxDBValidatePlugin);
+addRxPlugin(RxDBQueryBuilderPlugin);
+addRxPlugin(RxDBJsonDumpPlugin);
+addRxPlugin(RxDBAdapterCheckPlugin);
+addRxPlugin(RxDBMigrationPlugin);
+addRxPlugin(RxDBReplicationPlugin);
+// only in development environment
+if ((window as any).process?.env?.TEST) {
+  logFn(&#x27;dev or test mode&#x27;);
+  // addRxPlugin(require(&#x27;pouchdb-adapter-memory&#x27;));
+  // addRxPlugin(RxDBDevModePlugin); // FIXME: is it duplicate import ?
+}
+
+const IMPORTED_FLAG &#x3D; &#x27;_ngx_rxdb_imported&#x27;;
+
+@Injectable()
+export class NgxRxdbService {
+  private dbInstance: RxDatabase;
+
+  private static mergeConfig(config: NgxRxdbConfig): NgxRxdbConfig {
+    return Object.assign({}, RXDB_DEFAULT_CONFIG, config);
+  }
+
+  static getCouchAuthProxyHeaders(
+    userName: string &#x3D; &#x27;&#x27;,
+    roles: string[] &#x3D; [],
+    token: string &#x3D; &#x27;&#x27;
+  ): { [h: string]: string } {
+    return {
+      &#x27;X-Auth-CouchDB-UserName&#x27;: userName,
+      &#x27;X-Auth-CouchDB-Roles&#x27;: roles.join(&#x27;,&#x27;),
+      &#x27;X-Auth-CouchDB-Token&#x27;: token,
+    };
+  }
+
+  get db(): RxDatabase {
+    return this.dbInstance;
+  }
+
+  get collections(): { [key: string]: RxCollection } {
+    return this.db.collections;
+  }
+
+  get _imported() {
+    return window.localStorage[IMPORTED_FLAG];
+  }
+  set _imported(v) {
+    window.localStorage[IMPORTED_FLAG] &#x3D; v;
+  }
+
+  constructor() {
+    this._imported &#x3D; window.localStorage[IMPORTED_FLAG];
+  }
+
+  async destroyDb() {
+    try {
+      await this.dbInstance.remove();
+      await this.dbInstance.destroy();
+      this.dbInstance &#x3D; null;
+    } catch {}
+  }
+
+  /**
+   * This is run via APP_INITIALIZER in app.module.ts
+   * to ensure the database exists before the angular-app starts up
+   */
+  async initDb(config: NgxRxdbConfig) {
+    try {
+      const dbConfig &#x3D; NgxRxdbService.mergeConfig(config);
+      const db: RxDatabase &#x3D; await createRxDatabase(dbConfig);
+      this.dbInstance &#x3D; db;
+      logFn(&#x27;created database&#x27;);
+      // also can create collections from root config
+      if (!isEmpty(config.options) &amp;&amp; !isEmpty(config.options.schemas)) {
+        await this.initCollections(config.options.schemas);
+      }
+      if (!isEmpty(config.options) &amp;&amp; config.options.dumpPath) {
+        // fetch dump json
+        const dump &#x3D; await (await fetch(config.options.dumpPath)).json();
+        // import only new dump
+        if (
+          !this._imported ||
+          this._imported !&#x3D;&#x3D; dump[&#x27;timestamp&#x27;].toString()
+        ) {
+          await this.importDbDump(dump);
+        }
+      }
+    } catch (error) {
+      throw new NgxRxdbError(error.message ?? error);
+    }
+  }
+
+  async initCollections(schemaConfigs: {
+    [key: string]: NgxRxdbCollectionConfig;
+  }) {
+    try {
+      const collectionCreators &#x3D; await this.prepareCollections(schemaConfigs);
+      // use bulk &#x60;addCollections&#x60; method at the end of array
+      const bulk &#x3D; await this.dbInstance.addCollections(collectionCreators);
+      logFn(
+        &#x60;created ${Object.keys(bulk).length} collections bulk, &#x60;,
+        Object.keys(bulk)
+      );
+    } catch (error) {
+      throw new NgxRxdbError(error.message ?? error);
+    }
+  }
+
+  async initCollection(schemaConfig: NgxRxdbCollectionConfig) {
+    let collection: RxCollection &#x3D; this.db[schemaConfig.name];
+    if (isRxCollection(collection)) {
+      // delete collection if exists
+      if (schemaConfig.options.recreate) {
+        return await collection.remove();
+      }
+      logFn(&#x27;collection&#x27;, collection.name, &#x27;exists, skip create&#x27;);
+      return collection;
+    }
+
+    const collectionCreator &#x3D; await this.prepareCollections({
+      [schemaConfig.name]: schemaConfig,
+    });
+    collection &#x3D; (await this.dbInstance.addCollections(collectionCreator))[
+      schemaConfig.name
+    ];
+    logFn(&#x60;created collection &quot;${collection.name}&quot;&#x60;);
+    // preload data into collection
+    const docsCount &#x3D; await collection.countAllDocuments();
+    logFn(
+      &#x60;collection &quot;${collection.name}&quot; has &quot;${parseInt(docsCount, 0)}&quot; docs&#x60;
+    );
+    if (schemaConfig.options?.initialDocs &amp;&amp; !!!docsCount) {
+      const dumpObj &#x3D; {
+        name,
+        schemaHash: collection.schema.hash,
+        encrypted: false,
+        docs: [...schemaConfig.options.initialDocs],
+      };
+      await collection.importDump(dumpObj as any);
+      logFn(
+        &#x60;imported ${schemaConfig.options.initialDocs.length} docs for collection &quot;${name}&quot;&#x60;
+      );
+    }
+    return collection;
+  }
+
+  getCollection(name: string): RxCollection {
+    const collection: RxCollection &#x3D; this.db[name];
+    if (isRxCollection(collection)) {
+      return collection;
+    } else {
+      logFn(&#x60;returned false for RxDB.isRxCollection(${name})&#x60;);
+      return null;
+    }
+  }
+
+  syncCollection(
+    col: RxCollection,
+    remoteDbName: string &#x3D; &#x27;db&#x27;,
+    customHeaders?: { [h: string]: string }
+  ): RxReplicationState {
+    if (col.options?.syncOptions?.remote) {
+      const { syncOptions } &#x3D; col.options as NgxRxdbCollectionConfig[&#x27;options&#x27;];
+      syncOptions.remote &#x3D; syncOptions.remote.concat(&#x27;/&#x27;, remoteDbName);
+      // merge options
+      syncOptions.options &#x3D; Object.assign(
+        {
+          back_off_function: DEFAULT_BACKOFF_FN,
+        },
+        this.db.pouchSettings.ajax,
+        col.pouchSettings.ajax,
+        syncOptions.options
+      );
+      // append auth headers
+      if (customHeaders) {
+        (syncOptions.options as any).headers &#x3D; Object.assign(
+          {},
+          (syncOptions.options as any).headers,
+          customHeaders
+        );
+      }
+      // set filtered sync
+      if (syncOptions.queryObj) {
+        syncOptions.query &#x3D; col.find(syncOptions.queryObj);
+      }
+      return col.sync(syncOptions);
+    }
+  }
+
+  syncAllCollections(
+    remoteDbName: string &#x3D; &#x27;db&#x27;,
+    customHeaders?: { [h: string]: string }
+  ): RxReplicationState[] {
+    if (isEmpty(this.collections)) {
+      throw new NgxRxdbError(
+        &#x27;collections must be initialized before importing dump&#x27;
+      );
+    }
+    const replicationStates: RxReplicationState[] &#x3D; [];
+    Object.values(this.collections)
+      .filter(col &#x3D;&gt; &#x27;remote&#x27; in col.options.syncOptions)
+      .forEach(col &#x3D;&gt; {
+        const sync &#x3D; this.syncCollection(col, remoteDbName, customHeaders);
+        replicationStates.push(sync);
+      });
+    logFn(&#x27;syncAllCollections &#x3D; &#x27;, replicationStates);
+    return replicationStates;
+  }
+
+  /**
+   * imports pouchdb dump to the database, must be used only after db init
+   */
+  async importDbDump(dumpObj: NgxRxdbDump) {
+    try {
+      const dump &#x3D; this.prepareDump(dumpObj);
+      await this.db.importDump(dump as any);
+      this._imported &#x3D; dump.timestamp;
+    } catch (error) {
+      if (error.status !&#x3D;&#x3D; 409) {
+        throw new NgxRxdbError(error.message ?? error);
+      } else {
+        // impoted but were conflicts with old docs - mark as imported
+        this._imported &#x3D; dumpObj.timestamp;
+      }
+    }
+  }
+
+  private async prepareCollections(schemaConfigs: {
+    [key: string]: NgxRxdbCollectionConfig;
+  }): Promise&lt;{ [key: string]: RxCollectionCreator }&gt; {
+    try {
+      const collectionCreators &#x3D; {};
+      const configs &#x3D; Object.values(schemaConfigs);
+      for (const config of configs) {
+        // optionally fetch schema from remote url
+        if (!config.schema &amp;&amp; !!config.options.schemaUrl) {
+          config.schema &#x3D; await NgxRxdbCollectionCreator.fetchSchema(
+            config.options.schemaUrl
+          );
+        }
+        checkSchema(config.schema);
+        collectionCreators[config.name] &#x3D; new NgxRxdbCollectionCreator(config);
+      }
+      return collectionCreators;
+    } catch (error) {
+      throw new NgxRxdbError(error.message ?? error);
+    }
+  }
+
+  /** change schemaHashes from dump to existing schema hashes */
+  private prepareDump(dumpObj: NgxRxdbDump): NgxRxdbDump {
+    const dumpWithHashes &#x3D; { ...dumpObj };
+    if (isEmpty(this.collections)) {
+      throw new NgxRxdbError(
+        &#x27;collections must be initialized before importing dump&#x27;
+      );
+    }
+    for (const key in this.collections) {
+      if (dumpWithHashes.collections.hasOwnProperty(key)) {
+        dumpWithHashes.collections[key].schemaHash &#x3D; this.collections[
+          key
+        ].schema[&#x27;_hash&#x27;];
+      }
+    }
+    return dumpWithHashes;
+  }
+}
+</code></pre>
+    </div>
+
+</div>
+
+
+
+
+
+
+
+                   
+
+
+
+
+                   </div><div class="search-results">
+    <div class="has-results">
+        <h1 class="search-results-title"><span class='search-results-count'></span> result-matching "<span class='search-query'></span>"</h1>
+        <ul class="search-results-list"></ul>
+    </div>
+    <div class="no-results">
+        <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+    </div>
+</div>
+</div>
+               <!-- END CONTENT -->
+           </div>
+       </div>
+
+       <script>
+            var COMPODOC_CURRENT_PAGE_DEPTH = 1;
+            var COMPODOC_CURRENT_PAGE_CONTEXT = 'injectable';
+            var COMPODOC_CURRENT_PAGE_URL = 'NgxRxdbService.html';
+            var MAX_SEARCH_RESULTS = 15;
+       </script>
+
+       <script src="../js/libs/custom-elements.min.js"></script>
+       <script src="../js/libs/lit-html.js"></script>
+       <!-- Required to polyfill modern browsers as code is ES5 for IE... -->
+       <script src="../js/libs/custom-elements-es5-adapter.js" charset="utf-8" defer></script>
+       <script src="../js/menu-wc.js" defer></script>
+
+       <script src="../js/libs/bootstrap-native.js"></script>
+
+       <script src="../js/libs/es6-shim.min.js"></script>
+       <script src="../js/libs/EventDispatcher.js"></script>
+       <script src="../js/libs/promise.min.js"></script>
+       <script src="../js/libs/zepto.min.js"></script>
+
+       <script src="../js/compodoc.js"></script>
+
+       <script src="../js/tabs.js"></script>
+       <script src="../js/menu.js"></script>
+       <script src="../js/libs/clipboard.min.js"></script>
+       <script src="../js/libs/prism.js"></script>
+       <script src="../js/sourceCode.js"></script>
+          <script src="../js/search/search.js"></script>
+          <script src="../js/search/lunr.min.js"></script>
+          <script src="../js/search/search-lunr.js"></script>
+          <script src="../js/search/search_index.js"></script>
+       <script src="../js/lazy-load-graphs.js"></script>
+
+
+    </body>
+</html>
