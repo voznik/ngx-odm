@@ -9,10 +9,8 @@ cache:
   directories:
     - $HOME/.npm
 env:
-  - ENV=TEST
-# branches:
-  # except: ['..']
-  # only: ['master']
+  - ENV=CI
+
 before_install:
   - export CHROME_BIN=chromium-browser
   - export DISPLAY=:99.0
@@ -20,16 +18,19 @@ before_install:
 install:
   - npm ci --ignore-scripts
 before_script:
-  - npm run affected:lint
-  - npm run affected:test
+  - npm run packages:lint
+  - npm run packages:test
 script:
   # run build script specified in package.json
-  - npm run affected:build -- --prod
+  - npm run packages:build
   - npm run compodoc
 after_success:
   - echo 'success'
 deploy:
   provider: pages
-  skip_cleanup: true
-  github_token: $GITHUB_TOKEN
+  cleanup: true
+  github_token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
+  keep_history: false
   local_dir: dist/demo/
+  on:
+    branch: master

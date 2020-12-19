@@ -1,6 +1,6 @@
 {
   "name": "@ngx-odm/kinto",
-  "version": "2.0.0-alpha",
+  "version": "2.0.3-alpha",
   "description": "An RxJs Angular client for Kinto (https://kinto.readthedocs.io/)",
   "author": "voznik",
   "contributors": [

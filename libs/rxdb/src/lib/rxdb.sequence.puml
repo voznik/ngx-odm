@@ -1,0 +1,65 @@
+@startuml NgxRxdbService Sequence
+
+
+!pragma teoz true
+
+participant Consumer
+participant NgxRxdbService
+box "Internal Service"
+participant NgxRxdbStore
+participant RxDB
+control createConnection
+collections socket
+end box
+
+== Initialization ==
+Consumer -> NgxRxdbService : createHub(hubName, hubUrl)
+NgxRxdbService -> NgxRxdbStore: createHub
+activate NgxRxdbStore
+NgxRxdbStore -> NgxRxdbStore: _createHub
+create RxDB
+NgxRxdbStore --> RxDB: new
+NgxRxdbStore -> NgxRxdbService : instance of hub
+deactivate NgxRxdbStore
+NgxRxdbService -> NgxRxdbService: init()
+NgxRxdbService -> RxDB: start()
+activate RxDB
+RxDB --> RxDB: get connection
+create control createConnection
+activate createConnection
+RxDB -> createConnection **: new SignalR\nHubConnection
+alt testing
+createConnection -> RxDB: HubConnectionMock
+else SignalR HubConnection
+createConnection -> RxDB: HubConnection
+end
+deactivate createConnection
+RxDB -> RxDB: start()
+RxDB -> NgxRxdbService: Observable connection state
+deactivate RxDB
+== Hub Created ==
+{start} Consumer -> NgxRxdbService : getStreamByServiceId$<T>(streamingRequestParams, keepAlive?)
+' alt connected
+NgxRxdbService -> RxDB: on<T>(`OnMessageReceive`)
+activate RxDB
+RxDB --> RxDB: register handler as Subject<T>
+create control socket
+activate socket
+NgxRxdbService -> RxDB: send(`SubscribeStreamAsync`)
+socket <- RxDB: invoke(`SubscribeStreamAsync`)
+socket -> RxDB: async socket messages
+RxDB -> NgxRxdbService: messages as Observable<T>
+deactivate socket
+deactivate RxDB
+{end} NgxRxdbService -> Consumer: messages as Observable<T>
+' else
+' end
+{start} <-> {end} : some time
+== Connection Stop ==
+Consumer -> NgxRxdbService : connectionStop$
+NgxRxdbService -> RxDB: stop$
+RxDB -> RxDB: stop()
+alt hasConnections
+RxDB -> RxDB: purgeSubscriptions()
+end
+@enduml

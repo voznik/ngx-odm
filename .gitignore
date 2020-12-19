@@ -2,6 +2,7 @@
 
 # compiled output
 /dist
+/docs
 /tmp
 /out-tsc
 
@@ -36,6 +37,7 @@ testem.log
 /typings
 *.bak
 .env
+junit.xml
 
 # System Files
 .DS_Store

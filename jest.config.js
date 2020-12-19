@@ -50,8 +50,8 @@ module.exports = {
    * Because this retrofits all executed files with coverage collection statements,
    * it may significantly slow down your tests.
    */
-  collectCoverage: CI,
-  coverageReporters: ['lcovonly', 'lcov', 'html'],
+  collectCoverage: true, // CI,
+  coverageReporters: ['json-summary', 'json', 'lcovonly', 'lcov', 'text-summary', 'html'],
   passWithNoTests: true,
   // A set of global variables that need to be available in all test environments
   globals: {
@@ -65,5 +65,5 @@ module.exports = {
    * A preset that is used as a base for Jest's configuration.
    */
   preset: 'jest-preset-angular',
-  setupFilesAfterEnv: ['dotenv/config', 'jest-localstorage-mock'],
+  setupFilesAfterEnv: ['jest-localstorage-mock'],
 };

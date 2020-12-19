@@ -16,6 +16,7 @@ import { NgxRxdbService } from './rxdb.service';
 import { RXDB_CONFIG, RXDB_FEATURE_CONFIG } from './rxdb.token';
 import { logFn, noop } from './utils';
 
+/** run at APP_INITIALIZER cycle */
 export function dbInitializerFactory(
   rxdb: NgxRxdbService,
   config: NgxRxdbConfig
@@ -25,9 +26,55 @@ export function dbInitializerFactory(
   };
 }
 /**
- * main module which should be imported once in app module, will init RxDbDatabase with given configuration
+ * Main module which should be imported once in app module, will init RxDbDatabase with given configuration
+ *
+ * ### Installation
+ *
+ * 1) Import `NgxRxdbModule` to your root module.
+ *
+ * ```ts
+ * @NgModule({
+ *   imports: [
+ *     // ...
+ *     NgxRxdbModule.forRoot(
+ *       {
+ *         name: 'demo',          // <- name (required, 'ngx')
+ *         adapter: 'idb',        // <- storage-adapter (required, default: 'idb')
+ *         multiInstance: true,   // <-(optional)
+ *         options: {
+ *           dumpPath: 'assets/data/db.dump.json', // <- remote url (optional)
+ *         },
+ *       })
+ *   ],
+ * })
+ * export class AppModule { }
+ * ```
+ *
+ * 2) Import `NgxRxdbModule` to your feature module.
+ *
+ * ```ts
+ * @NgModule({
+ *   imports: [
+ *     // ...
+ *      NgxRxdbModule.forFeature({
+ *       name: 'todo',
+ *       // schema: todoSchema, <-(kind of optional)
+ *       statics: {}, // <-(optional)
+ *       options: { // <-(optional)
+ *         schemaUrl: 'assets/data/todo.schema.json', <- remote url (optional)
+ *         initialDocs: initialState.items, // <-(optional)
+ *       },
+ *      })
+ *      ]
+ * }),
+ * export class TodosModule { }
+ * ```
+ * ### Usage
+ *
+ * Example of usage:
+ * <example-url>http://localhost/demo/mysample.component.html</example-url>
+ * <example-url>../index.html</example-url>
  */
-// @dynamic
 @NgModule()
 export class NgxRxdbModule {
   static forFeature(
@@ -97,10 +144,8 @@ export class NgxRxdbModule {
 
     // TODO: initialize the service only when this is a Root module ('forRoot' was called)
     if (trueNgxRxdbConfig && !ngxRxdbConfig) {
-      // this logic cannot be executed in an APP_INITIALIZER factory
-      // so this is done via appInitStatus.donePromise
       from(appInitStatus.donePromise).subscribe(() => {
-        logFn('appInitStatus.donePromise');
+        // logFn('appInitStatus.donePromise');
       });
     }
   }

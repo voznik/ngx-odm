@@ -24,11 +24,5 @@ export class NgxKintoModule {
     };
   }
 
-  constructor(@Optional() @SkipSelf() parentModule?: NgxKintoModule) {
-    /* if (parentModule) {
-      throw new Error(
-        'NgxKintoModule already loaded. Import in root module only.'
-      );
-    } */
-  }
+  constructor(@Optional() @SkipSelf() parentModule?: NgxKintoModule) {}
 }

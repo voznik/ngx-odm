@@ -12,7 +12,12 @@ module.exports = {
       ],
     },
   },
-  coverageDirectory: '../../coverage/@ngx-odm/rxdb',
+  coverageReporters: [
+    'text-summary',
+    'json',
+    ['json-summary', { file: 'rxdb/rxdb-coverage-summary.json' }],
+  ],
+  coverageDirectory: '../../coverage/packages',
   snapshotSerializers: [
     'jest-preset-angular/build/AngularNoNgAttributesSnapshotSerializer.js',
     'jest-preset-angular/build/AngularSnapshotSerializer.js',

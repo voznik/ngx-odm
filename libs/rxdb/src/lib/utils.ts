@@ -1,3 +1,4 @@
+/** @internal */
 export function isEmpty(object, deep = false) {
   if (object == null || !!!object) {
     return true;
@@ -9,10 +10,12 @@ export function isEmpty(object, deep = false) {
   }
 }
 
+/** @internal */
 export function noop(): void {
   return void 0;
 }
 
+/** @internal */
 export function logFn(...args) {
   if ((window as any).process?.env?.DEBUG) {
     // tslint:disable-next-line: no-console

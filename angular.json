@@ -17,7 +17,10 @@
             "tsConfig": "apps/demo/tsconfig.app.json",
             "aot": true,
             "extractCss": true,
-            "assets": ["apps/demo/src/favicon.ico", "apps/demo/src/assets"],
+            "assets": [
+              "apps/demo/src/favicon.ico",
+              "apps/demo/src/assets"
+            ],
             "styles": [
               "node_modules/todomvc-common/base.css",
               "node_modules/todomvc-app-css/index.css",
@@ -98,12 +101,17 @@
               "apps/demo/tsconfig.spec.json",
               "apps/demo/tsconfig.editor.json"
             ],
-            "exclude": ["**/node_modules/**", "!apps/demo/**/*"]
+            "exclude": [
+              "**/node_modules/**",
+              "!apps/demo/**/*"
+            ]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/demo"],
+          "outputs": [
+            "coverage/apps/demo"
+          ],
           "options": {
             "jestConfig": "apps/demo/jest.config.js",
             "passWithNoTests": true
@@ -132,8 +140,14 @@
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
-            "tsConfig": ["libs/rxdb/tsconfig.lib.json", "libs/rxdb/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!libs/rxdb/**/*"]
+            "tsConfig": [
+              "libs/rxdb/tsconfig.lib.json",
+              "libs/rxdb/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**",
+              "!libs/rxdb/**/*"
+            ]
           }
         },
         "test": {
@@ -180,8 +194,14 @@
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
-            "tsConfig": ["libs/kinto/tsconfig.lib.json", "libs/kinto/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!libs/kinto/**/*"]
+            "tsConfig": [
+              "libs/kinto/tsconfig.lib.json",
+              "libs/kinto/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**",
+              "!libs/kinto/**/*"
+            ]
           }
         },
         "test": {
@@ -215,16 +235,36 @@
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
-            "tsConfig": ["tools/tsconfig.tools.json"],
-            "exclude": ["**/node_modules/**", "!tools/**/*"]
+            "tsConfig": [
+              "tools/tsconfig.tools.json"
+            ],
+            "exclude": [
+              "**/node_modules/**",
+              "!tools/**/*"
+            ]
           }
         },
         "compodoc": {
           "builder": "@twittwer/compodoc:compodoc",
           "options": {
             "tsConfig": "tools/tsconfig.compodoc.json",
-            "outputPath": "dist/demo/documentation",
-            "workspaceDocs": true
+            "outputPath": "docs/documentation",
+            "theme": "readthedocs",
+            "unitTestCoverage": "coverage/coverage-summary.json",
+            "navTabConfig": [],
+            "toggleMenuItems": [
+              "all"
+            ],
+            "hideGenerator": true,
+            "disablePrivate": false,
+            "disableProtected": false,
+            "disableInternal": true,
+            "disableCoverage": true,
+            "disableRoutesGraph": true,
+            "disableStyleTab": true,
+            "disableGraph": false,
+            "serve": true,
+            "silent": false
           },
           "configurations": {
             "json": {

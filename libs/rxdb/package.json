@@ -1,6 +1,7 @@
 {
   "name": "@ngx-odm/rxdb",
   "description": "Angular ODMs for NoSql DB - RxDB",
+  "version": "2.0.3-alpha",
   "author": {
     "name": "voznik",
     "url": "https://about.me/voznik"
@@ -30,7 +31,6 @@
     "url": "https://github.com/voznik/ngx-odm/issues"
   },
   "homepage": "https://github.com/voznik/ngx-odm",
-  "version": "2.0.2-alpha",
   "engines": {
     "node": ">=10.x",
     "npm": ">=6.x"
