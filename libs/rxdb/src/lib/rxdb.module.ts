@@ -75,6 +75,7 @@ export function dbInitializerFactory(
  * <example-url>http://localhost/demo/mysample.component.html</example-url>
  * <example-url>../index.html</example-url>
  */
+// "dynamic"
 @NgModule()
 export class NgxRxdbModule {
   static forFeature(

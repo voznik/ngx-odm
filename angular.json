@@ -263,8 +263,7 @@
             "disableRoutesGraph": true,
             "disableStyleTab": true,
             "disableGraph": false,
-            "serve": true,
-            "silent": false
+            "silent": true
           },
           "configurations": {
             "json": {
