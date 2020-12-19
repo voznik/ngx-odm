@@ -130,7 +130,7 @@
     "rimraf": "3.0.2",
     "rxjs-tslint-rules": "4.34.7",
     "source-map-explorer": "2.5.1",
-    "ts-jest": "26.4.0",
+    "ts-jest": "26.4.4",
     "ts-node": "8.10.2",
     "tsickle": "0.39.1",
     "tslint": "6.1.3",
