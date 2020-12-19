@@ -108,7 +108,7 @@
     "@nrwl/workspace": "11.0.13",
     "@twittwer/compodoc": "1.5.1",
     "@types/dotenv": "8.2.0",
-    "@types/jest": "26.0.10",
+    "@types/jest": "26.0.19",
     "@types/node": "14.14.14",
     "@types/pouchdb-find": "6.3.6",
     "@types/pouchdb-http": "6.1.3",
