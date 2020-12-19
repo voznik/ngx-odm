@@ -41,9 +41,9 @@
     "compodoc": "nx run tools:compodoc",
     "test": "nx test",
     "test:ci": "npm run nx -- run-many --target=test --projects=web,shared-core,shared-ui --ci --run-in-band --parallel --pass-with-no-tests",
-    "test:hook": "npm run affected:test -- --reporters='jest-junit' --parallel --pass-with-no-tests --base=develop --head=HEAD",
+    "test:hook": "npm run affected:test -- --reporters='jest-junit' --parallel --pass-with-no-tests --base=master --head=HEAD",
     "lint": "nx workspace-lint && ng lint",
-    "lint:hook": "npm run affected:lint -- --parallel --base=develop --head=HEAD",
+    "lint:hook": "npm run affected:lint -- --parallel --base=master --head=HEAD",
     "lint:uncommitted": "npm run affected:lint -- --parallel --fix --uncommitted",
     "e2e": "ng e2e",
     "affected:apps": "nx affected:apps",
@@ -152,9 +152,5 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/voznik/ngx-odm.git"
-  },
-  "bugs": {
-    "url": "https://github.com/voznik/ngx-odm/issues"
-  },
-  "homepage": "https://github.com/voznik/ngx-odm#readme"
+  }
 }
