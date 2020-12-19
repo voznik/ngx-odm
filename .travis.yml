@@ -5,9 +5,11 @@ sudo: required
 dist: trusty
 addons:
   chrome: stable
-# cache:
-#   directories:
-#     - $HOME/.npm
+cache:
+  directories:
+    - $HOME/.npm
+branches:
+  only: ['master']
 env:
   - ENV=CI
 # before_install:
@@ -23,14 +25,14 @@ script:
   # run build script specified in package.json
   - npm run packages:build
   #
-  - npm run build:prod  # demo
-  - npm run compodoc    # docs
+  - npm run build:prod # demo
+  - npm run compodoc # docs
 after_success:
   - echo 'success'
 deploy:
+  skip_cleanup: true
   provider: pages
-  skip_cleanup: false
-  github_token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
+  github_token: $GITHUB_TOKEN # Set in the settings page of your repository, as a secure variable
   keep_history: true
   local_dir: dist/demo/
   on:
