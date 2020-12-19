@@ -41,7 +41,7 @@ If you don't want to setup RxDB manually in your next Angular project - just imp
 
 ## Install
 
-Describe how to install / setup your local environement / add link to demo version.
+`npm install @ngx-odm/rxdb`
 
 ## Usage
 
