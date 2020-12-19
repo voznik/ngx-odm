@@ -1,10 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {
-  ModuleWithProviders,
-  NgModule,
-  Optional,
-  SkipSelf,
-} from '@angular/core';
+import { ModuleWithProviders, NgModule, Optional, SkipSelf } from '@angular/core';
 import {
   NgxKintoOptions,
   NgxKintoService,
@@ -15,21 +10,14 @@ import {
   imports: [CommonModule],
 })
 export class NgxKintoModule {
-  static forRoot(
-    options: NgxKintoOptions
-  ): ModuleWithProviders<NgxKintoModule> {
+  static forRoot(options: NgxKintoOptions): ModuleWithProviders<NgxKintoModule> {
     return {
       ngModule: NgxKintoModule,
-      providers: [
-        { provide: NGX_KINTO_OPTIONS, useValue: options || {} },
-        NgxKintoService,
-      ],
+      providers: [{ provide: NGX_KINTO_OPTIONS, useValue: options || {} }, NgxKintoService],
     };
   }
 
-  static forChild(
-    options?: NgxKintoOptions
-  ): ModuleWithProviders<NgxKintoModule> {
+  static forChild(options?: NgxKintoOptions): ModuleWithProviders<NgxKintoModule> {
     return {
       ngModule: NgxKintoModule,
       providers: [NgxKintoService],

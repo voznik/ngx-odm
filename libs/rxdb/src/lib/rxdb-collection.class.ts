@@ -1,24 +1,32 @@
-// tslint:disable:ban-types
+// tslint:disable:ban-types max-classes-per-file
 import {
   RxJsonSchema,
   RxCollectionCreator,
   PouchSettings,
   PouchDBInstance,
+  RxDumpDatabaseAny,
+  RxDumpCollectionAny,
+  RxDumpCollectionAsAny,
 } from 'rxdb';
-import { NgxRxdbCollectionConfig } from './rxdb.interface';
+import { AnyObject, NgxRxdbCollectionConfig } from './rxdb.interface';
 
-export function idLengthFn() {
-  return this.primary.length;
+export async function infoFn() {
+  return await (this.pouch as PouchDBInstance).info();
 }
 
 export async function countAllDocumentsFn(): Promise<number> {
-  return (await (this.pouch as PouchDBInstance).info()).doc_count;
+  const res = await (this.pouch as PouchDBInstance).allDocs({
+    include_docs: false,
+    attachments: false,
+    deleted: 'ok',
+    startkey: '_design\uffff',
+  });
+  return res.rows.length;
 }
 
-export const DEFAULT_INSTANCE_METHODS: { [key: string]: Function } = {
-  idLength: idLengthFn,
-};
+export const DEFAULT_INSTANCE_METHODS: { [key: string]: Function } = {};
 export const DEFAULT_COLLECTION_METHODS: { [key: string]: Function } = {
+  info: infoFn,
   countAllDocuments: countAllDocumentsFn,
 };
 
@@ -28,8 +36,7 @@ export class NgxRxdbCollectionCreator implements RxCollectionCreator {
   schema: RxJsonSchema;
   pouchSettings?: NgxRxdbCollectionConfig['pouchSettings'];
   migrationStrategies?: NgxRxdbCollectionConfig['migrationStrategies'];
-  statics?: NgxRxdbCollectionConfig['statics'] &
-    keyof typeof DEFAULT_COLLECTION_METHODS;
+  statics?: NgxRxdbCollectionConfig['statics'] & keyof typeof DEFAULT_COLLECTION_METHODS;
   methods?: NgxRxdbCollectionConfig['methods'];
   attachments?: NgxRxdbCollectionConfig['attachments'];
   options?: NgxRxdbCollectionConfig['options'];
@@ -47,5 +54,29 @@ export class NgxRxdbCollectionCreator implements RxCollectionCreator {
 
   static async fetchSchema(schemaUrl: string): Promise<RxJsonSchema> {
     return await (await fetch(schemaUrl)).json();
+  }
+}
+
+export class NgxRxdbDump implements RxDumpDatabaseAny<any> {
+  name = 'ngx-rxdb-dump';
+  instanceToken: string;
+  timestamp: number;
+  encrypted = false;
+  passwordHash = null;
+  collections: any;
+
+  constructor(data: Partial<NgxRxdbDump>) {
+    Object.assign(this, data);
+  }
+}
+export class NgxRxdbCollectionDump<T> implements RxDumpCollectionAny<T> {
+  encrypted = false;
+  passwordHash = null;
+  schemaHash: string;
+  name: string;
+  docs: T[];
+
+  constructor(data: Partial<RxDumpCollectionAny<T>>) {
+    Object.assign(this, data);
   }
 }

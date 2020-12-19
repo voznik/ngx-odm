@@ -22,8 +22,8 @@
     "typeRoots": ["node_modules/@types"],
     "types": ["node"],
     "paths": {
-      "@ngx-odm/rxdb": [ "dist/packages/@ngx-odm/rxdb", "libs/rxdb/src/index.ts" ],
-      "@ngx-odm/kinto": [ "dist/packages/@ngx-odm/kinto", "libs/kinto/src/index.ts" ]
+      "@ngx-odm/rxdb": ["dist/packages/@ngx-odm/rxdb", "libs/rxdb/src/index.ts"],
+      "@ngx-odm/kinto": ["dist/packages/@ngx-odm/kinto", "libs/kinto/src/index.ts"]
     },
     "plugins": [
       {

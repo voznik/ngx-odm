@@ -10,6 +10,7 @@ import {
 } from 'rxdb';
 import { defer, from, Observable, ReplaySubject } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
+import { NgxRxdbCollectionDump } from './rxdb-collection.class';
 import { AnyObject, NgxRxdbCollectionConfig } from './rxdb.interface';
 import { NgxRxdbService } from './rxdb.service';
 import { RXDB_FEATURE_CONFIG } from './rxdb.token';
@@ -57,17 +58,25 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
     remoteDbName: string = 'db',
     customHeaders?: { [h: string]: string }
   ): RxReplicationState {
-    return this.dbService.syncCollection(
-      this.collection,
-      remoteDbName,
-      customHeaders
+    return this.dbService.syncCollection(this.collection, remoteDbName, customHeaders);
+  }
+
+  import(docs: T[]) {
+    // preload data into collection
+    return this.collectionLoaded$().pipe(
+      switchMap(() => {
+        const dump = new NgxRxdbCollectionDump<T>({
+          name: this.collection.name,
+          schemaHash: this.collection.schema.hash,
+          docs,
+        });
+        return from(this.collection.importDump(dump));
+      })
     );
   }
 
   docs(queryObj?: MangoQuery<T>): Observable<RxDocument<T>[]> {
-    return this.collectionLoaded$().pipe(
-      switchMap(() => this.collection.find(queryObj).$)
-    );
+    return this.collectionLoaded$().pipe(switchMap(() => this.collection.find(queryObj).$));
   }
 
   allDocs(): Observable<RxDocument<T>[]> {
@@ -76,8 +85,7 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
         const docs = await this.collection.pouch.allDocs({
           include_docs: true,
           attachments: false,
-          endkey: '_design', // INFO: to skip design docs
-          inclusive_end: false, // INFO: to skip design docs
+          startkey: '_design\uffff', // INFO: to skip design docs
         });
         return docs.rows.map(({ doc, id }) => ({ ...doc, id }));
       } catch {
@@ -121,9 +129,7 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
   getById(id: string): Observable<RxDocument<T>> {
     return this.collectionLoaded$().pipe(
       switchMap(() =>
-        this.collection
-          .findByIds$([id])
-          .pipe(map(r => (r.size ? r.get(id) : null)))
+        this.collection.findByIds$([id]).pipe(map(r => (r.size ? r.get(id) : null)))
       )
     );
   }

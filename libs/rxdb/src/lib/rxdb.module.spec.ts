@@ -71,9 +71,7 @@ describe('NgxRxdbModule', () => {
       expect(NgxRxdbModule).toBeDefined();
     });
     it(`should not provide feature config token & collection service`, () => {
-      expect(() => TestBed.inject(RXDB_FEATURE_CONFIG)).toThrowError(
-        /No provider for/
-      );
+      expect(() => TestBed.inject(RXDB_FEATURE_CONFIG)).toThrowError(/No provider for/);
       expect(() => TestBed.inject(NgxRxdbCollectionService)).toThrowError(
         /No provider for/
       );

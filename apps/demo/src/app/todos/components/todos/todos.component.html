@@ -49,9 +49,7 @@
   <footer class="footer" *ngIf="filter$ | async as filter">
     <ng-container *ngIf="remainig$ | async as remainig">
       <span class="todo-count" [ngPlural]="remainig.length">
-        <ng-template ngPluralCase="other">
-          {{ remainig.length }} items left
-        </ng-template>
+        <ng-template ngPluralCase="other">{{ remainig.length }} items left</ng-template>
         <ng-template ngPluralCase="=1">one item left</ng-template>
         <ng-template ngPluralCase="=0">no items left</ng-template>
       </span>

@@ -5,9 +5,7 @@ import { KintoBaseOptions } from 'kinto/lib/KintoBase';
 export type NgxKintoOptions = KintoBaseOptions & {
   custom?: any;
 };
-export const NGX_KINTO_OPTIONS = new InjectionToken<NgxKintoOptions>(
-  'NgxKintoOptions'
-);
+export const NGX_KINTO_OPTIONS = new InjectionToken<NgxKintoOptions>('NgxKintoOptions');
 
 // @dynamic
 @Injectable()

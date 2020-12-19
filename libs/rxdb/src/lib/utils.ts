@@ -3,9 +3,7 @@ export function isEmpty(object, deep = false) {
     return true;
   } else {
     if (Object.keys(object).length) {
-      return deep
-        ? Object.values(object).every(val => val === null || !!!val)
-        : false;
+      return deep ? Object.values(object).every(val => val === null || !!!val) : false;
     }
     return true;
   }
@@ -16,13 +14,15 @@ export function noop(): void {
 }
 
 export function logFn(...args) {
-  // tslint:disable-next-line: no-console
-  console.log.call(
-    console,
-    `%c[DEBUG:: NgxRxdb::]`,
-    'background: #8d2089; color: #fff; padding: 2px; font-size: normal;',
-    ...args
-  );
+  if ((window as any).process?.env?.DEBUG) {
+    // tslint:disable-next-line: no-console
+    console.log.call(
+      console,
+      `%c[DEBUG:: NgxRxdb::]`,
+      'background: #8d2089; color: #fff; padding: 2px; font-size: normal;',
+      ...args
+    );
+  }
 }
 
 export class NgxRxdbError extends Error {

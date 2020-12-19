@@ -6,7 +6,7 @@
   "name": "ngx-odm",
   "description": "Angular ODMs for NoSql DBs like RxDB, Kinto",
   "author": "voznik (https://about.me/voznik)",
-  "version": "2.0.0-alpha",
+  "version": "2.0.1-alpha",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/voznik/ngx-odm/issues"
@@ -98,11 +98,13 @@
     "@angular/compiler-cli": "11.0.5",
     "@angular/language-service": "11.0.5",
     "@babel/polyfill": "7.12.1",
+    "@commitlint/cli": "^11.0.0",
+    "@commitlint/config-conventional": "^11.0.0",
     "@compodoc/compodoc": "1.1.11",
     "@ngxs/devtools-plugin": "3.7.1",
     "@nrwl/jest": "11.0.13",
     "@nrwl/tao": "11.0.13",
-    "@nrwl/web": "11.0.13",
+    "@nrwl/web": "^11.0.13",
     "@nrwl/workspace": "11.0.13",
     "@twittwer/compodoc": "1.5.1",
     "@types/dotenv": "8.2.0",
@@ -138,12 +140,6 @@
     "tslint-config-prettier": "1.18.0",
     "typescript": "4.0.5",
     "typescript-tslint-plugin": "1.0.1"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "pretty-quick --staged",
-      "pre-push": "npm run lint:hook"
-    }
   },
   "main": "decorate-angular-cli.js",
   "directories": {

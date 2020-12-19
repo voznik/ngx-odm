@@ -59,11 +59,7 @@
   ],
   "inputs": [
     {
-      "options": [
-        "demo",
-        "rxdb",
-        "kinto"
-      ],
+      "options": ["demo", "rxdb", "kinto"],
       "id": "libName",
       "type": "pickString",
       "default": "demo",

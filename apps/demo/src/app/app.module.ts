@@ -4,20 +4,20 @@ import { RouterModule, Routes } from '@angular/router';
 import { NgxRxdbConfig, NgxRxdbModule } from '@ngx-odm/rxdb';
 import { AppComponent } from './app.component';
 
+/** NgxRxdbConfig extends RxDatabaseCreator, will be merged with default config */
 const APP_RXDB_CONFIG: NgxRxdbConfig = {
-  // optional, NgxRxdbConfig extends RxDatabaseCreator, will be merged with default config
-  name: 'demo', // <- name (optional, 'ngx')
-  adapter: 'idb', // <- storage-adapter (optional, default: 'idb')
-  ignoreDuplicate: true,
+  name: 'demo', // <- name (required, 'ngx')
+  adapter: 'idb', // <- storage-adapter (required, default: 'idb')
   multiInstance: true,
-  options: {},
+  options: {
+    dumpPath: 'assets/data/db.dump.json',
+  },
 };
 
 const routes: Routes = [
   {
     path: 'todos',
-    loadChildren: () =>
-      import('./todos/todos.module').then(mod => mod.TodosModule),
+    loadChildren: () => import('./todos/todos.module').then(mod => mod.TodosModule),
   },
   {
     path: '',

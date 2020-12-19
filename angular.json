@@ -80,10 +80,14 @@
             }
           }
         },
-        "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
+        "host": {
+          "builder": "@nrwl/web:file-server",
           "options": {
-            "browserTarget": "demo:build"
+            "buildTarget": "demo:build",
+            "withDeps": false,
+            "port": 4201,
+            "host": "0.0.0.0",
+            "proxyUrl": "http://localhost:4201?"
           }
         },
         "lint": {
@@ -128,10 +132,7 @@
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
-            "tsConfig": [
-              "libs/rxdb/tsconfig.lib.json",
-              "libs/rxdb/tsconfig.spec.json"
-            ],
+            "tsConfig": ["libs/rxdb/tsconfig.lib.json", "libs/rxdb/tsconfig.spec.json"],
             "exclude": ["**/node_modules/**", "!libs/rxdb/**/*"]
           }
         },
@@ -179,10 +180,7 @@
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
-            "tsConfig": [
-              "libs/kinto/tsconfig.lib.json",
-              "libs/kinto/tsconfig.spec.json"
-            ],
+            "tsConfig": ["libs/kinto/tsconfig.lib.json", "libs/kinto/tsconfig.spec.json"],
             "exclude": ["**/node_modules/**", "!libs/kinto/**/*"]
           }
         },

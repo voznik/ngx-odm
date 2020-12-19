@@ -7,10 +7,7 @@ describe('KintoService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        { provide: NGX_KINTO_OPTIONS, useValue: {} },
-        NgxKintoService,
-      ],
+      providers: [{ provide: NGX_KINTO_OPTIONS, useValue: {} }, NgxKintoService],
     });
     service = TestBed.inject(NgxKintoService);
   });

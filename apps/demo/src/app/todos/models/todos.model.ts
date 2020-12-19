@@ -22,13 +22,13 @@ export const initialState: TodosState = {
     },
     {
       id: 'a4c6a479-7cca-4d3b-ab90-45d3eaa957f3',
-      title: 'Check the other examples',
+      title: 'Check other examples',
       completed: false,
       createdAt: 1548979200000,
     },
     {
       id: 'a4c6a479-7cca-4d3b-bc10-45d3eaa957r5',
-      title: 'Use Angular ngRx Material Starter in your project',
+      title: 'Use "@ngx-odm/rxdb" in your project',
       completed: false,
       createdAt: Date.now(),
     },

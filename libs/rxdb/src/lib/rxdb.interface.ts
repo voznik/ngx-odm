@@ -3,6 +3,7 @@ import {
   MangoQuery,
   RxCollectionCreator,
   RxDatabaseCreator,
+  RxDumpDatabaseAny,
   SyncOptions,
 } from 'rxdb';
 
@@ -23,22 +24,5 @@ export interface NgxRxdbConfig extends RxDatabaseCreator {
   };
 }
 
-export interface NgxRxdbDump {
-  name: string;
-  instanceToken?: string;
-  encrypted?: boolean;
-  passwordHash?: string;
-  collections: { [key: string]: any };
-  timestamp: number;
-}
-
-export type AnyValue =
-  | undefined
-  | null
-  | boolean
-  | string
-  | number
-  | object
-  | Date
-  | any[];
+export type AnyValue = undefined | null | boolean | string | number | object | Date | any[];
 export type AnyObject = { [key: string]: AnyValue };
