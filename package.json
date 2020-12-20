@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "ngx-odm",
-  "version": "2.0.5-alpha",
+  "version": "2.0.6-alpha",
   "private": false,
   "description": "Angular ODMs for NoSql DBs like RxDB, Kinto",
   "keywords": [

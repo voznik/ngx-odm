@@ -13,7 +13,6 @@ import { map, switchMap } from 'rxjs/operators';
 import { NgxRxdbCollectionDump } from './rxdb-collection.class';
 import { AnyObject, NgxRxdbCollectionConfig } from './rxdb.interface';
 import { NgxRxdbService } from './rxdb.service';
-import { RXDB_FEATURE_CONFIG } from './rxdb.token';
 
 @Injectable()
 export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
@@ -29,11 +28,8 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
 
   constructor(
     private dbService: NgxRxdbService,
-    @Inject(RXDB_FEATURE_CONFIG)
     protected readonly config: NgxRxdbCollectionConfig
-  ) {
-    // this.collectionLoaded$().subscribe();
-  }
+  ) {}
 
   async ngOnDestroy() {
     // tslint:disable-next-line:no-unused-expression
@@ -75,7 +71,7 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
     );
   }
 
-  docs(queryObj?: MangoQuery<T>): Observable<RxDocument<T>[]> {
+  docs(queryObj: MangoQuery<T>): Observable<RxDocument<T>[]> {
     return this.collectionLoaded$().pipe(switchMap(() => this.collection.find(queryObj).$));
   }
 
@@ -168,18 +164,19 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
     });
   }
 
-  removeBulkBy(queryObj?: MangoQuery<T>): Observable<any> {
+  removeBulkBy(queryObj: MangoQuery<T>): Observable<any> {
     return this.collectionLoaded$().pipe(
       switchMap(() => from(this.collection.find(queryObj).remove()))
     );
   }
 
   /**
-   * removes all docs by given query
+   * updates all docs by given query
    * also represents a way to use 'pouch.bulkDocs' with RxDb
    */
-  _removeBulkBy(
-    rulesObj
+  updateBulkBy(
+    queryObj: MangoQuery<T>,
+    values: Partial<T>
   ): Observable<
     {
       ok: boolean;
@@ -189,14 +186,15 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
   > {
     return defer(async () => {
       try {
-        const docs = await this.collection.find(rulesObj).exec();
+        const docs = await this.collection.find(queryObj).exec();
         if (docs && docs.length) {
-          const deletedDocs = docs.map(doc => ({
+          const docsToUpdate = docs.map(doc => ({
             _id: doc.primary,
             _rev: doc['_rev'],
-            _deleted: true,
+            ...doc.toJSON(),
+            ...values,
           }));
-          return this.collection.pouch.bulkDocs(deletedDocs);
+          return this.collection.pouch.bulkDocs(docsToUpdate);
         }
       } catch (error) {
         return null;

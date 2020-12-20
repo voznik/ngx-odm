@@ -6,7 +6,7 @@ import { NgxRxdbConfig, NgxRxdbCollectionConfig } from './rxdb.interface';
 import { RXDB_DEFAULT_CONFIG } from './rxdb.model';
 import { NgxRxdbFeatureModule, NgxRxdbModule } from './rxdb.module';
 import { NgxRxdbService } from './rxdb.service';
-import { RXDB_CONFIG, RXDB_FEATURE_CONFIG } from './rxdb.token';
+import { RXDB_CONFIG } from './rxdb.token';
 import { noop } from './utils';
 
 const TEST_DB_CONFIG: NgxRxdbConfig = { name: 'test', adapter: 'memory' };
@@ -71,7 +71,6 @@ describe('NgxRxdbModule', () => {
       expect(NgxRxdbModule).toBeDefined();
     });
     it(`should not provide feature config token & collection service`, () => {
-      expect(() => TestBed.inject(RXDB_FEATURE_CONFIG)).toThrowError(/No provider for/);
       expect(() => TestBed.inject(NgxRxdbCollectionService)).toThrowError(
         /No provider for/
       );
@@ -101,7 +100,6 @@ describe('NgxRxdbModule', () => {
     });
 
     it(`should provide collectionConfig & collection service`, () => {
-      expect(TestBed.inject(RXDB_FEATURE_CONFIG)).toBeDefined();
       expect(NgxRxdbFeatureModule).toBeDefined();
       expect(TestBed.inject(NgxRxdbCollectionService)).toBeDefined();
       // expect(dbService.initDb).toHaveBeenCalled();

@@ -14,18 +14,24 @@ import { NgxRxdbAsyncNoZonePipe } from './rxdb-async-no-zone.pipe';
 import { NgxRxdbCollectionService } from './rxdb-collection.service';
 import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.interface';
 import { NgxRxdbService } from './rxdb.service';
-import { RXDB_CONFIG, RXDB_FEATURE_CONFIG } from './rxdb.token';
+import { RXDB_CONFIG } from './rxdb.token';
 import { logFn, noop } from './utils';
 
 /** run at APP_INITIALIZER cycle */
 export function dbInitializerFactory(
-  rxdb: NgxRxdbService,
-  config: NgxRxdbConfig
+  dbService: NgxRxdbService,
+  dbConfig: NgxRxdbConfig
 ): () => Promise<void> {
   return async () => {
-    await rxdb.initDb(config);
+    await dbService.initDb(dbConfig);
   };
 }
+
+export function collectionServiceFactory(config: NgxRxdbCollectionConfig) {
+  return (dbService: NgxRxdbService): NgxRxdbCollectionService =>
+    new NgxRxdbCollectionService(dbService, config);
+}
+
 /**
  * Main module which should be imported once in app module, will init RxDbDatabase with given configuration
  *
@@ -80,16 +86,16 @@ export function dbInitializerFactory(
 @NgModule()
 export class NgxRxdbModule {
   static forFeature(
-    config: NgxRxdbCollectionConfig
+    collectionConfig: NgxRxdbCollectionConfig
   ): ModuleWithProviders<NgxRxdbFeatureModule> {
     return {
       ngModule: NgxRxdbFeatureModule,
       providers: [
         {
-          provide: RXDB_FEATURE_CONFIG,
-          useValue: config,
+          provide: NgxRxdbCollectionService,
+          useFactory: collectionServiceFactory(collectionConfig),
+          deps: [NgxRxdbService],
         },
-        NgxRxdbCollectionService,
       ],
     };
   }
@@ -128,9 +134,8 @@ export class NgxRxdbModule {
     trueNgxRxdbConfig: NgxRxdbConfig,
     @Optional()
     @SkipSelf()
-    @Inject(RXDB_FEATURE_CONFIG)
-    ngxRxdbCollectionConfig: NgxRxdbCollectionConfig,
-    @Self() ngxRxdbService: NgxRxdbService
+    @Self()
+    ngxRxdbService: NgxRxdbService
   ) {
     if (!trueNgxRxdbConfig && !ngxRxdbConfig) {
       throw new Error(

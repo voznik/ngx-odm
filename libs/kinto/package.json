@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/package",
   "name": "@ngx-odm/kinto",
   "description": "An RxJs Angular client for Kinto (https://kinto.readthedocs.io/)",
-  "version": "2.0.5-alpha",
+  "version": "2.0.6-alpha",
   "private": false,
   "keywords": [
     "angular9",
