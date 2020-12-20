@@ -3,5 +3,12 @@
   "dest": "../../dist/packages/rxdb",
   "lib": {
     "entryFile": "src/index.ts"
-  }
+  },
+  "whitelistedNonPeerDependencies": [
+    "tslib",
+    "pouchdb-adapter-http",
+    "pouchdb-adapter-idb",
+    "pouchdb-adapter-memory",
+    "rxdb"
+  ]
 }

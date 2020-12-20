@@ -3,5 +3,6 @@
   "dest": "../../dist/packages/kinto",
   "lib": {
     "entryFile": "src/index.ts"
-  }
+  },
+  "whitelistedNonPeerDependencies": ["tslib", "kinto", "kinto-http"]
 }
