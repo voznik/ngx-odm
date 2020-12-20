@@ -10,6 +10,7 @@ import {
   SkipSelf,
 } from '@angular/core';
 import { from } from 'rxjs';
+import { NgxRxdbAsyncNoZonePipe } from './rxdb-async-no-zone.pipe';
 import { NgxRxdbCollectionService } from './rxdb-collection.service';
 import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.interface';
 import { NgxRxdbService } from './rxdb.service';
@@ -154,7 +155,10 @@ export class NgxRxdbModule {
 /**
  * feature module which should be imported in lazy feature modules, will init RxDbCollection with given configuration
  */
-@NgModule({})
+@NgModule({
+  declarations: [NgxRxdbAsyncNoZonePipe],
+  exports: [NgxRxdbAsyncNoZonePipe],
+})
 export class NgxRxdbFeatureModule {
   constructor(public collectionService: NgxRxdbCollectionService<any>) {
     // init collection via loader

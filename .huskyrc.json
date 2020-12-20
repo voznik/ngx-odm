@@ -1,7 +1,7 @@
 {
   "hooks": {
     "pre-commit": "lint-staged",
-    "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+    "commit-msg": "commitlint --edit $1",
     "?": "\"pre-push\": \"npm run lint:hook"
   }
 }

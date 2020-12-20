@@ -2,6 +2,7 @@
  * Public API Surface of ngx-rxdb
  */
 
+export * from './lib/rxdb-async-no-zone.pipe';
 export * from './lib/rxdb.interface';
 export * from './lib/rxdb.token';
 export * from './lib/rxdb.service';

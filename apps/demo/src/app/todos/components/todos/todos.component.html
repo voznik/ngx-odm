@@ -1,4 +1,5 @@
-<section class="todoapp" *ngIf="todos$ | async as todos">
+<!-- https://angular.io/guide/template-typecheck#disabling-type-checking-using-any -->
+<section class="todoapp" *ngIf="$any(todos$ | asyncNoZone) as todos">
   <header class="header">
     <h1>todos</h1>
     <input

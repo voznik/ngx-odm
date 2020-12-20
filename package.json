@@ -12,6 +12,10 @@
     "url": "https://github.com/voznik/ngx-odm/issues"
   },
   "homepage": "https://github.com/voznik/ngx-odm#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/voznik/ngx-odm.git"
+  },
   "packageScope": "@ngx-odm",
   "packages": [
     "libs/kinto",
@@ -29,6 +33,10 @@
     "kinto",
     "replication"
   ],
+  "main": "decorate-angular-cli.js",
+  "directories": {
+    "doc": "docs"
+  },
   "scripts": {
     "nx": "nx",
     "ng-high-memory": "node --max_old_space_size=8192 ./node_modules/@angular/cli/bin/ng",
@@ -148,13 +156,5 @@
     "tslint-config-prettier": "1.18.0",
     "typescript": "4.0.5",
     "typescript-tslint-plugin": "1.0.1"
-  },
-  "main": "decorate-angular-cli.js",
-  "directories": {
-    "doc": "docs"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/voznik/ngx-odm.git"
   }
 }
