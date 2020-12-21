@@ -1,0 +1,9 @@
+{
+  "enabledManagers": ["npm"],
+  "extends": [
+    ":preserveSemverRanges",
+    "group:all",
+    "schedule:monthly",
+    ":maintainLockFilesMonthly"
+  ]
+}
