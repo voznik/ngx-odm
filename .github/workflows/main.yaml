@@ -15,15 +15,28 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [12.x, 14.x]
+    # strategy:
+    #   matrix:
+    #     node-version: [12.x, 14.x]
     steps:
       - uses: actions/checkout@v2
       - name: Build on Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
-          node-version: ${{ matrix.node-version }}
+          #   node-version: ${{ matrix.node-version }}
+          node-version: 12
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          # npm cache files are stored in `~/.npm` on Linux/macOS
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
       - name: Install
         run: npm ci
       - name: Lint & Test
@@ -32,6 +45,13 @@ jobs:
           CI: true
       - name: Build
         run: npm run packages:build --if-present
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist-packages
+          path:
+            dist/packages
+            # !dist/**/*.md
 
   publish:
     # if: github.ref == 'refs/heads/main'
@@ -42,6 +62,8 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 12
+      - name: Download all workflow run artifacts
+        uses: actions/download-artifact@v2
       - name: Publish
         run: |
           cd dist/packages/rxdb
