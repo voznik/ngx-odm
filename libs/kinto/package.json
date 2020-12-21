@@ -40,8 +40,8 @@
     "npm": ">=6.x"
   },
   "peerDependencies": {
-    "@angular/common": "^10.0.14",
-    "@angular/core": "^10.0.14",
+    "@angular/common": "^10.0.14 || ^11.0.0",
+    "@angular/core": "^10.0.14 || ^11.0.0",
     "rxjs": "6.x"
   },
   "dependencies": {
