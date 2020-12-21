@@ -21,7 +21,7 @@ export class TodosService {
       },
       sort: [{ createdAt: 'desc' } as any],
     };
-    if (!!completedOnly) {
+    if (completedOnly) {
       Object.assign(queryObj.selector, {
         completed: false,
       });

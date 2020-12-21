@@ -1,14 +1,13 @@
-// tslint:disable:ban-types max-classes-per-file
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  RxJsonSchema,
-  RxCollectionCreator,
-  PouchSettings,
   PouchDBInstance,
-  RxDumpDatabaseAny,
+  PouchSettings,
+  RxCollectionCreator,
   RxDumpCollectionAny,
-  RxDumpCollectionAsAny,
+  RxDumpDatabaseAny,
+  RxJsonSchema,
 } from 'rxdb';
-import { AnyObject, NgxRxdbCollectionConfig } from './rxdb.interface';
+import { AnyFn, NgxRxdbCollectionConfig } from './rxdb.interface';
 
 export async function infoFn() {
   return await (this.pouch as PouchDBInstance).info();
@@ -24,8 +23,8 @@ export async function countAllDocumentsFn(): Promise<number> {
   return res.rows.length;
 }
 
-export const DEFAULT_INSTANCE_METHODS: { [key: string]: Function } = {};
-export const DEFAULT_COLLECTION_METHODS: { [key: string]: Function } = {
+export const DEFAULT_INSTANCE_METHODS: { [key: string]: AnyFn } = {};
+export const DEFAULT_COLLECTION_METHODS: { [key: string]: AnyFn } = {
   info: infoFn,
   countAllDocuments: countAllDocumentsFn,
 };

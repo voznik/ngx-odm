@@ -7,7 +7,7 @@ import { TodosService } from '../../services';
   selector: 'demo-todos',
   templateUrl: './todos.component.html',
   styleUrls: ['./todos.component.css'],
-  changeDetection: ChangeDetectionStrategy.Default,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TodosComponent implements OnInit {
   filter$ = this.todosService.filter$;

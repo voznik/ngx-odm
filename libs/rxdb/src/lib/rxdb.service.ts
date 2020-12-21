@@ -1,7 +1,7 @@
-// tslint:disable: no-string-literal no-var-requires
 import { Injectable } from '@angular/core';
 import {
   addRxPlugin,
+  CollectionsOfDatabase,
   createRxDatabase,
   isRxCollection,
   RxCollection,
@@ -68,7 +68,7 @@ export class NgxRxdbService {
     return this.dbInstance;
   }
 
-  get collections(): { [key: string]: RxCollection } {
+  get collections(): CollectionsOfDatabase {
     return this.db.collections;
   }
 
@@ -100,13 +100,14 @@ export class NgxRxdbService {
       const dbConfig = NgxRxdbService.mergeConfig(config);
       const db: RxDatabase = await createRxDatabase(dbConfig);
       this.dbInstance = db;
-      logFn('created database');
+      logFn(`created database ${this.db.name}`);
       // TODO: should the instance becomes leader
       // await this.dbInstance.waitForLeadership();
 
       // optional: can create collections from root config
       if (!isEmpty(dbConfig.options?.schemas)) {
-        await this.initCollections(dbConfig.options.schemas);
+        const bulk = await this.initCollections(dbConfig.options.schemas);
+        logFn(`created ${Object.keys(bulk).length} collections bulk: ${Object.keys(bulk)}`);
       }
       if (dbConfig.options?.dumpPath) {
         // fetch dump json
@@ -125,8 +126,7 @@ export class NgxRxdbService {
   async initCollections(colConfigs: { [key: string]: NgxRxdbCollectionConfig }) {
     try {
       const colCreators = await this.prepareCollections(colConfigs);
-      const bulk = await this.dbInstance.addCollections(colCreators);
-      logFn(`created ${Object.keys(bulk).length} collections bulk, `, Object.keys(bulk));
+      return await this.dbInstance.addCollections(colCreators);
     } catch (error) {
       throw new NgxRxdbError(error.message ?? error);
     }
@@ -183,7 +183,7 @@ export class NgxRxdbService {
   syncCollection(
     col: RxCollection,
     remoteDbName: string = 'db',
-    customHeaders?: { [h: string]: string }
+    customHeaders?: Record<string, string>
   ): RxReplicationState {
     if (col.options?.syncOptions?.remote) {
       const { syncOptions } = col.options as NgxRxdbCollectionConfig['options'];
@@ -194,7 +194,6 @@ export class NgxRxdbService {
           back_off_function: DEFAULT_BACKOFF_FN,
         },
         this.db.pouchSettings.ajax,
-        col.pouchSettings.ajax,
         syncOptions.options
       );
       // append auth headers
@@ -256,7 +255,7 @@ export class NgxRxdbService {
       const configs = Object.values(colConfigs);
       for (const config of configs) {
         // optionally fetch schema from remote url
-        if (!config.schema && !!config.options.schemaUrl) {
+        if (!config.schema && !!config.options?.schemaUrl) {
           config.schema = await NgxRxdbCollectionCreator.fetchSchema(
             config.options.schemaUrl
           );
