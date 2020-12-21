@@ -1,4 +1,3 @@
-// tslint:disable:member-access array-type max-classes-per-file
 import {
   ApplicationInitStatus,
   APP_INITIALIZER,
@@ -15,7 +14,7 @@ import { NgxRxdbCollectionService } from './rxdb-collection.service';
 import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.interface';
 import { NgxRxdbService } from './rxdb.service';
 import { RXDB_CONFIG } from './rxdb.token';
-import { logFn, noop } from './utils';
+import { noop } from './utils';
 
 /** run at APP_INITIALIZER cycle */
 export function dbInitializerFactory(
@@ -118,7 +117,8 @@ export class NgxRxdbModule {
 
   /**
    * Prevents this module from being incorrectly imported
-   * @param appInitStatus - A class that reflects the state of running {@link https://v7.angular.io/api/core/APP_INITIALIZER|APP_INITIALIZER}s.
+   * @param appInitStatus - A class that reflects the state of
+   * running {@link https://v7.angular.io/api/core/APP_INITIALIZER|APP_INITIALIZER}s.
    * @param parentModule - The parent module
    * @param ngxRxdbConfig - The configuration of the `NgxRxdbModule`
    */
@@ -152,7 +152,7 @@ export class NgxRxdbModule {
     // TODO: initialize the service only when this is a Root module ('forRoot' was called)
     if (trueNgxRxdbConfig && !ngxRxdbConfig) {
       from(appInitStatus.donePromise).subscribe(() => {
-        // logFn('appInitStatus.donePromise');
+        // doSmth
       });
     }
   }
@@ -165,8 +165,8 @@ export class NgxRxdbModule {
   exports: [NgxRxdbAsyncNoZonePipe],
 })
 export class NgxRxdbFeatureModule {
+  /** also init collection via loader */
   constructor(public collectionService: NgxRxdbCollectionService<any>) {
-    // init collection via loader
     this.collectionService.collectionLoaded$().subscribe(noop);
   }
 }

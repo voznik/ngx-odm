@@ -1,5 +1,5 @@
 // tslint:disable:variable-name
-import { Inject, Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import {
   isRxCollection,
   MangoQuery,

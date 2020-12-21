@@ -1,13 +1,10 @@
-// tslint:disable: nx-enforce-module-boundaries
 import { ApplicationInitStatus } from '@angular/core';
-import { inject, TestBed, waitForAsync } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { NgxRxdbCollectionService } from './rxdb-collection.service';
-import { NgxRxdbConfig, NgxRxdbCollectionConfig } from './rxdb.interface';
-import { RXDB_DEFAULT_CONFIG } from './rxdb.model';
+import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.interface';
 import { NgxRxdbFeatureModule, NgxRxdbModule } from './rxdb.module';
 import { NgxRxdbService } from './rxdb.service';
 import { RXDB_CONFIG } from './rxdb.token';
-import { noop } from './utils';
 
 const TEST_DB_CONFIG: NgxRxdbConfig = { name: 'test', adapter: 'memory' };
 const TEST_FEATURE_CONFIG: NgxRxdbCollectionConfig = { name: 'feature' };

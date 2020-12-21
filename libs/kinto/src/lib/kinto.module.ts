@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ModuleWithProviders, NgModule, Optional, SkipSelf } from '@angular/core';
+import { ModuleWithProviders, NgModule } from '@angular/core';
 import {
   NgxKintoOptions,
   NgxKintoService,
@@ -23,6 +23,4 @@ export class NgxKintoModule {
       providers: [NgxKintoService],
     };
   }
-
-  constructor(@Optional() @SkipSelf() parentModule?: NgxKintoModule) {}
 }

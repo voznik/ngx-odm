@@ -1,10 +1,12 @@
+import { AnyObject } from './rxdb.interface';
+
 /** @internal */
-export function isEmpty(object, deep = false) {
-  if (object == null || !!!object) {
+export function isEmpty(object: AnyObject, deep = false) {
+  if (object == null || !object) {
     return true;
   } else {
     if (Object.keys(object).length) {
-      return deep ? Object.values(object).every(val => val === null || !!!val) : false;
+      return deep ? Object.values(object).every(val => val === null || !val) : false;
     }
     return true;
   }
@@ -18,7 +20,7 @@ export function noop(): void {
 /** @internal */
 export function logFn(...args) {
   if ((window as any).process?.env?.DEBUG) {
-    // tslint:disable-next-line: no-console
+    // eslint-disable-next-line no-console
     console.log.call(
       console,
       `%c[DEBUG:: NgxRxdb::]`,
@@ -29,7 +31,7 @@ export function logFn(...args) {
 }
 
 export class NgxRxdbError extends Error {
-  constructor(message: string, public extra?: any) {
+  constructor(message: string) {
     super(message);
     this.name = this.constructor.name;
     Object.setPrototypeOf(this, NgxRxdbError.prototype);

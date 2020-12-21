@@ -5,7 +5,7 @@
       "projectType": "application",
       "root": "apps/demo",
       "sourceRoot": "apps/demo/src",
-      "prefix": "ngx-rxdb",
+      "prefix": "demo",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
@@ -17,10 +17,7 @@
             "tsConfig": "apps/demo/tsconfig.app.json",
             "aot": true,
             "extractCss": true,
-            "assets": [
-              "apps/demo/src/favicon.ico",
-              "apps/demo/src/assets"
-            ],
+            "assets": ["apps/demo/src/favicon.ico", "apps/demo/src/assets"],
             "styles": [
               "node_modules/todomvc-common/base.css",
               "node_modules/todomvc-app-css/index.css",
@@ -94,24 +91,14 @@
           }
         },
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "tsConfig": [
-              "apps/demo/tsconfig.app.json",
-              "apps/demo/tsconfig.spec.json",
-              "apps/demo/tsconfig.editor.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!apps/demo/**/*"
-            ]
+            "lintFilePatterns": ["apps/demo/src/**/*.ts", "apps/demo/src/**/*.html"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/apps/demo"
-          ],
+          "outputs": ["coverage/apps/demo"],
           "options": {
             "jestConfig": "apps/demo/jest.config.js",
             "passWithNoTests": true
@@ -138,16 +125,9 @@
           }
         },
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "tsConfig": [
-              "libs/rxdb/tsconfig.lib.json",
-              "libs/rxdb/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!libs/rxdb/**/*"
-            ]
+            "lintFilePatterns": ["libs/rxdb/src/**/*.ts", "libs/rxdb/src/**/*.html"]
           }
         },
         "test": {
@@ -192,16 +172,9 @@
           }
         },
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "tsConfig": [
-              "libs/kinto/tsconfig.lib.json",
-              "libs/kinto/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!libs/kinto/**/*"
-            ]
+            "lintFilePatterns": ["libs/kinto/src/**/*.ts", "libs/kinto/src/**/*.html"]
           }
         },
         "test": {
@@ -233,15 +206,9 @@
       "projectType": "library",
       "architect": {
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "tsConfig": [
-              "tools/tsconfig.tools.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!tools/**/*"
-            ]
+            "lintFilePatterns": ["tools/**/*.ts", "tools/**/*.html"]
           }
         },
         "compodoc": {
@@ -252,9 +219,7 @@
             "theme": "readthedocs",
             "unitTestCoverage": "coverage/coverage-summary.json",
             "navTabConfig": [],
-            "toggleMenuItems": [
-              "all"
-            ],
+            "toggleMenuItems": ["all"],
             "hideGenerator": true,
             "disablePrivate": false,
             "disableProtected": false,
@@ -284,42 +249,15 @@
         "linter": "tslint"
       }
     },
-    "@nrwl/cypress": {
-      "cypress-project": {
-        "linter": "tslint"
-      }
-    },
-    "@nrwl/node": {
-      "application": {
-        "linter": "tslint"
-      },
-      "library": {
-        "linter": "tslint"
-      }
-    },
-    "@nrwl/nest": {
-      "application": {
-        "linter": "tslint"
-      },
-      "library": {
-        "linter": "tslint"
-      }
-    },
-    "@nrwl/express": {
-      "application": {
-        "linter": "tslint"
-      },
-      "library": {
-        "linter": "tslint"
-      }
-    },
     "@nrwl/angular:application": {
       "unitTestRunner": "jest",
-      "e2eTestRunner": "cypress"
+      "e2eTestRunner": "cypress",
+      "strict": true
     },
     "@nrwl/angular:library": {
       "unitTestRunner": "jest",
-      "prefix": "ngx"
+      "prefix": "ngx",
+      "strict": true
     },
     "@nrwl/angular:component": {
       "style": "scss"
