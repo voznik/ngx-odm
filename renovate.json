@@ -1,8 +1,15 @@
 {
-  "enabled": false,
   "extends": ["config:base"],
-  "patch": false,
-  "prHourlyLimit": 24,
-  "prPriority": -1,
-  "stabilityDays": 14
+  "enabledManagers": ["npm"],
+  "packageRules": [
+    {
+      "packagePatterns": ["*"],
+      "enabled": true,
+      "patch": false,
+      "preserveSemverRanges": true,
+      "prHourlyLimit": 24,
+      "prPriority": -1,
+      "stabilityDays": 14
+    }
+  ]
 }
