@@ -66,7 +66,7 @@ jobs:
         uses: actions/download-artifact@v2
       - name: Publish
         run: |
-          cd dist/packages/rxdb
+          cd dist-packages/rxdb
           npm pack
           npm config set //registry.npmjs.org/:_authToken ${NPM_TOKEN}
           npm publish --ignore-scripts
