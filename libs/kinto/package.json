@@ -45,8 +45,8 @@
     "rxjs": "6.x"
   },
   "dependencies": {
-    "kinto": "^14.0.0",
-    "kinto-http": "^5.1.1",
+    "kinto": "14.0.2",
+    "kinto-http": "5.1.1",
     "tslib": "2.0.3"
   }
 }
