@@ -86,7 +86,7 @@
     "@angular/router": "11.0.5",
     "@angular/service-worker": "11.0.5",
     "@ng-toolkit/pwa": "8.0.4",
-    "@nrwl/angular": "11.0.13",
+    "@nrwl/angular": "11.0.16",
     "kinto": "14.0.2",
     "kinto-http": "5.1.1",
     "micro-dash": "8.1.0",
@@ -116,11 +116,11 @@
     "@commitlint/cli": "^11.0.0",
     "@commitlint/config-conventional": "^11.0.0",
     "@compodoc/compodoc": "1.1.11",
-    "@nrwl/eslint-plugin-nx": "11.0.15",
-    "@nrwl/jest": "11.0.13",
-    "@nrwl/tao": "11.0.13",
-    "@nrwl/web": "^11.0.13",
-    "@nrwl/workspace": "11.0.13",
+    "@nrwl/eslint-plugin-nx": "11.0.16",
+    "@nrwl/jest": "11.0.16",
+    "@nrwl/tao": "11.0.16",
+    "@nrwl/web": "^11.0.16",
+    "@nrwl/workspace": "11.0.16",
     "@twittwer/compodoc": "1.5.1",
     "@types/dotenv": "8.2.0",
     "@types/jest": "26.0.10",
@@ -152,9 +152,9 @@
     "rxjs-tslint-rules": "4.34.7",
     "source-map-explorer": "2.5.1",
     "ts-jest": "26.4.0",
-    "ts-node": "~9.1.1",
-    "tsickle": "^0.39.1",
-    "typescript": "~4.0.3"
+    "ts-node": "9.1.1",
+    "tsickle": "0.39.1",
+    "typescript": "4.0.5"
   },
   "engines": {
     "node": ">=12 <13"

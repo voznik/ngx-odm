@@ -1,5 +1,5 @@
 {
-  "enabled": true,
+  "enabled": false,
   "extends": ["config:base"],
   "patch": false,
   "prHourlyLimit": 24,
