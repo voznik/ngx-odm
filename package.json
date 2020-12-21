@@ -134,7 +134,7 @@
     "dotenv": "8.2.0",
     "dotenv-webpack": "2.0.0",
     "eslint": "7.16.0",
-    "eslint-config-prettier": "6.0.0",
+    "eslint-config-prettier": "6.15.0",
     "eslint-plugin-cypress": "^2.10.3",
     "fs-extra": "9.0.1",
     "husky": "4.3.6",
