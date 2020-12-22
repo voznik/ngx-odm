@@ -7,7 +7,7 @@ import {
   RxDumpDatabaseAny,
   RxJsonSchema,
 } from 'rxdb';
-import { AnyFn, NgxRxdbCollectionConfig } from './rxdb.interface';
+import { AnyFn, AnyObject, NgxRxdbCollectionConfig } from './rxdb.interface';
 
 export async function infoFn() {
   return await (this.pouch as PouchDBInstance).info();
@@ -23,8 +23,8 @@ export async function countAllDocumentsFn(): Promise<number> {
   return res.rows.length;
 }
 
-export const DEFAULT_INSTANCE_METHODS: { [key: string]: AnyFn } = {};
-export const DEFAULT_COLLECTION_METHODS: { [key: string]: AnyFn } = {
+export const DEFAULT_INSTANCE_METHODS: Record<string, AnyFn> = {};
+export const DEFAULT_COLLECTION_METHODS: Record<string, AnyFn> = {
   info: infoFn,
   countAllDocuments: countAllDocumentsFn,
 };
@@ -62,13 +62,13 @@ export class NgxRxdbDump implements RxDumpDatabaseAny<any> {
   timestamp: number;
   encrypted = false;
   passwordHash = null;
-  collections: any;
+  collections: RxDumpCollectionAny<any>[];
 
   constructor(data: Partial<NgxRxdbDump>) {
     Object.assign(this, data);
   }
 }
-export class NgxRxdbCollectionDump<T> implements RxDumpCollectionAny<T> {
+export class NgxRxdbCollectionDump<T = AnyObject> implements RxDumpCollectionAny<T> {
   encrypted = false;
   passwordHash = null;
   schemaHash: string;

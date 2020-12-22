@@ -18,8 +18,17 @@ export function noop(): void {
 }
 
 /** @internal */
+export function isDevMode(): boolean {
+  return (window as any).process?.env?.DEBUG;
+}
+
+export function isTestMode(): boolean {
+  return (window as any).process?.env?.TEST;
+}
+
+/** @internal */
 export function logFn(...args) {
-  if ((window as any).process?.env?.DEBUG) {
+  if (isDevMode()) {
     // eslint-disable-next-line no-console
     console.log.call(
       console,

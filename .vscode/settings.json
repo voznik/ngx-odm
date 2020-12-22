@@ -1,4 +1,10 @@
 {
   "search.showLineNumbers": true,
-  "debug.allowBreakpointsEverywhere": true
+  "debug.allowBreakpointsEverywhere": true,
+  "workbench.colorCustomizations": {
+    "statusBar.background": "#8d2089",
+    "statusBar.foreground": "#e7e7e7",
+    "statusBarItem.hoverBackground": "#b729b1"
+  },
+  "peacock.color": "#8d2089"
 }

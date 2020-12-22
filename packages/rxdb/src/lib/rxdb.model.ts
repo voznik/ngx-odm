@@ -4,8 +4,8 @@ export const RXDB_DEFAULT_ADAPTER = 'idb';
 export const RXDB_DEFAULT_CONFIG: NgxRxdbConfig = {
   name: 'ngx',
   adapter: RXDB_DEFAULT_ADAPTER,
-  multiInstance: false,
-  ignoreDuplicate: true,
+  multiInstance: true,
+  ignoreDuplicate: false,
   pouchSettings: {
     skip_setup: true,
     ajax: {

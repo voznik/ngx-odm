@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
+/**
+ * Instead of using the default rxdb-import,
+ * we do a custom build which lets us cherry-pick
+ * only the modules that we need.
+ * A default import would be: import RxDB from 'rxdb';
+ */
 import {
-  addRxPlugin,
   CollectionsOfDatabase,
   createRxDatabase,
   isRxCollection,
@@ -8,15 +13,9 @@ import {
   RxCollectionCreator,
   RxDatabase,
   RxReplicationState,
-} from 'rxdb';
-import { RxDBAdapterCheckPlugin } from 'rxdb/plugins/adapter-check';
+} from 'rxdb/plugins/core';
 import { checkSchema } from 'rxdb/plugins/dev-mode';
-import { RxDBJsonDumpPlugin } from 'rxdb/plugins/json-dump';
-import { RxDBMigrationPlugin } from 'rxdb/plugins/migration';
-import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
-import { RxDBReplicationPlugin } from 'rxdb/plugins/replication';
-import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
-import { RxDBValidatePlugin } from 'rxdb/plugins/validate';
+import { loadRxDBPlugins } from './plugin-loader';
 // NgxRxdb
 import {
   NgxRxdbCollectionCreator,
@@ -26,21 +25,6 @@ import {
 import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.interface';
 import { DEFAULT_BACKOFF_FN, RXDB_DEFAULT_CONFIG } from './rxdb.model';
 import { isEmpty, logFn, NgxRxdbError } from './utils';
-
-addRxPlugin(require('pouchdb-adapter-http')); // enable syncing over http (remote database)
-addRxPlugin(require('pouchdb-adapter-idb'));
-addRxPlugin(RxDBValidatePlugin);
-addRxPlugin(RxDBQueryBuilderPlugin);
-addRxPlugin(RxDBJsonDumpPlugin);
-addRxPlugin(RxDBAdapterCheckPlugin);
-addRxPlugin(RxDBMigrationPlugin);
-addRxPlugin(RxDBReplicationPlugin);
-addRxPlugin(RxDBUpdatePlugin);
-// only in development environment
-if ((window as any).process?.env?.TEST) {
-  logFn('dev or test mode');
-  // addRxPlugin(require('pouchdb-adapter-memory')); // FIXME: is it duplicate import ?
-}
 
 const IMPORTED_FLAG = '_ngx_rxdb_imported';
 
@@ -98,11 +82,15 @@ export class NgxRxdbService {
   async initDb(config: NgxRxdbConfig) {
     try {
       const dbConfig = NgxRxdbService.mergeConfig(config);
+      await loadRxDBPlugins();
       const db: RxDatabase = await createRxDatabase(dbConfig);
       this.dbInstance = db;
       logFn(`created database ${this.db.name}`);
-      // TODO: should the instance becomes leader
-      // await this.dbInstance.waitForLeadership();
+
+      if (dbConfig.multiInstance) {
+        await this.dbInstance.waitForLeadership();
+        logFn(`database isLeader now`);
+      }
 
       // optional: can create collections from root config
       if (!isEmpty(dbConfig.options?.schemas)) {
@@ -123,7 +111,7 @@ export class NgxRxdbService {
   }
 
   /** uses bulk `addCollections` method at the end of array */
-  async initCollections(colConfigs: { [key: string]: NgxRxdbCollectionConfig }) {
+  async initCollections(colConfigs: Record<string, NgxRxdbCollectionConfig>) {
     try {
       const colCreators = await this.prepareCollections(colConfigs);
       return await this.dbInstance.addCollections(colCreators);
@@ -247,9 +235,9 @@ export class NgxRxdbService {
     }
   }
 
-  private async prepareCollections(colConfigs: {
-    [key: string]: NgxRxdbCollectionConfig;
-  }): Promise<{ [key: string]: RxCollectionCreator }> {
+  private async prepareCollections(
+    colConfigs: Record<string, NgxRxdbCollectionConfig>
+  ): Promise<Record<string, RxCollectionCreator>> {
     try {
       const colCreators = {};
       const configs = Object.values(colConfigs);

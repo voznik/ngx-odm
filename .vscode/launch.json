@@ -49,9 +49,12 @@
         "--codeCoverage=false",
         "--testFile=${fileBasenameNoExtension}",
         "--watchAll",
-        "--colors",
-        "--runInBand=true"
+        "--colors"
       ],
+      "env": {
+        "NODE_ENV": "development",
+        "TEST": "true"
+      },
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
