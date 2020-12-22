@@ -7,6 +7,9 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+    types: [opened, synchronize, reopened]
+  release:
+    types: [published]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -19,12 +22,21 @@ jobs:
     #   matrix:
     #     node-version: [12.x, 14.x]
     steps:
-      - uses: actions/checkout@v2
-      - name: Build on Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+      - name: My first step
+        if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' }}
+        run: echo This event is a pull request that was opened.
+      #
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      #
+      - name: Build on Node.js # ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
         with:
           #   node-version: ${{ matrix.node-version }}
           node-version: 12
+      #
       - name: Cache node modules
         uses: actions/cache@v2
         env:
@@ -37,14 +49,26 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
+      #
       - name: Install
         run: npm ci
       - name: Lint & Test
         run: npm run packages:lint && npm run packages:test
         env:
           CI: true
+      # Save coverage report in Coveralls
+      - name: Coveralls
+        if: ${{ success() }}
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          COVERALLS_SERVICE_NAME: '@ngx-odm'
+          COVERALLS_PARALLEL: true
+      # Build if release published
       - name: Build
-        run: npm run packages:build --if-present
+        if: github.event.release.published
+        run: npm run packages:build
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -54,21 +78,37 @@ jobs:
             # !dist/**/*.md
 
   publish:
-    # if: github.ref == 'refs/heads/main'
+    # if: github.event.pull_request.merged
+    if: github.event.release.published
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      # - name: Download all workflow run artifacts
+      #   uses: actions/download-artifact@v2
+      - name: Version and publish
+        ### echo "//registry.npmjs.org/:_authToken=$NPM_API_TOKEN" >> ~/.npmrc
+        run: |
+          git config user.name $GITHUB_ACTOR
+          git config user.email gh-actions-${GITHUB_ACTOR}@github.com
+          git remote add gh-origin https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+
+          npm install
+          npm version minor --force -m "v%s" -m "build(*): release new version [build-skip]"
+          npm run packages:build
+          git push gh-origin HEAD:master --tags
+      - uses: actions/setup-node@v2
         with:
           node-version: 12
-      - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v2
-      - name: Publish
-        run: |
-          cd dist-packages/rxdb
-          npm pack
-          npm config set //registry.npmjs.org/:_authToken ${NPM_TOKEN}
-          npm publish --ignore-scripts
+          registry-url: 'https://registry.npmjs.org'
+      - run: |
+          npm run packages:publish:dev
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - uses: actions/setup-node@v2
+        with:
+          registry-url: 'https://npm.pkg.github.com'
+      - run: |
+          npm run packages:publish:dev
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # https://docs.github.com/en/free-pro-team@latest/actions/reference/authentication-in-a-workflow#about-the-github_token-secret

@@ -1,5 +1,6 @@
+// eslint-disable-next-line no-undef
 module.exports = {
-  name: '@ngx-odm/rxdb',
+  name: '@ngx-odm/kinto',
   preset: '../../jest.config.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   globals: {
@@ -15,7 +16,8 @@ module.exports = {
   coverageReporters: [
     'text-summary',
     'json',
-    ['json-summary', { file: 'rxdb/rxdb-coverage-summary.json' }],
+    ['lcov', { file: 'kinto-coverage.lcov' }],
+    ['json-summary', { file: 'kinto-coverage-summary.json' }],
   ],
   coverageDirectory: '../../coverage/packages',
   snapshotSerializers: [

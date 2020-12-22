@@ -2,6 +2,7 @@
   "$schema": "../../node_modules/ng-packagr/ng-package.schema.json",
   "dest": "../../dist/packages/rxdb",
   "lib": {
+    "flatModuleFile": "ngx-odm-rxdb",
     "entryFile": "src/index.ts"
   },
   "whitelistedNonPeerDependencies": [

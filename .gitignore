@@ -5,6 +5,8 @@
 /docs
 /tmp
 /out-tsc
+**/builds
+**/@ngx-odm*
 
 # dependencies
 /node_modules

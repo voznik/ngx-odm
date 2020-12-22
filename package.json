@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "ngx-odm",
-  "version": "2.1.1-alpha",
+  "version": "2.2.0",
   "private": false,
   "description": "Angular ODMs for NoSql DBs like RxDB, Kinto",
   "keywords": [
@@ -41,6 +41,9 @@
   },
   "scripts": {
     "nx": "nx",
+    "ts-node": "ts-node",
+    "nyc": "nyc",
+    "prettier": "prettier",
     "ng-high-memory": "node --max_old_space_size=8192 ./node_modules/@angular/cli/bin/ng",
     "postinstall": "node ./decorate-angular-cli.js && npm run ngcc",
     "postbuild": "node ./tools/scripts/postbuild_replace.js",
@@ -48,16 +51,19 @@
     "start": "nx serve",
     "build:prod": "npm run ng-high-memory -- build --prod",
     "build:sourcemaps": "npm run ng-high-memory -- build --prod --sourceMap=true --statsJson",
-    "packages:test": "npm run nx -- run-many --target=test --projects=rxdb,kinto --ci --run-in-band --parallel --pass-with-no-tests && nyc report -t coverage/packages --reporter=json-summary",
-    "packages:test:merge": "nyc report -t coverage/packages --reporter=json-summary",
+    "packages:test": "npm run nx -- run-many --target=test --projects=rxdb,kinto --ci --run-in-band --parallel --pass-with-no-tests && npm run packages:test:merge",
+    "packages:test:merge": "./node_modules/.bin/lcov-result-merger 'coverage/packages/*.lcov' coverage/lcov.info",
     "packages:lint": "npm run nx -- run-many --target=lint --projects=rxdb,kinto",
     "packages:build": "npm run nx -- run-many --target=build --projects=rxdb,kinto --prod",
+    "packages:publish": "ts-node tools/scripts/publish-tagged-builds.ts",
+    "packages:publish:dev": "ts-node tools/scripts/publish-dev-builds.ts",
     "test": "nx test",
     "test:hook": "npm run affected:test -- --reporters='jest-junit' --parallel --pass-with-no-tests --base=master --head=HEAD",
     "lint": "nx workspace-lint && ng lint",
     "lint:hook": "npm run affected:lint -- --parallel --base=master --head=HEAD",
     "lint:uncommitted": "npm run affected:lint -- --parallel --fix --uncommitted",
     "e2e": "ng e2e",
+    "postversion": "npm run packages:publish",
     "affected:apps": "nx affected:apps",
     "affected:libs": "nx affected:libs",
     "affected:build": "nx affected:build",
@@ -143,6 +149,7 @@
     "jest-junit": "^12.0.0",
     "jest-localstorage-mock": "2.4.6",
     "jest-preset-angular": "8.3.2",
+    "lcov-result-merger": "^3.1.0",
     "lint-staged": "10.5.3",
     "ng-packagr": "11.0.3",
     "nyc": "^15.1.0",
@@ -150,6 +157,7 @@
     "pretty-quick": "3.1.0",
     "rimraf": "3.0.2",
     "rxjs-tslint-rules": "4.34.7",
+    "semver": "^7.3.4",
     "source-map-explorer": "2.5.1",
     "ts-jest": "26.4.0",
     "ts-node": "9.1.1",
@@ -162,7 +170,7 @@
   "npmScope": "@ngx-odm",
   "packageScope": "@ngx-odm",
   "packages": [
-    "libs/kinto",
-    "libs/rxdb"
+    "kinto",
+    "rxdb"
   ]
 }
