@@ -50,7 +50,7 @@
     "start": "nx serve",
     "build:prod": "npm run ng-high-memory -- build --prod",
     "build:sourcemaps": "npm run ng-high-memory -- build --prod --sourceMap=true --statsJson",
-    "packages:test": "npm run nx -- run-many --target=test --projects=rxdb,kinto --ci --run-in-band --parallel --pass-with-no-tests && nyc report -t coverage/packages --reporter=json-summary",
+    "packages:test": "npm run nx -- run-many --target=test --projects=rxdb,kinto --ci --run-in-band --parallel --pass-with-no-tests",
     "packages:test:merge": "nyc report -t coverage/packages --reporter=json-summary",
     "packages:lint": "npm run nx -- run-many --target=lint --projects=rxdb,kinto",
     "packages:build": "npm run nx -- run-many --target=build --projects=rxdb,kinto --prod",
