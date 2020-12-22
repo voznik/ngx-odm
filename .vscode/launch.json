@@ -49,11 +49,31 @@
         "--codeCoverage=false",
         "--testFile=${fileBasenameNoExtension}",
         "--watchAll",
-        "--colors"
+        "--colors",
+        "--runInBand=true"
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
+      "disableOptimisticBPs": true
+    },
+    {
+      "name": "Tools: Ts-Node: Current File",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+      "args": ["${relativeFile}"],
+      "sourceMaps": true,
+      "cwd": "${workspaceRoot}",
+      "protocol": "inspector",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "TS_NODE_PROJECT": "${workspaceFolder}/tools/tsconfig.tools.json",
+        "TS_NODE_TRANSPILE_ONLY": "true"
+      },
       "disableOptimisticBPs": true
     }
   ],

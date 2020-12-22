@@ -1,3 +1,5 @@
+// TODO: review https://github.com/Angular-RU/angular-jest-utils/blob/master/src/create-ts-jest-config.ts
+
 const CI = process.env['CI'] === 'true';
 
 /* if (!CI) {

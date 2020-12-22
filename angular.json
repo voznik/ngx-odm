@@ -3,25 +3,25 @@
   "projects": {
     "demo": {
       "projectType": "application",
-      "root": "apps/demo",
-      "sourceRoot": "apps/demo/src",
+      "root": "examples/demo",
+      "sourceRoot": "examples/demo/src",
       "prefix": "demo",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
             "outputPath": "dist/demo",
-            "index": "apps/demo/src/index.html",
-            "main": "apps/demo/src/main.ts",
-            "polyfills": "apps/demo/src/polyfills.ts",
-            "tsConfig": "apps/demo/tsconfig.app.json",
+            "index": "examples/demo/src/index.html",
+            "main": "examples/demo/src/main.ts",
+            "polyfills": "examples/demo/src/polyfills.ts",
+            "tsConfig": "examples/demo/tsconfig.app.json",
             "aot": true,
             "extractCss": true,
-            "assets": ["apps/demo/src/favicon.ico", "apps/demo/src/assets"],
+            "assets": ["examples/demo/src/favicon.ico", "examples/demo/src/assets"],
             "styles": [
               "node_modules/todomvc-common/base.css",
               "node_modules/todomvc-app-css/index.css",
-              "apps/demo/src/styles.scss"
+              "examples/demo/src/styles.scss"
             ],
             "scripts": [],
             "allowedCommonJsDependencies": [
@@ -41,8 +41,8 @@
             "production": {
               "fileReplacements": [
                 {
-                  "replace": "apps/demo/src/environments/environment.ts",
-                  "with": "apps/demo/src/environments/environment.prod.ts"
+                  "replace": "examples/demo/src/environments/environment.ts",
+                  "with": "examples/demo/src/environments/environment.prod.ts"
                 }
               ],
               "baseHref": "https://voznik.github.io/ngx-odm/",
@@ -93,14 +93,14 @@
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": ["apps/demo/src/**/*.ts", "apps/demo/src/**/*.html"]
+            "lintFilePatterns": ["examples/demo/src/**/*.ts", "examples/demo/src/**/*.html"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/demo"],
+          "outputs": ["coverage/examples/demo"],
           "options": {
-            "jestConfig": "apps/demo/jest.config.js",
+            "jestConfig": "examples/demo/jest.config.js",
             "passWithNoTests": true
           }
         }
@@ -108,41 +108,41 @@
     },
     "rxdb": {
       "projectType": "library",
-      "root": "libs/rxdb",
-      "sourceRoot": "libs/rxdb/src",
+      "root": "packages/rxdb",
+      "sourceRoot": "packages/rxdb/src",
       "prefix": "ngx",
       "architect": {
         "build": {
           "builder": "@nrwl/angular:package",
           "options": {
-            "tsConfig": "libs/rxdb/tsconfig.lib.json",
-            "project": "libs/rxdb/ng-package.json"
+            "tsConfig": "packages/rxdb/tsconfig.lib.json",
+            "project": "packages/rxdb/ng-package.json"
           },
           "configurations": {
             "production": {
-              "tsConfig": "libs/rxdb/tsconfig.lib.prod.json"
+              "tsConfig": "packages/rxdb/tsconfig.lib.prod.json"
             }
           }
         },
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": ["libs/rxdb/src/**/*.ts", "libs/rxdb/src/**/*.html"]
+            "lintFilePatterns": ["packages/rxdb/src/**/*.ts", "packages/rxdb/src/**/*.html"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "libs/rxdb/jest.config.js",
-            "tsConfig": "libs/rxdb/tsconfig.spec.json",
+            "jestConfig": "packages/rxdb/jest.config.js",
+            "tsConfig": "packages/rxdb/tsconfig.spec.json",
             "passWithNoTests": true,
-            "setupFile": "libs/rxdb/src/test-setup.ts"
+            "setupFile": "packages/rxdb/src/test-setup.ts"
           }
         },
         "compodoc": {
           "builder": "@twittwer/compodoc:compodoc",
           "options": {
-            "tsConfig": "libs/rxdb/tsconfig.lib.json",
+            "tsConfig": "packages/rxdb/tsconfig.lib.json",
             "outputPath": "dist/compodoc/ngx-rxdb"
           },
           "configurations": {
@@ -155,41 +155,44 @@
     },
     "kinto": {
       "projectType": "library",
-      "root": "libs/kinto",
-      "sourceRoot": "libs/kinto/src",
+      "root": "packages/kinto",
+      "sourceRoot": "packages/kinto/src",
       "prefix": "ngx",
       "architect": {
         "build": {
           "builder": "@nrwl/angular:package",
           "options": {
-            "tsConfig": "libs/kinto/tsconfig.lib.json",
-            "project": "libs/kinto/ng-package.json"
+            "tsConfig": "packages/kinto/tsconfig.lib.json",
+            "project": "packages/kinto/ng-package.json"
           },
           "configurations": {
             "production": {
-              "tsConfig": "libs/kinto/tsconfig.lib.prod.json"
+              "tsConfig": "packages/kinto/tsconfig.lib.prod.json"
             }
           }
         },
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": ["libs/kinto/src/**/*.ts", "libs/kinto/src/**/*.html"]
+            "lintFilePatterns": [
+              "packages/kinto/src/**/*.ts",
+              "packages/kinto/src/**/*.html"
+            ]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "libs/kinto/jest.config.js",
-            "tsConfig": "libs/kinto/tsconfig.spec.json",
+            "jestConfig": "packages/kinto/jest.config.js",
+            "tsConfig": "packages/kinto/tsconfig.spec.json",
             "passWithNoTests": true,
-            "setupFile": "libs/kinto/src/test-setup.ts"
+            "setupFile": "packages/kinto/src/test-setup.ts"
           }
         },
         "compodoc": {
           "builder": "@twittwer/compodoc:compodoc",
           "options": {
-            "tsConfig": "libs/kinto/tsconfig.lib.json",
+            "tsConfig": "packages/kinto/tsconfig.lib.json",
             "outputPath": "dist/compodoc/ngx-rxdb"
           },
           "configurations": {
