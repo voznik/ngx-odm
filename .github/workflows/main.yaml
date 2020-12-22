@@ -62,6 +62,9 @@ jobs:
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          COVERALLS_SERVICE_NAME: '@ngx-odm'
+          COVERALLS_PARALLEL: true
       # Build if release published
       - name: Build
         if: github.event.release.published
