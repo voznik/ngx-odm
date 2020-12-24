@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { TestBed, waitForAsync } from '@angular/core/testing';
-import { NgxRxdbConfig, NgxRxdbCollectionConfig } from './rxdb.interface';
+import { NgxRxdbConfig, NgxRxdbCollectionConfig } from './rxdb.d';
 import { NgxRxdbModule } from './rxdb.module';
 import { NgxRxdbCollectionService } from './rxdb-collection.service';
 import { TEST_DB_CONFIG_1, TEST_DB_CONFIG_2, TEST_FEATURE_CONFIG_1 } from './rxdb.mock';
@@ -8,7 +8,7 @@ import { ApplicationInitStatus } from '@angular/core';
 
 describe(`NgxRxdbCollectionService :: init`, () => {
   let service: NgxRxdbCollectionService;
-  let collectionLoadedSpy;
+  let initializedSpy;
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
@@ -18,7 +18,7 @@ describe(`NgxRxdbCollectionService :: init`, () => {
       ],
     });
     service = TestBed.inject(NgxRxdbCollectionService);
-    collectionLoadedSpy = jest.spyOn(service, 'collectionLoaded$');
+    initializedSpy = jest.spyOn(service, 'initialized$');
     await TestBed.inject(ApplicationInitStatus).donePromise;
   });
 
@@ -26,7 +26,7 @@ describe(`NgxRxdbCollectionService :: init`, () => {
     `should provide itself via feature module`,
     waitForAsync(() => {
       expect(service).toBeDefined();
-      // expect(collectionLoadedSpy).toHaveBeenCalled(); // FIXME: IDK how
+      // expect(initializedSpy).toHaveBeenCalled(); // FIXME: IDK how
     })
   );
 });
@@ -43,7 +43,7 @@ describe(`NgxRxdbCollectionService :: init db AND col`, () => {
     });
     service = TestBed.inject(NgxRxdbCollectionService);
     await TestBed.inject(ApplicationInitStatus).donePromise;
-    service.collectionLoaded$().subscribe(() => {
+    service.initialized$().subscribe(() => {
       console.log('s');
     });
   });
@@ -52,7 +52,7 @@ describe(`NgxRxdbCollectionService :: init db AND col`, () => {
     waitForAsync(() => {
       expect(service.db).toBeDefined();
       expect(service.db.name).toEqual(TEST_DB_CONFIG_2.name);
-      service.collectionLoaded$().subscribe(() => {
+      service.initialized$().subscribe(() => {
         // expect(service.collection).toBeDefined();
         // expect(service.collection?.statics?.countAllDocuments).toBeInstanceOf(Function);
       });

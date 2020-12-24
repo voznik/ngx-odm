@@ -1,4 +1,4 @@
-import { NgxRxdbConfig } from './rxdb.interface';
+import { NgxRxdbConfig } from './rxdb.d';
 
 export const RXDB_DEFAULT_ADAPTER = 'idb';
 export const RXDB_DEFAULT_CONFIG: NgxRxdbConfig = {

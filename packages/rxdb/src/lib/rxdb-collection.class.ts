@@ -7,7 +7,7 @@ import {
   RxDumpDatabaseAny,
   RxJsonSchema,
 } from 'rxdb';
-import { AnyFn, AnyObject, NgxRxdbCollectionConfig } from './rxdb.interface';
+import { NgxRxdbCollectionConfig } from './rxdb.d';
 
 export async function infoFn() {
   return await (this.pouch as PouchDBInstance).info();

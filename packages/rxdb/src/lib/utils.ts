@@ -1,5 +1,3 @@
-import { AnyObject } from './rxdb.interface';
-
 /** @internal */
 export function isEmpty(object: AnyObject, deep = false) {
   if (object == null || !object) {

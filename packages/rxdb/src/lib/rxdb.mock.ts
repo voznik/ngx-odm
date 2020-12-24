@@ -1,5 +1,5 @@
 import { RxCollectionCreator, RxJsonSchema } from 'rxdb';
-import { NgxRxdbCollectionConfig } from './rxdb.interface';
+import { NgxRxdbCollectionConfig } from './rxdb.d';
 
 export const TEST_SCHEMA: RxJsonSchema = {
   type: 'object',

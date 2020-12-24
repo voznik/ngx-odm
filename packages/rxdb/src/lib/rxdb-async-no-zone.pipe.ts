@@ -1,6 +1,5 @@
 import { AsyncPipe } from '@angular/common';
 import { Pipe, PipeTransform } from '@angular/core';
-import { AnyObject } from './rxdb.interface';
 
 /**
  * @see https://github.com/pubkey/rxdb/blob/master/examples/angular/src/app/pipes/async-no-zone.pipe.ts

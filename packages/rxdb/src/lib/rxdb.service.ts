@@ -22,7 +22,7 @@ import {
   NgxRxdbCollectionDump,
   NgxRxdbDump,
 } from './rxdb-collection.class';
-import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.interface';
+import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.d';
 import { DEFAULT_BACKOFF_FN, RXDB_DEFAULT_CONFIG } from './rxdb.model';
 import { isEmpty, logFn, NgxRxdbError } from './utils';
 
