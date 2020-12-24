@@ -38,43 +38,42 @@ export function collectionServiceFactory(config: NgxRxdbCollectionConfig) {
  *
  * 1) Import `NgxRxdbModule` to your root module.
  *
- * ```ts
- * @NgModule({
- *   imports: [
- *     // ...
- *     NgxRxdbModule.forRoot(
- *       {
- *         name: 'demo',          // <- name (required, 'ngx')
- *         adapter: 'idb',        // <- storage-adapter (required, default: 'idb')
- *         multiInstance: true,   // <-(optional)
- *         options: {
- *           dumpPath: 'assets/data/db.dump.json', // <- remote url (optional)
- *         },
- *       })
- *   ],
- * })
- * export class AppModule { }
- * ```
+ ```typescript
+    @NgModule({
+      imports: [
+        // ...
+        NgxRxdbModule.forRoot({
+          name: 'demo',          // <- name (required, 'ngx')
+          adapter: 'idb',        // <- storage-adapter (required, default: 'idb')
+          multiInstance: true,   // <-(optional)
+          options: {
+            dumpPath: 'assets/data/db.dump.json', // <- remote url (optional)
+          },
+        })
+      ],
+    })
+    export class AppModule { }
+ ```
  *
  * 2) Import `NgxRxdbModule` to your feature module.
  *
- * ```ts
- * @NgModule({
- *   imports: [
- *     // ...
- *      NgxRxdbModule.forFeature({
- *       name: 'todo',
- *       // schema: todoSchema, <-(kind of optional)
- *       statics: {}, // <-(optional)
- *       options: { // <-(optional)
- *         schemaUrl: 'assets/data/todo.schema.json', <- remote url (optional)
- *         initialDocs: initialState.items, // <-(optional)
- *       },
- *      })
- *      ]
- * }),
- * export class TodosModule { }
- * ```
+ ```typescript
+  @NgModule({
+    imports: [
+      // ...
+      NgxRxdbModule.forFeature({
+        name: 'todo',
+        // schema: todoSchema, <-(kind of optional)
+        statics: {}, // <-(optional)
+        options: { // <-(optional)
+          schemaUrl: 'assets/data/todo.schema.json', <- remote url (optional)
+          initialDocs: initialState.items, // <-(optional)
+        },
+      })
+    ]
+  }),
+  export class TodosModule { }
+ ```
  * ### Usage
  *
  * Example of usage:
