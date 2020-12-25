@@ -1,37 +1,91 @@
+/* eslint-disable @angular-eslint/directive-class-suffix */
 /* eslint-disable no-console */
-import { TestBed, waitForAsync } from '@angular/core/testing';
-import { NgxRxdbConfig, NgxRxdbCollectionConfig } from './rxdb.d';
-import { NgxRxdbModule } from './rxdb.module';
+import {
+  ApplicationInitStatus,
+  Directive,
+  InjectFlags,
+  NgModule,
+  NgModuleFactoryLoader,
+  NgZone,
+} from '@angular/core';
+import {
+  fakeAsync,
+  flushMicrotasks,
+  TestBed,
+  tick,
+  waitForAsync,
+} from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { NgxRxdbCollectionService } from './rxdb-collection.service';
 import { TEST_DB_CONFIG_1, TEST_DB_CONFIG_2, TEST_FEATURE_CONFIG_1 } from './rxdb.mock';
-import { ApplicationInitStatus } from '@angular/core';
+import { NgxRxdbModule } from './rxdb.module';
+import { NgxRxdbService } from './rxdb.service';
+
+@Directive({ selector: 'lazy' })
+class LazyComponent {}
+
+@NgModule({
+  declarations: [LazyComponent],
+  imports: [NgxRxdbModule.forFeature(TEST_FEATURE_CONFIG_1)],
+})
+class LazyModule {}
 
 describe(`NgxRxdbCollectionService :: init`, () => {
+  let ngZone: NgZone;
+  let router: Router;
+  let dbService: NgxRxdbService;
   let service: NgxRxdbCollectionService;
-  let initializedSpy;
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [
+        RouterTestingModule.withRoutes([]),
         NgxRxdbModule.forRoot(TEST_DB_CONFIG_1),
-        NgxRxdbModule.forFeature(TEST_FEATURE_CONFIG_1),
       ],
+      // providers: [NgxRxdbCollectionService],
     });
-    service = TestBed.inject(NgxRxdbCollectionService);
-    initializedSpy = jest.spyOn(service, 'initialized$');
+    ngZone = TestBed.inject(NgZone);
+    router = TestBed.inject(Router);
+    dbService = TestBed.inject(NgxRxdbService);
+    // loader = TestBed.get(NgModuleFactoryLoader);
     await TestBed.inject(ApplicationInitStatus).donePromise;
   });
 
-  it(
+  it(`should provide itself via feature module`, fakeAsync(() => {
+    ngZone.run(() => {
+      router.initialNavigation();
+      router.resetConfig([
+        {
+          path: 'todos',
+          loadChildren: () => Promise.resolve(LazyModule),
+        },
+      ]);
+      // tick(100);
+      router.navigateByUrl('/todos').then(r => {
+        service = TestBed.inject(
+          NgxRxdbCollectionService,
+          new NgxRxdbCollectionService(dbService, TEST_FEATURE_CONFIG_1),
+          InjectFlags.Self
+        );
+        expect(service).toBeDefined();
+      });
+      tick();
+    });
+    flushMicrotasks();
+    // expect(initializedSpy).toHaveBeenCalled(); // FIXME: IDK how
+  }));
+
+  /* it(
     `should provide itself via feature module`,
     waitForAsync(() => {
       expect(service).toBeDefined();
       // expect(initializedSpy).toHaveBeenCalled(); // FIXME: IDK how
     })
-  );
+  ); */
 });
 
-describe(`NgxRxdbCollectionService :: init db AND col`, () => {
+xdescribe(`NgxRxdbCollectionService :: init db AND col`, () => {
   let service: NgxRxdbCollectionService;
 
   beforeEach(async () => {
@@ -43,9 +97,14 @@ describe(`NgxRxdbCollectionService :: init db AND col`, () => {
     });
     service = TestBed.inject(NgxRxdbCollectionService);
     await TestBed.inject(ApplicationInitStatus).donePromise;
-    service.initialized$().subscribe(() => {
-      console.log('s');
-    });
+    service.initialized$().subscribe(
+      () => {
+        console.log('s');
+      },
+      e => {
+        console.warn(e);
+      }
+    );
   });
   it(
     `should init database AND collection`,

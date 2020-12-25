@@ -1,4 +1,27 @@
-import { NgxRxdbConfig } from './rxdb.d';
+import type {
+  MangoQuery,
+  RxCollectionCreator,
+  RxDatabaseCreator,
+  SyncOptions,
+} from 'rxdb/plugins/core';
+import { AnyObject } from './types';
+
+export interface NgxRxdbCollectionConfig extends Partial<RxCollectionCreator> {
+  schema?: RxCollectionCreator['schema'];
+  options?: {
+    syncOptions?: SyncOptions & { queryObj?: MangoQuery<any> };
+    schemaUrl?: string;
+    initialDocs?: AnyObject[];
+    recreate?: boolean;
+  };
+}
+
+export interface NgxRxdbConfig extends RxDatabaseCreator {
+  options?: {
+    schemas?: Record<string, NgxRxdbCollectionConfig>;
+    dumpPath?: string;
+  };
+}
 
 export const RXDB_DEFAULT_ADAPTER = 'idb';
 export const RXDB_DEFAULT_CONFIG: NgxRxdbConfig = {

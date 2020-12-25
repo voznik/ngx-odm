@@ -1,5 +1,5 @@
 import { RxCollectionCreator, RxJsonSchema } from 'rxdb';
-import { NgxRxdbCollectionConfig } from './rxdb.d';
+import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.model';
 
 export const TEST_SCHEMA: RxJsonSchema = {
   type: 'object',
@@ -31,10 +31,15 @@ export const TEST_FEATURE_CONFIG_1: RxCollectionCreator = {
   schema: TEST_SCHEMA,
 };
 
-export const TEST_DB_CONFIG_1 = { name: 'test1', adapter: 'memory' };
-export const TEST_DB_CONFIG_2 = {
+export const TEST_DB_CONFIG_1: NgxRxdbConfig = {
+  name: 'test1',
+  adapter: 'memory',
+  multiInstance: false,
+};
+export const TEST_DB_CONFIG_2: NgxRxdbConfig = {
   name: 'test2',
   adapter: 'memory',
+  multiInstance: false,
   options: {
     schemas: {
       todo: { ...TEST_FEATURE_CONFIG_1 },

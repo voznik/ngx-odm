@@ -1,33 +1,34 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { RxCollectionBase } from 'rxdb/dist/types/rx-collection';
-import {
-  PouchAllDocsOptions,
-  RxCollectionGenerated,
-  RxDocumentBase,
-  // RxQueryResult
-} from 'rxdb/dist/types/types';
+import { PouchAllDocsOptions } from 'rxdb/dist/types/types/pouch';
 import {
   isRxCollection,
   MangoQuery,
   RxCollection,
+  RxCollectionGenerated,
   RxDocument,
+  RxDocumentBase,
   RxReplicationState,
 } from 'rxdb/plugins/core';
-import { defer, from, Observable, ReplaySubject, Subscribable } from 'rxjs';
+import { defer, Observable, ReplaySubject, Subscribable } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { NgxRxdbCollectionDump } from './rxdb-collection.class';
-import { NgxRxdbCollectionConfig } from './rxdb.d';
+import { NgxRxdbCollectionConfig } from './rxdb.model';
 import { NgxRxdbService } from './rxdb.service';
+import type { AnyAsyncResult, AnyObject, FunctionPropertyNames } from './types';
+import { logFn } from './utils';
+
+const debug = logFn('NgxRxdbCollectionService');
 
 // -----------------------------------------------------------------------------
 type QueryResult<T> = RxDocument<T[]> | RxDocument<T>;
 type LocalDocument = (RxDocumentBase<any> & { isLocal(): true }) | null;
-type AllDocsOptions = PouchAllDocsOptions & PouchDB.Core.AllDocsWithinRangeOptions;
+type AllDocsOptions = PouchAllDocsOptions; // & PouchDB.Core.AllDocsWithinRangeOptions;
 type CollectionFnNames =
   | FunctionPropertyNames<RxCollectionGenerated<any>>
   | FunctionPropertyNames<RxCollectionBase<any>>;
 type CollectionFn = RxCollection<any>[CollectionFnNames];
-type CollectionFnReturnType<K extends CollectionFnNames> = Awaited<
+type CollectionFnReturnType<K extends CollectionFnNames> = AnyAsyncResult<
   ReturnType<RxCollection<any>[K]>
 >;
 // -----------------------------------------------------------------------------
@@ -55,17 +56,22 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
     isRxCollection(this.collection) && (await this.collection.destroy());
   }
 
-  /**  */
+  /** starter chain  */
   initialized$(): Observable<boolean> {
     if (this._init$) {
       return this._init$.asObservable();
     }
     this._init$ = new ReplaySubject();
-    this.dbService.initCollection(this.config).then(collection => {
-      this._collection = collection;
-      this._init$.next(true);
-      this._init$.complete();
-    });
+    this.dbService
+      .initCollection(this.config)
+      .then(collection => {
+        this._collection = collection;
+        this._init$.next(true);
+        this._init$.complete();
+      })
+      .catch(e => {
+        debug('initCollection error', e);
+      });
     return this._init$.asObservable();
   }
 
@@ -168,7 +174,7 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
     return defer(async () => {
       try {
         const docs = await this.collection.find(query).exec();
-        if (docs && docs.length) {
+        if (docs?.length) {
           const docsToUpdate = docs.map(doc => ({
             _id: doc.primary,
             _rev: doc['_rev'],

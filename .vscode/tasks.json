@@ -4,7 +4,9 @@
     {
       "type": "eslint",
       "problemMatcher": ["$eslint-stylish"],
-      "label": "eslint: lint whole folder"
+      "label": "eslint: lint whole folder",
+      "isBackground": true
+      // "runOptions": { "runOn": "folderOpen" }
     }
   ]
 }

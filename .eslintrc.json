@@ -1,7 +1,16 @@
 {
   "root": true,
   "ignorePatterns": ["**/*"],
-  "plugins": ["@nrwl/nx"],
+  "extends": ["prettier", "prettier/@typescript-eslint"],
+  "plugins": ["prettier", "@nrwl/nx"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "sourceType": "module",
+    "project": ["./tsconfig.base.json", "packages/**/tsconfig.json"],
+    "tsconfigRootDir": "./",
+    "warnOnUnsupportedTypeScriptVersion": false,
+    "EXPERIMENTAL_useSourceOfProjectReferenceRedirect": true
+  },
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
@@ -10,8 +19,25 @@
           "error",
           {
             "enforceBuildableLibDependency": true,
-            "allow": [],
-            "depConstraints": [{ "sourceTag": "*", "onlyDependOnLibsWithTags": ["*"] }]
+            "allow": ["@ngx-odm/utils", "@ngx-odm/utils/*"],
+            "depConstraints": [
+              {
+                "sourceTag": "*",
+                "onlyDependOnLibsWithTags": ["*"]
+              }
+            ]
+          }
+        ],
+        "sort-imports": [
+          "off",
+          {
+            "memberSyntaxSortOrder": ["all", "multiple", "single", "none"]
+          }
+        ],
+        "no-console": [
+          "error",
+          {
+            "allow": ["warn", "error"]
           }
         ]
       }
@@ -19,8 +45,27 @@
     {
       "files": ["*.ts", "*.tsx"],
       "extends": ["plugin:@nrwl/nx/typescript"],
-      "parserOptions": { "project": "./tsconfig.*?.json" },
-      "rules": {}
+      "parserOptions": {
+        "sourceType": "module",
+        "project": ["./packages/**/tsconfig.*?.json"]
+      },
+      "rules": {
+        "@angular-eslint/no-input-rename": "off",
+        "@typescript-eslint/consistent-type-imports": [
+          "off",
+          {
+            "prefer": "type-imports"
+          }
+        ],
+        "@typescript-eslint/prefer-optional-chain": "error",
+        "@typescript-eslint/no-unused-vars": [
+          "warn",
+          {
+            "vars": "all",
+            "args": "none"
+          }
+        ]
+      }
     },
     {
       "files": ["*.js", "*.jsx"],
@@ -29,7 +74,7 @@
     }
   ],
   "rules": {
-    "no-console": ["error", { "allow": ["warn", "error"] }],
-    "@angular-eslint/no-input-rename": "off"
+    "@typescript-eslint/ban-tslint-comment": "error",
+    "prettier/prettier": ["error"]
   }
 }

@@ -1,7 +1,7 @@
 import { ApplicationInitStatus } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NgxRxdbCollectionService } from './rxdb-collection.service';
-import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.d';
+import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.model';
 import { NgxRxdbFeatureModule, NgxRxdbModule } from './rxdb.module';
 import { NgxRxdbService } from './rxdb.service';
 import { RXDB_CONFIG } from './rxdb.token';

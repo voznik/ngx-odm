@@ -1,3 +1,5 @@
+import { AnyObject } from './types';
+
 /** @internal */
 export function isEmpty(object: AnyObject, deep = false) {
   if (object == null || !object) {
@@ -25,15 +27,17 @@ export function isTestMode(): boolean {
 }
 
 /** @internal */
-export function logFn(...args) {
+export function logFn(title?: string) {
   if (isDevMode()) {
     // eslint-disable-next-line no-console
-    console.log.call(
-      console,
-      `%c[DEBUG:: NgxRxdb::]`,
-      'background: #8d2089; color: #fff; padding: 2px; font-size: normal;',
-      ...args
+    return console.log.bind(
+      window.console,
+      `%c[DEBUG:: ${title ?? 'NgxODM'}::]`,
+      'background: #8d2089; color: #fff; padding: 2px; font-size: normal;'
+      // ...args
     );
+  } else {
+    return noop;
   }
 }
 

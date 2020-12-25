@@ -1,5 +1,9 @@
 {
   "npmScope": "ngx-odm",
+  "workspaceLayout": {
+    "appsDir": "examples",
+    "libsDir": "packages"
+  },
   "affected": {
     "defaultBase": "master"
   },

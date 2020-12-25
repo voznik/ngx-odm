@@ -22,10 +22,15 @@ import {
   NgxRxdbCollectionDump,
   NgxRxdbDump,
 } from './rxdb-collection.class';
-import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.d';
-import { DEFAULT_BACKOFF_FN, RXDB_DEFAULT_CONFIG } from './rxdb.model';
+import {
+  DEFAULT_BACKOFF_FN,
+  NgxRxdbCollectionConfig,
+  NgxRxdbConfig,
+  RXDB_DEFAULT_CONFIG,
+} from './rxdb.model';
 import { isEmpty, logFn, NgxRxdbError } from './utils';
 
+const debug = logFn('NgxRxdbService');
 const IMPORTED_FLAG = '_ngx_rxdb_imported';
 
 @Injectable()
@@ -49,7 +54,7 @@ export class NgxRxdbService {
   }
 
   get db(): RxDatabase {
-    return this.dbInstance;
+    return this.dbInstance ?? null;
   }
 
   get collections(): CollectionsOfDatabase {
@@ -59,7 +64,7 @@ export class NgxRxdbService {
   get _imported() {
     return window.localStorage[IMPORTED_FLAG];
   }
-  set _imported(v) {
+  set _imported(v: number) {
     window.localStorage[IMPORTED_FLAG] = v;
   }
 
@@ -83,19 +88,21 @@ export class NgxRxdbService {
     try {
       const dbConfig = NgxRxdbService.mergeConfig(config);
       await loadRxDBPlugins();
-      const db: RxDatabase = await createRxDatabase(dbConfig);
+      const db: RxDatabase = await createRxDatabase(dbConfig).catch(e => {
+        throw new NgxRxdbError(e.message ?? e);
+      });
       this.dbInstance = db;
-      logFn(`created database ${this.db.name}`);
+      debug(`created database ${this.db.name}`);
 
       if (dbConfig.multiInstance) {
         await this.dbInstance.waitForLeadership();
-        logFn(`database isLeader now`);
+        debug(`database isLeader now`);
       }
 
       // optional: can create collections from root config
       if (!isEmpty(dbConfig.options?.schemas)) {
         const bulk = await this.initCollections(dbConfig.options.schemas);
-        logFn(`created ${Object.keys(bulk).length} collections bulk: ${Object.keys(bulk)}`);
+        debug(`created ${Object.keys(bulk).length} collections bulk: ${Object.keys(bulk)}`);
       }
       if (dbConfig.options?.dumpPath) {
         // fetch dump json
@@ -127,7 +134,7 @@ export class NgxRxdbService {
       if (colConfig.options?.recreate) {
         await col.remove();
       }
-      logFn('collection', col.name, 'exists, skip create');
+      debug('collection', col.name, 'exists, skip create');
       return col;
     }
 
@@ -135,13 +142,13 @@ export class NgxRxdbService {
       [colConfig.name]: colConfig,
     });
     col = (await this.dbInstance.addCollections(colCreator))[colConfig.name];
-    logFn(`created collection "${col.name}"`);
+    debug(`created collection "${col.name}"`);
 
     if (colConfig.options?.initialDocs) {
       const info = await col.info();
       const count = await col.countAllDocuments();
       if (!count && info.update_seq <= 1) {
-        logFn(`collection "${col.name}" has "${parseInt(count, 0)}" docs`);
+        debug(`collection "${col.name}" has "${parseInt(count, 0)}" docs`);
         // preload data into collection
         const dump = new NgxRxdbCollectionDump({
           name: col.name,
@@ -149,7 +156,7 @@ export class NgxRxdbService {
           docs: colConfig.options.initialDocs,
         });
         await col.importDump(dump);
-        logFn(
+        debug(
           `imported ${colConfig.options.initialDocs.length} docs for collection "${col.name}"`
         );
       }
@@ -163,7 +170,7 @@ export class NgxRxdbService {
     if (isRxCollection(collection)) {
       return collection;
     } else {
-      logFn(`returned false for RxDB.isRxCollection(${name})`);
+      debug(`returned false for RxDB.isRxCollection(${name})`);
       return null;
     }
   }
@@ -214,7 +221,7 @@ export class NgxRxdbService {
         const sync = this.syncCollection(col, remoteDbName, customHeaders);
         replicationStates.push(sync);
       });
-    logFn('syncAllCollections = ', replicationStates);
+    debug('syncAllCollections = ', replicationStates);
     return replicationStates;
   }
 

@@ -11,10 +11,9 @@ import {
 import { from } from 'rxjs';
 import { NgxRxdbAsyncNoZonePipe } from './rxdb-async-no-zone.pipe';
 import { NgxRxdbCollectionService } from './rxdb-collection.service';
-import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.d';
+import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.model';
 import { NgxRxdbService } from './rxdb.service';
 import { RXDB_CONFIG } from './rxdb.token';
-import { noop } from './utils';
 
 /** run at APP_INITIALIZER cycle */
 export function dbInitializerFactory(
@@ -166,6 +165,6 @@ export class NgxRxdbModule {
 export class NgxRxdbFeatureModule {
   /** also init collection via loader */
   constructor(public collectionService: NgxRxdbCollectionService<any>) {
-    this.collectionService.initialized$().subscribe(noop);
+    this.collectionService.initialized$().subscribe();
   }
 }

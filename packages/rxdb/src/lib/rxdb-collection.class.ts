@@ -6,8 +6,9 @@ import {
   RxDumpCollectionAny,
   RxDumpDatabaseAny,
   RxJsonSchema,
-} from 'rxdb';
-import { NgxRxdbCollectionConfig } from './rxdb.d';
+} from 'rxdb/plugins/core';
+import { NgxRxdbCollectionConfig } from './rxdb.model';
+import { AnyFn } from './types';
 
 export async function infoFn() {
   return await (this.pouch as PouchDBInstance).info();
@@ -68,7 +69,7 @@ export class NgxRxdbDump implements RxDumpDatabaseAny<any> {
     Object.assign(this, data);
   }
 }
-export class NgxRxdbCollectionDump<T = AnyObject> implements RxDumpCollectionAny<T> {
+export class NgxRxdbCollectionDump<T = any> implements RxDumpCollectionAny<T> {
   encrypted = false;
   passwordHash = null;
   schemaHash: string;
