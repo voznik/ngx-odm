@@ -220,7 +220,9 @@
             "tsConfig": "tools/tsconfig.compodoc.json",
             "outputPath": "dist/demo/documentation",
             "theme": "readthedocs",
-            "unitTestCoverage": "coverage/coverage-summary.json",
+            "workspaceDocs": true,
+            "assetsFolder": "dist/demo/assets",
+            "??:unitTestCoverage": "coverage/packages/rxdb-coverage-summary.json",
             "navTabConfig": [],
             "toggleMenuItems": ["all"],
             "hideGenerator": true,
@@ -231,7 +233,7 @@
             "disableRoutesGraph": true,
             "disableStyleTab": true,
             "disableGraph": false,
-            "silent": true
+            "silent": false
           },
           "configurations": {
             "json": {

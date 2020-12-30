@@ -46,7 +46,6 @@
     "prettier": "prettier",
     "ng-high-memory": "node --max_old_space_size=8192 ./node_modules/@angular/cli/bin/ng",
     "postinstall": "node ./decorate-angular-cli.js && npm run ngcc",
-    "postbuild": "node ./tools/scripts/postbuild_replace.js",
     "ngcc": "ngcc --properties es2015 browser module main --first-only --create-ivy-entry-points",
     "start": "nx serve",
     "build:prod": "npm run ng-high-memory -- build --prod",
@@ -55,6 +54,7 @@
     "packages:test:merge": "./node_modules/.bin/lcov-result-merger 'coverage/packages/*.lcov' coverage/lcov.info",
     "packages:lint": "npm run nx -- run-many --target=lint --projects=rxdb,kinto",
     "packages:build": "npm run nx -- run-many --target=build --projects=rxdb,kinto --prod",
+    "packages:docs": "nx run demo:build --prod && nx run tools:compodoc",
     "packages:publish": "ts-node tools/scripts/publish-tagged-builds.ts",
     "packages:publish:dev": "ts-node tools/scripts/publish-dev-builds.ts",
     "test": "nx test",
@@ -78,7 +78,6 @@
     "update": "ng update @nrwl/workspace",
     "workspace-schematic": "nx workspace-schematic",
     "dep-graph": "nx dep-graph",
-    "compodoc": "nx run tools:compodoc",
     "deprecated::compodoc": "node node_modules/.bin/compodoc -c .compodocrc.json -p ./tools/tsconfig.compodoc.json"
   },
   "dependencies": {
