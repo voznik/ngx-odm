@@ -48,3 +48,19 @@ export class NgxRxdbError extends Error {
     Object.setPrototypeOf(this, NgxRxdbError.prototype);
   }
 }
+
+declare let jest: any;
+/** See https://github.com/angular/angular/issues/25837 */
+function setupNavigationWarnStub() {
+  const warn = console.warn;
+  jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
+    const [firstArg] = args;
+    if (
+      typeof firstArg === 'string' &&
+      firstArg.startsWith('Navigation triggered outside Angular zone')
+    ) {
+      return;
+    }
+    return warn.apply(console, args);
+  });
+}

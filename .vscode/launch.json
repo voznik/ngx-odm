@@ -83,11 +83,11 @@
   ],
   "inputs": [
     {
-      "options": ["demo", "rxdb", "kinto"],
+      "options": ["rxdb", "kinto"],
       "id": "libName",
       "type": "pickString",
-      "default": "demo",
-      "description": "The lib name"
+      "default": "rxdb",
+      "description": "Package name"
     }
   ]
 }

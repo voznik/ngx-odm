@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
+import { ApplicationInitStatus } from '@angular/core';
 import { TestBed, waitForAsync } from '@angular/core/testing';
+import { TEST_DB_CONFIG_1, TEST_DB_CONFIG_2 } from './rxdb.mock';
 import { NgxRxdbModule } from './rxdb.module';
 import { NgxRxdbService } from './rxdb.service';
-import { TEST_DB_CONFIG_1, TEST_DB_CONFIG_2 } from './rxdb.mock';
-import { ApplicationInitStatus } from '@angular/core';
 
 describe('NgxRxdbService', () => {
   let service: NgxRxdbService;

@@ -1,6 +1,7 @@
 import { ApplicationInitStatus } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NgxRxdbCollectionService } from './rxdb-collection.service';
+import { MockNgxRxdbService } from './rxdb.mock';
 import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.model';
 import { NgxRxdbFeatureModule, NgxRxdbModule } from './rxdb.module';
 import { NgxRxdbService } from './rxdb.service';
@@ -8,14 +9,6 @@ import { RXDB_CONFIG } from './rxdb.token';
 
 const TEST_DB_CONFIG: NgxRxdbConfig = { name: 'test', adapter: 'memory' };
 const TEST_FEATURE_CONFIG: NgxRxdbCollectionConfig = { name: 'feature' };
-class NgxRxdbServiceMock implements Partial<NgxRxdbService> {
-  db = {} as any;
-  collections = {} as any;
-
-  initDb = () => Promise.resolve();
-  initCollection = (c = {} as any) => Promise.resolve({} as any);
-  getCollection = (n: string) => ({} as any);
-}
 
 describe('NgxRxdbModule', () => {
   describe('NgxRxdbModule :: init w/o forRoot', () => {
@@ -60,7 +53,7 @@ describe('NgxRxdbModule', () => {
     beforeEach(() => {
       TestBed.configureTestingModule({
         imports: [NgxRxdbModule.forRoot(TEST_DB_CONFIG)],
-        providers: [{ provide: NgxRxdbService, useClass: NgxRxdbServiceMock }],
+        providers: [{ provide: NgxRxdbService, useClass: MockNgxRxdbService }],
       });
     });
 
@@ -86,7 +79,7 @@ describe('NgxRxdbModule', () => {
           NgxRxdbModule.forRoot(TEST_DB_CONFIG),
           NgxRxdbModule.forFeature(TEST_FEATURE_CONFIG),
         ],
-        providers: [{ provide: NgxRxdbService, useClass: NgxRxdbServiceMock }],
+        providers: [{ provide: NgxRxdbService, useClass: MockNgxRxdbService }],
       });
       dbService = TestBed.inject(NgxRxdbService);
       collectionService = TestBed.inject(NgxRxdbCollectionService);

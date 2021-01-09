@@ -61,13 +61,6 @@ export class NgxRxdbService {
     return this.db.collections;
   }
 
-  get _imported() {
-    return window.localStorage[IMPORTED_FLAG];
-  }
-  set _imported(v: number) {
-    window.localStorage[IMPORTED_FLAG] = v;
-  }
-
   constructor() {
     this._imported = window.localStorage[IMPORTED_FLAG];
   }
@@ -105,12 +98,7 @@ export class NgxRxdbService {
         debug(`created ${Object.keys(bulk).length} collections bulk: ${Object.keys(bulk)}`);
       }
       if (dbConfig.options?.dumpPath) {
-        // fetch dump json
-        const dump = await (await fetch(dbConfig.options.dumpPath)).json();
-        // import only new dump
-        if (!this._imported || this._imported !== dump.timestamp?.toString()) {
-          await this.importDbDump(dump);
-        }
+        await this.importDbDump(dbConfig.options.dumpPath);
       }
     } catch (error) {
       throw new NgxRxdbError(error.message ?? error);
@@ -128,49 +116,40 @@ export class NgxRxdbService {
   }
 
   async initCollection(colConfig: NgxRxdbCollectionConfig) {
-    let col: RxCollection = this.getCollection(colConfig.name);
-    if (isRxCollection(col)) {
-      // delete  data in collection if exists
-      if (colConfig.options?.recreate) {
-        await col.remove();
+    let col = this.getCollection(colConfig.name);
+    try {
+      if (col) {
+        // delete  data in collection if exists
+        if (colConfig.options?.recreate) {
+          await col.remove();
+        }
+        debug('collection', col.name, 'exists, skip create');
+        return col;
       }
-      debug('collection', col.name, 'exists, skip create');
+
+      const colCreator = await this.prepareCollections({
+        [colConfig.name]: colConfig,
+      });
+      const res = await this.dbInstance.addCollections(colCreator);
+      col = res[colConfig.name];
+      debug(`created collection "${col.name}"`);
+
+      if (colConfig.options?.initialDocs) {
+        await this.importColDump(col, colConfig.options.initialDocs);
+      }
+
       return col;
+    } catch (error) {
+      throw new NgxRxdbError(error.message ?? error);
     }
-
-    const colCreator = await this.prepareCollections({
-      [colConfig.name]: colConfig,
-    });
-    col = (await this.dbInstance.addCollections(colCreator))[colConfig.name];
-    debug(`created collection "${col.name}"`);
-
-    if (colConfig.options?.initialDocs) {
-      const info = await col.info();
-      const count = await col.countAllDocuments();
-      if (!count && info.update_seq <= 1) {
-        debug(`collection "${col.name}" has "${parseInt(count, 0)}" docs`);
-        // preload data into collection
-        const dump = new NgxRxdbCollectionDump({
-          name: col.name,
-          schemaHash: col.schema.hash,
-          docs: colConfig.options.initialDocs,
-        });
-        await col.importDump(dump);
-        debug(
-          `imported ${colConfig.options.initialDocs.length} docs for collection "${col.name}"`
-        );
-      }
-    }
-
-    return col;
   }
 
-  getCollection(name: string): RxCollection {
-    const collection: RxCollection = this.db[name];
+  getCollection(name: string): RxCollection | null {
+    const collection = this.db?.[name];
     if (isRxCollection(collection)) {
       return collection;
     } else {
-      debug(`returned false for RxDB.isRxCollection(${name})`);
+      debug(`returned [false] for RxDB.isRxCollection(${name})`);
       return null;
     }
   }
@@ -228,18 +207,48 @@ export class NgxRxdbService {
   /**
    * imports pouchdb dump to the database, must be used only after db init
    */
-  async importDbDump(dump: Partial<NgxRxdbDump>) {
+  async importDbDump(dumpPath: string) {
     try {
-      await this.db.importDump(this.prepareDbDump(dump));
-      this._imported = dump.timestamp;
+      const dump = await this.prepareDbDump(dumpPath);
+      // import only new dump
+      if (!this._imported || this._imported !== dump.timestamp) {
+        await this.db.importDump(dump);
+        this._imported = dump.timestamp;
+        debug(`imported dump for db "${this.db.name}"`);
+      }
     } catch (error) {
       if (error.status !== 409) {
         throw new NgxRxdbError(error.message ?? error);
       } else {
         // impoted but were conflicts with old docs - mark as imported
-        this._imported = dump.timestamp;
+        this._imported = Date.now(); // dump.timestamp;
       }
     }
+  }
+
+  async importColDump(col: RxCollection, initialDocs: any[]) {
+    if (initialDocs.length) {
+      const info = await col.info();
+      const count = await col.countAllDocuments();
+      if (!count && info.update_seq <= 1) {
+        debug(`collection "${col.name}" has "${parseInt(count, 0)}" docs`);
+        // preload data into collection
+        const dump = new NgxRxdbCollectionDump({
+          name: col.name,
+          schemaHash: col.schema.hash,
+          docs: initialDocs,
+        });
+        await col.importDump(dump);
+        debug(`imported ${initialDocs.length} docs for collection "${col.name}"`);
+      }
+    }
+  }
+
+  private get _imported() {
+    return window.localStorage[IMPORTED_FLAG];
+  }
+  private set _imported(v: number) {
+    window.localStorage[IMPORTED_FLAG] = v;
   }
 
   private async prepareCollections(
@@ -265,7 +274,9 @@ export class NgxRxdbService {
   }
 
   /** change schemaHashes from dump to existing schema hashes */
-  private prepareDbDump(dumpObj: Partial<NgxRxdbDump>): NgxRxdbDump {
+  private async prepareDbDump(dumpPath: string): Promise<NgxRxdbDump> {
+    // fetch dump json
+    const dumpObj = await (await fetch(dumpPath)).json();
     const dumpWithHashes = new NgxRxdbDump(dumpObj);
     if (isEmpty(this.collections)) {
       throw new NgxRxdbError('collections must be initialized before importing');

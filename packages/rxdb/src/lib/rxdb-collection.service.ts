@@ -16,7 +16,7 @@ import { NgxRxdbCollectionDump } from './rxdb-collection.class';
 import { NgxRxdbCollectionConfig } from './rxdb.model';
 import { NgxRxdbService } from './rxdb.service';
 import type { AnyAsyncResult, AnyObject, FunctionPropertyNames } from './types';
-import { logFn } from './utils';
+import { logFn, NgxRxdbError } from './utils';
 
 const debug = logFn('NgxRxdbCollectionService');
 
@@ -70,7 +70,8 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
         this._init$.complete();
       })
       .catch(e => {
-        debug('initCollection error', e);
+        debug('initCollection error');
+        // throw new NgxRxdbError(e.message ?? e);
       });
     return this._init$.asObservable();
   }
@@ -121,7 +122,7 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
   }
 
   get(id: string): Observable<RxDocument<T>> {
-    return this.initialized$().pipe(switchMap(() => this.collection.findOne(id).exec()));
+    return this.initialized$().pipe(switchMap(() => this.collection.findOne(id).$));
   }
 
   insert(data: T): Observable<RxDocument<T>> {
