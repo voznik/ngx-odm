@@ -1,6 +1,6 @@
 // TODO: review https://github.com/Angular-RU/angular-jest-utils/blob/master/src/create-ts-jest-config.ts
 
-const CI = process.env['CI'] === 'true';
+const CI = process.env['CI'] || true;
 
 /* if (!CI) {
   console.log('[DEBUG]: moduleNameMapper');
@@ -52,7 +52,7 @@ module.exports = {
    * Because this retrofits all executed files with coverage collection statements,
    * it may significantly slow down your tests.
    */
-  collectCoverage: true, // CI,
+  collectCoverage: CI,
   coverageReporters: ['json-summary', 'json', 'lcovonly', 'lcov', 'text-summary', 'html'],
   passWithNoTests: true,
   // A set of global variables that need to be available in all test environments

@@ -69,7 +69,7 @@ import '@babel/polyfill';
 (window as any).process = {
   env: {
     DEBUG: true,
-    TEST: undefined,
+    // TEST: undefined,
   },
 };
 // https://github.com/pouchdb/pouchdb/issues/8206#issuecomment-722996015

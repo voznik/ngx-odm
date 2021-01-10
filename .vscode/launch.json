@@ -13,6 +13,7 @@
       "stopOnEntry": false,
       "protocol": "inspector"
     },
+    //
     {
       "type": "chrome",
       "request": "attach",
@@ -21,6 +22,7 @@
       "sourceMaps": true,
       "webRoot": "${workspaceRoot}"
     },
+    //
     {
       "name": "Jest: Nx: All",
       "type": "node",
@@ -38,6 +40,7 @@
       "internalConsoleOptions": "neverOpen",
       "disableOptimisticBPs": true
     },
+    //
     {
       "name": "Jest: Nx: Current File",
       "type": "node",
@@ -45,18 +48,24 @@
       "program": "${workspaceFolder}/node_modules/@angular/cli/bin/ng",
       "args": [
         "test",
+        // "${relativeFile}",
         "${input:libName}",
         "--codeCoverage=false",
         "--testFile=${fileBasenameNoExtension}",
         "--watchAll",
-        "--colors",
-        "--runInBand=true"
+        "--colors"
       ],
+      "env": {
+        "NODE_ENV": "development",
+        "DEBUG": "true",
+        "TEST": "true"
+      },
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "disableOptimisticBPs": true
     },
+    //
     {
       "name": "Tools: Ts-Node: Current File",
       "type": "node",
@@ -79,11 +88,11 @@
   ],
   "inputs": [
     {
-      "options": ["demo", "rxdb", "kinto"],
+      "options": ["rxdb", "kinto"],
       "id": "libName",
       "type": "pickString",
-      "default": "demo",
-      "description": "The lib name"
+      "default": "rxdb",
+      "description": "Package name"
     }
   ]
 }

@@ -1,13 +1,14 @@
+/* eslint-disable no-console */
 import { Injectable } from '@angular/core';
 import { NgxRxdbCollectionService } from '@ngx-odm/rxdb';
-import { BehaviorSubject, Observable, iif } from 'rxjs';
+import { Observable, ReplaySubject } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { v4 as uuid } from 'uuid';
 import { Todo, TodosFilter } from '../models';
 
 @Injectable()
 export class TodosService {
-  private _filter$ = new BehaviorSubject<TodosFilter>('ALL');
+  private _filter$ = new ReplaySubject<TodosFilter>();
   filter$ = this._filter$.asObservable();
 
   constructor(private collectionService: NgxRxdbCollectionService<Todo>) {}
@@ -53,7 +54,7 @@ export class TodosService {
   }
 
   toggle(id: string, completed: boolean): void {
-    this.collectionService.update(id, { completed }).subscribe();
+    this.collectionService.set(id, { completed }).subscribe();
   }
 
   remove(id: string): void {
@@ -63,17 +64,20 @@ export class TodosService {
   removeCompletedTodos(): void {
     const rulesObject = { selector: { completed: true } };
     this.collectionService
-      .removeBulkBy(rulesObject)
+      .removeBulk(rulesObject)
       .subscribe(res => this.changeFilter('ALL'));
   }
 
   restoreFilter(): void {
-    const filterValue = localStorage.getItem('todosFilter') || 'ALL';
-    this.changeFilter(filterValue as TodosFilter);
+    this.collectionService.getLocal('local').subscribe((local: any) => {
+      const filterValue = local?.get('filterValue');
+      this.changeFilter(filterValue || 'ALL');
+    });
   }
 
   changeFilter(filterValue: TodosFilter): void {
-    localStorage.setItem('todosFilter', filterValue);
-    this._filter$.next(filterValue);
+    this.collectionService.upsertLocal('local', { filterValue }).subscribe(local => {
+      this._filter$.next(filterValue);
+    });
   }
 }
