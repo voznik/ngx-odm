@@ -4,13 +4,7 @@
   "extends": ["prettier", "prettier/@typescript-eslint"],
   "plugins": ["prettier", "@nrwl/nx"],
   "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "sourceType": "module",
-    "project": ["./tsconfig.base.json", "packages/**/tsconfig.json"],
-    "tsconfigRootDir": "./",
-    "warnOnUnsupportedTypeScriptVersion": false,
-    "EXPERIMENTAL_useSourceOfProjectReferenceRedirect": true
-  },
+
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],

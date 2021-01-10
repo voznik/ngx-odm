@@ -10,7 +10,7 @@ import { RxDBNoValidatePlugin } from 'rxdb/plugins/no-validate';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
 import { RxDBReplicationPlugin } from 'rxdb/plugins/replication';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
-import { isDevMode, isTestMode, logFn, NgxRxdbError } from './utils';
+import { isDevMode, logFn, NgxRxdbError } from './utils';
 
 const debug = logFn('NgxRxdb PluginLoader');
 
@@ -30,11 +30,6 @@ export async function loadRxDBPlugins(): Promise<void> {
     addRxPlugin(RxDBMigrationPlugin);
     addRxPlugin(RxDBUpdatePlugin);
 
-    /** * to reduce the build-size, we use some plugins in dev-mode only */
-    if (isTestMode()) {
-      debug('load test plugins');
-      await import('pouchdb-adapter-memory').then(module => addRxPlugin(module));
-    }
     /** * to reduce the build-size, we use some plugins in dev-mode only */
     if (isDevMode()) {
       debug('load dev plugins');

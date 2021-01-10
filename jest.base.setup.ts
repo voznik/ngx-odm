@@ -50,3 +50,18 @@ if (CI) {
     jest.spyOn(global.console, methodName as any).mockImplementation(() => jest.fn());
   });
 }
+
+// https://github.com/angular/angular/issues/20827#issuecomment-394487432
+(window as any)['__zone_symbol__supportWaitUnResolvedChainedPromise'] = true;
+/* import 'zone.js/dist/zone-testing';
+import { getTestBed } from '@angular/core/testing';
+import {
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting,
+} from '@angular/platform-browser-dynamic/testing';
+
+// First, initialize the Angular testing environment.
+getTestBed().initTestEnvironment(
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting()
+); */

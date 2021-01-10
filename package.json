@@ -157,6 +157,7 @@
     "lint-staged": "10.5.3",
     "ng-packagr": "11.0.3",
     "nyc": "^15.1.0",
+    "pouchdb-adapter-node-websql": "^7.0.0",
     "prettier": "2.2.1",
     "rimraf": "3.0.2",
     "semver": "^7.3.4",

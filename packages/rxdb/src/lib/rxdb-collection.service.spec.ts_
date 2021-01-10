@@ -1,21 +1,86 @@
 /* eslint-disable @angular-eslint/directive-class-suffix */
-import { ApplicationInitStatus } from '@angular/core';
-import { TestBed, waitForAsync } from '@angular/core/testing';
-import { addRxPlugin } from 'rxdb/plugins/core';
-import { Observable } from 'rxjs';
+/* eslint-disable no-console */
+import {
+  ApplicationInitStatus,
+  Directive,
+  Injectable,
+  InjectFlags,
+  NgModule,
+  NgModuleFactoryLoader,
+  NgZone,
+} from '@angular/core';
+import {
+  fakeAsync,
+  flush,
+  flushMicrotasks,
+  TestBed,
+  tick,
+  waitForAsync,
+} from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { addRxPlugin, RxCollection } from 'rxdb/plugins/core';
+import { Observable, of } from 'rxjs';
+import * as _async from 'rxjs/scheduler/async';
 import { NgxRxdbCollectionService } from './rxdb-collection.service';
-import { MockNgxRxdbService, TEST_DB_CONFIG_2, TEST_FEATURE_CONFIG_1 } from './rxdb.mock';
-import { NgxRxdbModule } from './rxdb.module';
+import {
+  MockNgxRxdbService,
+  TEST_DB_CONFIG_1,
+  TEST_DB_CONFIG_2,
+  TEST_FEATURE_CONFIG_1,
+} from './rxdb.mock';
+import { NgxRxdbFeatureModule, NgxRxdbModule } from './rxdb.module';
 import { NgxRxdbService } from './rxdb.service';
 
 addRxPlugin(require('pouchdb-adapter-node-websql'));
+// jest.mock('./rxdb.service');
 
 describe(`NgxRxdbCollectionService`, () => {
+  /* beforeAll(async () => {
+    if (isTestMode()) {
+      await import('pouchdb-adapter-memory').then(module => addRxPlugin(module));
+    }
+  }); */
+
   describe(`test methods using mock NgxRxdbService`, () => {
     let dbService: NgxRxdbService;
     let service: NgxRxdbCollectionService;
 
     beforeEach(() => {
+      // setupNavigationWarnStub();
+      /*
+    @Directive({ selector: 'lazy' })
+    class LazyComponent {}
+
+    @NgModule({
+      declarations: [LazyComponent],
+      imports: [NgxRxdbModule.forFeature(TEST_FEATURE_CONFIG_1)],
+    })
+    class LazyModule {}
+    const lazyModuleRoute = [
+      {
+        path: 'todos',
+        loadChildren: () => Promise.resolve(LazyModule),
+      },
+    ];
+
+    let ngZone: NgZone;
+    let router: Router;
+    TestBed.configureTestingModule({
+      imports: [
+        RouterTestingModule.withRoutes([]),
+        NgxRxdbModule.forRoot(TEST_DB_CONFIG_1),
+      ],
+      providers: [
+        { provide: NgxRxdbService, useClass: MockNgxRxdbService },
+        NgxRxdbCollectionService,
+      ],
+    });
+    ngZone = TestBed.inject(NgZone);
+    router = TestBed.inject(Router);
+    dbService = TestBed.inject(NgxRxdbService);
+    await TestBed.inject(ApplicationInitStatus).donePromise; */
+
       dbService = new MockNgxRxdbService();
       service = new NgxRxdbCollectionService(dbService, TEST_FEATURE_CONFIG_1);
     });
@@ -114,6 +179,38 @@ describe(`NgxRxdbCollectionService`, () => {
         expect(result).toBeDefined();
       });
     });
+
+    /** FIXME: I can't write test for lazy module ;(   */
+    /* it(
+    `should init database ONLY`,
+    waitForAsync(() => {
+      expect(dbService).toBeDefined();
+      expect(dbService.db).toBeDefined();
+      // expect(service).toBeUndefined();
+    })
+  ); */
+    /* xit(
+    `should provide itself via lazy-loaded feature module`,
+    waitForAsync(() => {
+      ngZone.run(() => {
+        router.initialNavigation();
+        router.resetConfig(lazyModuleRoute);
+        router.navigateByUrl('/todos').then(r => {
+          tick(250);
+          flushMicrotasks();
+          expect(NgxRxdbFeatureModule).toBeDefined();
+          service = TestBed.inject(
+            NgxRxdbCollectionService,
+            new NgxRxdbCollectionService(dbService, TEST_FEATURE_CONFIG_1),
+            InjectFlags.Self
+          );
+          expect(service).toBeDefined();
+          // expect(initializedSpy).toHaveBeenCalled();
+          flush();
+        });
+      });
+    })
+  ); */
   });
 
   describe(`test init by db config`, () => {

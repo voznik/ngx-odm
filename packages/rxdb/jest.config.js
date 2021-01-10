@@ -3,6 +3,13 @@ module.exports = {
   name: '@ngx-odm/rxdb',
   preset: '../../jest.config.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(pouchdb-adapter-asyncstorage)/)',
+    //
+  ],
+  moduleNameMapper: {
+    // 'my-module.js': '<rootDir>/path/to/my-module.js',
+  },
   globals: {
     'ts-jest': {
       tsConfig: '<rootDir>/tsconfig.spec.json',

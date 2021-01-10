@@ -19,11 +19,11 @@ export function noop(): void {
 
 /** @internal */
 export function isDevMode(): boolean {
-  return (window as any).process?.env?.DEBUG;
+  return process?.env?.DEBUG || (window as any).process?.env?.DEBUG;
 }
 
 export function isTestMode(): boolean {
-  return (window as any).process?.env?.TEST;
+  return process?.env?.TEST || (window as any).process?.env?.TEST;
 }
 
 /** @internal */
@@ -49,10 +49,12 @@ export class NgxRxdbError extends Error {
   }
 }
 
-declare let jest: any;
+// eslint-disable-next-line no-var
+declare var jest: any;
 /** See https://github.com/angular/angular/issues/25837 */
-function setupNavigationWarnStub() {
+export function setupNavigationWarnStub() {
   const warn = console.warn;
+  const error = console.error;
   jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
     const [firstArg] = args;
     if (
@@ -62,5 +64,12 @@ function setupNavigationWarnStub() {
       return;
     }
     return warn.apply(console, args);
+  });
+  jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
+    const [firstArg] = args;
+    if (typeof firstArg === 'string' && firstArg.startsWith('Attempted to log "[DEBUG')) {
+      return;
+    }
+    return error.apply(console, args);
   });
 }

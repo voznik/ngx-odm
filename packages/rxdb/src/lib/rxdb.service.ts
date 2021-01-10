@@ -74,17 +74,16 @@ export class NgxRxdbService {
   }
 
   /**
-   * This is run via APP_INITIALIZER in app.module.ts
+   * Runs via APP_INITIALIZER in app.module.ts
    * to ensure the database exists before the angular-app starts up
    */
   async initDb(config: NgxRxdbConfig) {
     try {
       const dbConfig = NgxRxdbService.mergeConfig(config);
       await loadRxDBPlugins();
-      const db: RxDatabase = await createRxDatabase(dbConfig).catch(e => {
+      this.dbInstance = await createRxDatabase(dbConfig).catch(e => {
         throw new NgxRxdbError(e.message ?? e);
       });
-      this.dbInstance = db;
       debug(`created database ${this.db.name}`);
 
       if (dbConfig.multiInstance) {
@@ -97,6 +96,8 @@ export class NgxRxdbService {
         const bulk = await this.initCollections(dbConfig.options.schemas);
         debug(`created ${Object.keys(bulk).length} collections bulk: ${Object.keys(bulk)}`);
       }
+
+      // optional: can import dump from remote file
       if (dbConfig.options?.dumpPath) {
         await this.importDbDump(dbConfig.options.dumpPath);
       }

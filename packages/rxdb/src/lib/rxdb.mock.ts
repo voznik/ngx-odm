@@ -1,7 +1,13 @@
+import { ensureDirSync } from 'fs-extra';
+import { resolve } from 'path';
 import { RxCollection, RxCollectionCreator, RxJsonSchema } from 'rxdb/plugins/core';
 import { of } from 'rxjs';
-import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.model';
+import { NgxRxdbConfig } from './rxdb.model';
 import { NgxRxdbService } from './rxdb.service';
+
+const rootDir = resolve(__dirname, '../../../../');
+const dbPath = resolve(rootDir, 'tmp', 'websql', 'test');
+ensureDirSync(dbPath);
 
 export const TEST_SCHEMA: RxJsonSchema = {
   type: 'object',
@@ -34,14 +40,14 @@ export const TEST_FEATURE_CONFIG_1: RxCollectionCreator = {
 };
 
 export const TEST_DB_CONFIG_1: NgxRxdbConfig = {
-  name: 'test1',
-  adapter: 'memory',
+  name: dbPath, // 'test',
+  adapter: 'websql',
   multiInstance: false,
   ignoreDuplicate: true,
 };
 export const TEST_DB_CONFIG_2: NgxRxdbConfig = {
-  name: 'test2',
-  adapter: 'memory',
+  name: dbPath, // 'test',
+  adapter: 'websql',
   multiInstance: false,
   ignoreDuplicate: true,
   options: {

@@ -1,16 +1,19 @@
 import { ApplicationInitStatus } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { TestBed, waitForAsync } from '@angular/core/testing';
 import { NgxRxdbCollectionService } from './rxdb-collection.service';
-import { MockNgxRxdbService } from './rxdb.mock';
-import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.model';
+import { MockNgxRxdbService, TEST_DB_CONFIG_1, TEST_FEATURE_CONFIG_1 } from './rxdb.mock';
+import { addRxPlugin } from 'rxdb/plugins/core';
 import { NgxRxdbFeatureModule, NgxRxdbModule } from './rxdb.module';
 import { NgxRxdbService } from './rxdb.service';
 import { RXDB_CONFIG } from './rxdb.token';
+import { setupNavigationWarnStub } from './utils';
 
-const TEST_DB_CONFIG: NgxRxdbConfig = { name: 'test', adapter: 'memory' };
-const TEST_FEATURE_CONFIG: NgxRxdbCollectionConfig = { name: 'feature' };
+addRxPlugin(require('pouchdb-adapter-node-websql'));
 
 describe('NgxRxdbModule', () => {
+  beforeAll(() => {
+    setupNavigationWarnStub();
+  });
   describe('NgxRxdbModule :: init w/o forRoot', () => {
     beforeEach(() => {
       TestBed.configureTestingModule({
@@ -36,7 +39,7 @@ describe('NgxRxdbModule', () => {
   describe(`NgxRxdbModule :: forRoot()`, () => {
     beforeEach(() => {
       TestBed.configureTestingModule({
-        imports: [NgxRxdbModule.forRoot(TEST_DB_CONFIG)],
+        imports: [NgxRxdbModule.forRoot(TEST_DB_CONFIG_1)],
       });
     });
 
@@ -52,7 +55,7 @@ describe('NgxRxdbModule', () => {
   describe(`NgxRxdbModule :: init w/o forFeature`, () => {
     beforeEach(() => {
       TestBed.configureTestingModule({
-        imports: [NgxRxdbModule.forRoot(TEST_DB_CONFIG)],
+        imports: [NgxRxdbModule.forRoot(TEST_DB_CONFIG_1)],
         providers: [{ provide: NgxRxdbService, useClass: MockNgxRxdbService }],
       });
     });
@@ -69,47 +72,36 @@ describe('NgxRxdbModule', () => {
 
   describe(`NgxRxdbModule :: forFeature`, () => {
     let dbService: NgxRxdbService;
-    let collectionService: NgxRxdbCollectionService;
-    // let dbInitSpy;
-    // let collectionLoadedSpy;
+    let dbInitSpy;
 
-    beforeEach(async () => {
+    beforeEach(() => {
       TestBed.configureTestingModule({
         imports: [
-          NgxRxdbModule.forRoot(TEST_DB_CONFIG),
-          NgxRxdbModule.forFeature(TEST_FEATURE_CONFIG),
+          NgxRxdbModule.forRoot(TEST_DB_CONFIG_1),
+          NgxRxdbModule.forFeature(TEST_FEATURE_CONFIG_1),
         ],
         providers: [{ provide: NgxRxdbService, useClass: MockNgxRxdbService }],
       });
       dbService = TestBed.inject(NgxRxdbService);
-      collectionService = TestBed.inject(NgxRxdbCollectionService);
-      // dbInitSpy = jest.spyOn(dbService, 'initDb');
-      // collectionLoadedSpy = jest.spyOn(collectionService, 'collectionLoaded$');
-      await TestBed.inject(ApplicationInitStatus).donePromise;
-      await dbService.initDb(TEST_DB_CONFIG);
+      dbInitSpy = jest.spyOn(dbService, 'initDb');
     });
 
-    it(`should provide collectionConfig & collection service`, () => {
-      expect(NgxRxdbFeatureModule).toBeDefined();
-      expect(TestBed.inject(NgxRxdbCollectionService)).toBeDefined();
-      // expect(dbService.initDb).toHaveBeenCalled();
-    });
-
-    /* it(
-      `should wait for collection loaded`,
-      waitForAsync(
-        inject(
-          [ApplicationInitStatus],
-          (appInitStatus: ApplicationInitStatus) => {
-            appInitStatus.donePromise
-              .then(() => {
-                expect(collectionService.db).toBeDefined();
-                // expect(dbInitSpy).toHaveBeenCalled();
-              })
-              .catch(noop);
-          }
-        )
-      )
-    ); */
+    it(
+      `should init db via dbService`,
+      waitForAsync(async () => {
+        expect(dbInitSpy).toHaveBeenCalled();
+        const calls = dbInitSpy.mock.calls;
+        expect(calls[0].length).toEqual(1);
+        expect(calls[0][0]).toEqual(TEST_DB_CONFIG_1);
+        await Promise.resolve();
+      })
+    );
+    it(
+      `should provide collectionConfig & collection service`,
+      waitForAsync(() => {
+        expect(NgxRxdbFeatureModule).toBeDefined();
+        expect(TestBed.inject(NgxRxdbCollectionService)).toBeDefined();
+      })
+    );
   });
 });
