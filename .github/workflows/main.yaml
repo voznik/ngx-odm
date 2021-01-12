@@ -79,7 +79,7 @@ jobs:
 
   publish:
     # if: github.event.pull_request.merged
-    if: github.event.release.published
+    # if: github.event.release.published
     needs: build
     runs-on: ubuntu-latest
     steps:
