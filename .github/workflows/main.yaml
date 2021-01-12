@@ -67,7 +67,7 @@ jobs:
           # COVERALLS_PARALLEL: true
       # Build if release published
       - name: Build
-        if: github.event.release.published
+        # if: github.event.release.published
         run: npm run packages:build
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
