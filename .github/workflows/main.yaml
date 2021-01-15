@@ -83,19 +83,17 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      # - uses: actions/checkout@v2
       # - name: Download all workflow run artifacts
-      #   uses: actions/download-artifact@v2
+      - uses: actions/cache@v2
+      - uses: actions/download-artifact@v2
       - name: Version and publish
-        ### echo "//registry.npmjs.org/:_authToken=$NPM_API_TOKEN" >> ~/.npmrc
         run: |
           git config user.name $GITHUB_ACTOR
           git config user.email gh-actions-${GITHUB_ACTOR}@github.com
           git remote add gh-origin https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
 
-          npm install
           npm version minor --force -m "v%s" -m "build(*): release new version [build-skip]"
-          npm run packages:build
           git push gh-origin HEAD:master --tags
       - uses: actions/setup-node@v2
         with:

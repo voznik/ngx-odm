@@ -22,7 +22,7 @@ async function main() {
 
   console.log('setting metada for all packages');
 
-  setMetadata();
+  setMetadata(true);
 
   console.log('publishing new version', newVersion);
 

@@ -1,8 +1,8 @@
 import { writeFile } from 'fs';
 import { getPackages } from './utils';
 
-export async function setMetadata() {
-  const ngxJson = require('../../package.json');
+export async function setMetadata(dev = false) {
+  const rootJson = require('../../package.json');
   const keysToCopy = [
     'version',
     'repository',
@@ -22,7 +22,11 @@ export async function setMetadata() {
 
     // copy all meta data from the root package.json into all packages
     for (const key of keysToCopy) {
-      packPackage[key] = ngxJson[key];
+      packPackage[key] = rootJson[key];
+    }
+
+    if (dev) {
+      packPackage.version = `${rootJson.version}-dev`;
     }
 
     // set all the packages peerDependencies to be the same as root package.json version
@@ -30,7 +34,7 @@ export async function setMetadata() {
       if (packPackage.peerDependencies[packageInfo.packageName]) {
         packPackage.peerDependencies[
           packageInfo.packageName
-        ] = `^${ngxJson.version} || ^${ngxJson.version}-dev`;
+        ] = `^${rootJson.version} || ^${rootJson.version}-dev`;
       }
     }
 
@@ -42,5 +46,5 @@ export async function setMetadata() {
     });
   }
 
-  console.log(`package version set to ${ngxJson.version}`);
+  console.log(`package version set to ${rootJson.version}`);
 }
