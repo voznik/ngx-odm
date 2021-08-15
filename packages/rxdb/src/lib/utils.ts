@@ -1,5 +1,10 @@
 import { AnyObject } from './types';
 
+/** Coerces a data-bound value (typically a string) to a boolean. */
+export function coerceBooleanProperty(value: any): boolean {
+  return value != null && `${value}` !== 'false';
+}
+
 /** @internal */
 export function isEmpty(object: AnyObject, deep = false) {
   if (object == null || !object) {
@@ -19,11 +24,17 @@ export function noop(): void {
 
 /** @internal */
 export function isDevMode(): boolean {
-  return process?.env?.DEBUG || (window as any).process?.env?.DEBUG;
+  return (
+    coerceBooleanProperty(process?.env?.DEBUG) ||
+    coerceBooleanProperty((window as any).process?.env?.DEBUG)
+  );
 }
 
 export function isTestMode(): boolean {
-  return process?.env?.TEST || (window as any).process?.env?.TEST;
+  return (
+    coerceBooleanProperty(process?.env?.TEST) ||
+    coerceBooleanProperty((window as any).process?.env?.TEST)
+  );
 }
 
 /** @internal */
