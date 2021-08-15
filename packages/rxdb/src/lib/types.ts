@@ -47,3 +47,5 @@ export type AnyAsyncFn<U = any> = (...args: any[]) => SubscribableOrPromise<U>;
 
 export type AnyAsyncResult<T> = T extends SubscribableOrPromise<infer U> ? U : T;
 export type PromiseReturn<T> = T extends () => Promise<infer I> ? I : never;
+
+export type BooleanInput = string | boolean | null | undefined;
