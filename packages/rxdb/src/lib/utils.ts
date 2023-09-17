@@ -1,4 +1,4 @@
-import { AnyObject } from './types';
+import 'process/browser';
 
 /** Coerces a data-bound value (typically a string) to a boolean. */
 export function coerceBooleanProperty(value: any): boolean {
@@ -6,7 +6,7 @@ export function coerceBooleanProperty(value: any): boolean {
 }
 
 /** @internal */
-export function isEmpty(object: AnyObject, deep = false) {
+export function isEmpty(object: Record<string, any> | null | undefined, deep = false) {
   if (object == null || !object) {
     return true;
   } else {
@@ -24,17 +24,19 @@ export function noop(): void {
 
 /** @internal */
 export function isDevMode(): boolean {
-  return (
-    coerceBooleanProperty(process?.env?.DEBUG) ||
-    coerceBooleanProperty((window as any).process?.env?.DEBUG)
-  );
+  try {
+    return coerceBooleanProperty(process?.env?.DEBUG);
+  } catch (error) {
+    return coerceBooleanProperty((window as any).process?.env?.DEBUG);
+  }
 }
 
 export function isTestMode(): boolean {
-  return (
-    coerceBooleanProperty(process?.env?.TEST) ||
-    coerceBooleanProperty((window as any).process?.env?.TEST)
-  );
+  try {
+    return coerceBooleanProperty(process?.env?.TEST);
+  } catch (error) {
+    return coerceBooleanProperty((window as any).process?.env?.TEST);
+  }
 }
 
 /** @internal */

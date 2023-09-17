@@ -8,13 +8,14 @@ import {
   RxJsonSchema,
 } from 'rxdb/plugins/core';
 import { NgxRxdbCollectionConfig } from './rxdb.model';
-import { AnyFn } from './types';
 
 export async function infoFn() {
+  // @ts-ignore`this` is correct for exported function
   return await (this.pouch as PouchDBInstance).info();
 }
 
 export async function countAllDocumentsFn(): Promise<number> {
+  // @ts-ignore`this` is correct for exported function
   const res = await (this.pouch as PouchDBInstance).allDocs({
     include_docs: false,
     attachments: false,
@@ -24,16 +25,16 @@ export async function countAllDocumentsFn(): Promise<number> {
   return res.rows.length;
 }
 
-export const DEFAULT_INSTANCE_METHODS: Record<string, AnyFn> = {};
-export const DEFAULT_COLLECTION_METHODS: Record<string, AnyFn> = {
+export const DEFAULT_INSTANCE_METHODS: Record<string, Function> = {};
+export const DEFAULT_COLLECTION_METHODS: Record<string, Function> = {
   info: infoFn,
   countAllDocuments: countAllDocumentsFn,
 };
 
 // @dynamic
 export class NgxRxdbCollectionCreator implements RxCollectionCreator {
-  name: string;
-  schema: RxJsonSchema;
+  name!: string;
+  schema!: RxJsonSchema;
   pouchSettings?: NgxRxdbCollectionConfig['pouchSettings'];
   migrationStrategies?: NgxRxdbCollectionConfig['migrationStrategies'];
   statics?: NgxRxdbCollectionConfig['statics'] & keyof typeof DEFAULT_COLLECTION_METHODS;
@@ -59,11 +60,11 @@ export class NgxRxdbCollectionCreator implements RxCollectionCreator {
 
 export class NgxRxdbDump implements RxDumpDatabaseAny<any> {
   name = 'ngx-rxdb-dump';
-  instanceToken: string;
-  timestamp: number;
+  instanceToken!: string;
+  timestamp!: number;
   encrypted = false;
   passwordHash = null;
-  collections: RxDumpCollectionAny<any>[];
+  collections!: RxDumpCollectionAny<any>[];
 
   constructor(data: Partial<NgxRxdbDump>) {
     Object.assign(this, data);
@@ -72,9 +73,9 @@ export class NgxRxdbDump implements RxDumpDatabaseAny<any> {
 export class NgxRxdbCollectionDump<T = any> implements RxDumpCollectionAny<T> {
   encrypted = false;
   passwordHash = null;
-  schemaHash: string;
-  name: string;
-  docs: T[];
+  schemaHash!: string;
+  name!: string;
+  docs!: T[];
 
   constructor(data: Partial<RxDumpCollectionAny<T>>) {
     Object.assign(this, data);

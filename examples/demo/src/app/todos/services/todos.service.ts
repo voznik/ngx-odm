@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
-import { Injectable } from '@angular/core';
-import { NgxRxdbCollectionService } from '@ngx-odm/rxdb';
+import { Inject, Injectable } from '@angular/core';
+import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb';
 import { Observable, ReplaySubject } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { v4 as uuid } from 'uuid';
@@ -11,7 +11,9 @@ export class TodosService {
   private _filter$ = new ReplaySubject<TodosFilter>();
   filter$ = this._filter$.asObservable();
 
-  constructor(private collectionService: NgxRxdbCollectionService<Todo>) {}
+  constructor(
+    @Inject(NgxRxdbCollectionService) private collectionService: NgxRxdbCollection<Todo>
+  ) {}
 
   select(completedOnly = false): Observable<Todo[]> {
     const queryObj = {

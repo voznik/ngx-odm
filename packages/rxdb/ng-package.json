@@ -5,8 +5,7 @@
     "flatModuleFile": "ngx-odm-rxdb",
     "entryFile": "src/index.ts"
   },
-  "whitelistedNonPeerDependencies": [
-    "tslib",
+  "allowedNonPeerDependencies": [
     "pouchdb-adapter-http",
     "pouchdb-adapter-idb",
     "pouchdb-adapter-memory",

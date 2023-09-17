@@ -10,7 +10,11 @@ import {
 } from '@angular/core';
 import { from } from 'rxjs';
 import { NgxRxdbAsyncNoZonePipe } from './rxdb-async-no-zone.pipe';
-import { NgxRxdbCollectionService } from './rxdb-collection.service';
+import {
+  NgxRxdbCollection,
+  NgxRxdbCollectionService,
+  NgxRxdbCollectionServiceImpl,
+} from './rxdb-collection.service';
 import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.model';
 import { NgxRxdbService } from './rxdb.service';
 import { RXDB_CONFIG } from './rxdb.token';
@@ -26,8 +30,8 @@ export function dbInitializerFactory(
 }
 
 export function collectionServiceFactory(config: NgxRxdbCollectionConfig) {
-  return (dbService: NgxRxdbService): NgxRxdbCollectionService =>
-    new NgxRxdbCollectionService(dbService, config);
+  return (dbService: NgxRxdbService): NgxRxdbCollection<any> =>
+    new NgxRxdbCollectionServiceImpl(dbService, config);
 }
 
 /**
@@ -88,6 +92,7 @@ export class NgxRxdbModule {
     return {
       ngModule: NgxRxdbFeatureModule,
       providers: [
+        { provide: RXDB_CONFIG, useValue: collectionConfig, multi: true },
         {
           provide: NgxRxdbCollectionService,
           useFactory: collectionServiceFactory(collectionConfig),
@@ -164,7 +169,9 @@ export class NgxRxdbModule {
 })
 export class NgxRxdbFeatureModule {
   /** also init collection via loader */
-  constructor(public collectionService: NgxRxdbCollectionService<any>) {
+  constructor(
+    @Inject(NgxRxdbCollectionService) public collectionService: NgxRxdbCollection<any>
+  ) {
     this.collectionService.initialized$().subscribe();
   }
 }

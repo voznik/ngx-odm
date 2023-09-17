@@ -46,7 +46,7 @@ export async function loadRxDBPlugins(): Promise<void> {
       // to reduce the build-size
       addRxPlugin(RxDBNoValidatePlugin);
     }
-  } catch (error) {
+  } catch (error: any) {
     throw new NgxRxdbError(error.message ?? error);
   }
 }

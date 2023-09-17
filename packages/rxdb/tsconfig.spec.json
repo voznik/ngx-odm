@@ -7,5 +7,10 @@
     "allowJs": true
   },
   "files": ["src/test-setup.ts"],
-  "include": ["**/*.mock.ts", "**/*.spec.ts", "**/*.spec.tsx", "**/*.d.ts"]
+  "include": [
+    "jest.config.ts",
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.d.ts"
+  ]
 }

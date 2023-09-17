@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  baseUrl: process.env.API_URL || '/api/v1',
+  baseUrl: '/api/v1',
   couchDbRemote: process.env.COUCHDB_SERVER,
   couchDbSyncLive: Boolean(process.env.COUCHDB_SYNC_LIVE),
   couchDbSyncHeartbeat: Boolean(process.env.COUCHDB_SYNC_HEARTBEAT),

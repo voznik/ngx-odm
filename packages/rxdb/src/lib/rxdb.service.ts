@@ -35,16 +35,16 @@ const IMPORTED_FLAG = '_ngx_rxdb_imported';
 
 @Injectable()
 export class NgxRxdbService {
-  private dbInstance: RxDatabase;
+  private dbInstance: RxDatabase | null = null;
 
   private static mergeConfig(config: NgxRxdbConfig): NgxRxdbConfig {
     return Object.assign({}, RXDB_DEFAULT_CONFIG, config);
   }
 
   static getCouchAuthProxyHeaders(
-    userName: string = '',
+    userName = '',
     roles: string[] = [],
-    token: string = ''
+    token = ''
   ): { [h: string]: string } {
     return {
       'X-Auth-CouchDB-UserName': userName,
@@ -54,11 +54,11 @@ export class NgxRxdbService {
   }
 
   get db(): RxDatabase {
-    return this.dbInstance ?? null;
+    return this.dbInstance!;
   }
 
   get collections(): CollectionsOfDatabase {
-    return this.db.collections;
+    return this.db!.collections;
   }
 
   constructor() {
@@ -67,8 +67,8 @@ export class NgxRxdbService {
 
   async destroyDb() {
     try {
-      await this.dbInstance.remove();
-      await this.dbInstance.destroy();
+      await this.dbInstance!.remove();
+      await this.dbInstance!.destroy();
       this.dbInstance = null;
     } catch {}
   }
@@ -92,8 +92,8 @@ export class NgxRxdbService {
       }
 
       // optional: can create collections from root config
-      if (!isEmpty(dbConfig.options?.schemas)) {
-        const bulk = await this.initCollections(dbConfig.options.schemas);
+      if (!isEmpty(dbConfig?.options?.schemas)) {
+        const bulk = await this.initCollections(dbConfig!.options!.schemas!);
         debug(`created ${Object.keys(bulk).length} collections bulk: ${Object.keys(bulk)}`);
       }
 
@@ -101,7 +101,7 @@ export class NgxRxdbService {
       if (dbConfig.options?.dumpPath) {
         await this.importDbDump(dbConfig.options.dumpPath);
       }
-    } catch (error) {
+    } catch (error: any) {
       throw new NgxRxdbError(error.message ?? error);
     }
   }
@@ -110,14 +110,14 @@ export class NgxRxdbService {
   async initCollections(colConfigs: Record<string, NgxRxdbCollectionConfig>) {
     try {
       const colCreators = await this.prepareCollections(colConfigs);
-      return await this.dbInstance.addCollections(colCreators);
-    } catch (error) {
+      return await this.dbInstance!.addCollections(colCreators);
+    } catch (error: any) {
       throw new NgxRxdbError(error.message ?? error);
     }
   }
 
   async initCollection(colConfig: NgxRxdbCollectionConfig) {
-    let col = this.getCollection(colConfig.name);
+    let col = this.getCollection(colConfig!.name!);
     try {
       if (col) {
         // delete  data in collection if exists
@@ -129,10 +129,10 @@ export class NgxRxdbService {
       }
 
       const colCreator = await this.prepareCollections({
-        [colConfig.name]: colConfig,
+        [colConfig!.name!]: colConfig,
       });
-      const res = await this.dbInstance.addCollections(colCreator);
-      col = res[colConfig.name];
+      const res = await this.dbInstance!.addCollections(colCreator);
+      col = res[colConfig!.name!];
       debug(`created collection "${col.name}"`);
 
       if (colConfig.options?.initialDocs) {
@@ -140,7 +140,7 @@ export class NgxRxdbService {
       }
 
       return col;
-    } catch (error) {
+    } catch (error: any) {
       throw new NgxRxdbError(error.message ?? error);
     }
   }
@@ -157,38 +157,39 @@ export class NgxRxdbService {
 
   syncCollection(
     col: RxCollection,
-    remoteDbName: string = 'db',
+    remoteDbName = 'db',
     customHeaders?: Record<string, string>
-  ): RxReplicationState {
-    if (col.options?.syncOptions?.remote) {
-      const { syncOptions } = col.options as NgxRxdbCollectionConfig['options'];
-      syncOptions.remote = syncOptions.remote.concat('/', remoteDbName);
-      // merge options
-      syncOptions.options = Object.assign(
-        {
-          back_off_function: DEFAULT_BACKOFF_FN,
-        },
-        this.db.pouchSettings.ajax,
-        syncOptions.options
-      );
-      // append auth headers
-      if (customHeaders) {
-        (syncOptions.options as any).headers = Object.assign(
-          {},
-          (syncOptions.options as any).headers,
-          customHeaders
-        );
-      }
-      // set filtered sync
-      if (syncOptions.queryObj) {
-        syncOptions.query = col.find(syncOptions.queryObj);
-      }
-      return col.sync(syncOptions);
+  ): RxReplicationState | undefined {
+    if (!col.options?.syncOptions?.remote) {
+      return undefined;
     }
+    const syncOptions = (col.options as NgxRxdbCollectionConfig['options'])!.syncOptions!;
+    syncOptions.remote = syncOptions.remote.concat('/', remoteDbName);
+    // merge options
+    syncOptions.options = Object.assign(
+      {
+        back_off_function: DEFAULT_BACKOFF_FN,
+      },
+      this.db.pouchSettings.ajax,
+      syncOptions.options
+    );
+    // append auth headers
+    if (customHeaders) {
+      (syncOptions.options as any).headers = Object.assign(
+        {},
+        (syncOptions.options as any).headers,
+        customHeaders
+      );
+    }
+    // set filtered sync
+    if (syncOptions.queryObj) {
+      syncOptions.query = col.find(syncOptions.queryObj);
+    }
+    return col.sync(syncOptions);
   }
 
   syncAllCollections(
-    remoteDbName: string = 'db',
+    remoteDbName = 'db',
     customHeaders?: { [h: string]: string }
   ): RxReplicationState[] {
     if (isEmpty(this.collections)) {
@@ -198,7 +199,7 @@ export class NgxRxdbService {
     Object.values(this.collections)
       .filter(col => 'remote' in col.options.syncOptions)
       .forEach(col => {
-        const sync = this.syncCollection(col, remoteDbName, customHeaders);
+        const sync = this.syncCollection(col, remoteDbName, customHeaders)!;
         replicationStates.push(sync);
       });
     debug('syncAllCollections = ', replicationStates);
@@ -217,7 +218,7 @@ export class NgxRxdbService {
         this._imported = dump.timestamp;
         debug(`imported dump for db "${this.db.name}"`);
       }
-    } catch (error) {
+    } catch (error: any) {
       if (error.status !== 409) {
         throw new NgxRxdbError(error.message ?? error);
       } else {
@@ -265,11 +266,11 @@ export class NgxRxdbService {
             config.options.schemaUrl
           );
         }
-        checkSchema(config.schema);
-        colCreators[config.name] = new NgxRxdbCollectionCreator(config);
+        checkSchema(config.schema!);
+        colCreators[config.name!] = new NgxRxdbCollectionCreator(config);
       }
       return colCreators;
-    } catch (error) {
+    } catch (error: any) {
       throw new NgxRxdbError(error.message ?? error);
     }
   }

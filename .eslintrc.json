@@ -1,19 +1,16 @@
 {
   "root": true,
   "ignorePatterns": ["**/*"],
-  "extends": ["prettier", "prettier/@typescript-eslint"],
-  "plugins": ["prettier", "@nrwl/nx"],
-  "parser": "@typescript-eslint/parser",
-
+  "plugins": ["@nx"],
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
       "rules": {
-        "@nrwl/nx/enforce-module-boundaries": [
+        "@nx/enforce-module-boundaries": [
           "error",
           {
             "enforceBuildableLibDependency": true,
-            "allow": ["@ngx-odm/utils", "@ngx-odm/utils/*"],
+            "allow": [],
             "depConstraints": [
               {
                 "sourceTag": "*",
@@ -21,54 +18,25 @@
               }
             ]
           }
-        ],
-        "sort-imports": [
-          "off",
-          {
-            "memberSyntaxSortOrder": ["all", "multiple", "single", "none"]
-          }
-        ],
-        "no-console": [
-          "error",
-          {
-            "allow": ["warn", "error"]
-          }
         ]
       }
     },
     {
       "files": ["*.ts", "*.tsx"],
-      "extends": ["plugin:@nrwl/nx/typescript"],
-      "parserOptions": {
-        "sourceType": "module",
-        "project": ["./packages/**/tsconfig.*?.json"]
-      },
-      "rules": {
-        "@angular-eslint/no-input-rename": "off",
-        "@typescript-eslint/consistent-type-imports": [
-          "off",
-          {
-            "prefer": "type-imports"
-          }
-        ],
-        "@typescript-eslint/prefer-optional-chain": "error",
-        "@typescript-eslint/no-unused-vars": [
-          "warn",
-          {
-            "vars": "all",
-            "args": "none"
-          }
-        ]
-      }
+      "extends": ["plugin:@nx/typescript"],
+      "rules": {}
     },
     {
       "files": ["*.js", "*.jsx"],
-      "extends": ["plugin:@nrwl/nx/javascript"],
+      "extends": ["plugin:@nx/javascript"],
+      "rules": {}
+    },
+    {
+      "files": ["*.spec.ts", "*.spec.tsx", "*.spec.js", "*.spec.jsx"],
+      "env": {
+        "jest": true
+      },
       "rules": {}
     }
-  ],
-  "rules": {
-    "@typescript-eslint/ban-tslint-comment": "error",
-    "prettier/prettier": ["error"]
-  }
+  ]
 }

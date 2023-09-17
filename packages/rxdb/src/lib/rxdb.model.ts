@@ -4,14 +4,13 @@ import type {
   RxDatabaseCreator,
   SyncOptions,
 } from 'rxdb/plugins/core';
-import { AnyObject } from './types';
 
 export interface NgxRxdbCollectionConfig extends Partial<RxCollectionCreator> {
   schema?: RxCollectionCreator['schema'];
   options?: {
     syncOptions?: SyncOptions & { queryObj?: MangoQuery<any> };
     schemaUrl?: string;
-    initialDocs?: AnyObject[];
+    initialDocs?: Record<string, any>[];
     recreate?: boolean;
   };
 }
@@ -39,4 +38,4 @@ export const RXDB_DEFAULT_CONFIG: NgxRxdbConfig = {
     },
   },
 };
-export const DEFAULT_BACKOFF_FN = delay => (delay === 0 ? 2000 : delay * 3);
+export const DEFAULT_BACKOFF_FN = (delay: number) => (delay === 0 ? 2000 : delay * 3);

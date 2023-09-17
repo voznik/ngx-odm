@@ -1,42 +1,70 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { InjectionToken } from '@angular/core';
 import { RxCollectionBase } from 'rxdb/dist/types/rx-collection';
-import { PouchAllDocsOptions } from 'rxdb/dist/types/types/pouch';
-import {
-  isRxCollection,
+import type { PouchAllDocsOptions } from 'rxdb/dist/types/types/pouch';
+import { isRxCollection, RxReplicationState } from 'rxdb/plugins/core';
+import type {
   MangoQuery,
   RxCollection,
   RxCollectionGenerated,
   RxDocument,
   RxDocumentBase,
-  RxReplicationState,
 } from 'rxdb/plugins/core';
-import { defer, Observable, ReplaySubject, Subscribable } from 'rxjs';
+import { defer, EMPTY, Observable, of, ReplaySubject, Subscribable } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
+import { ConditionalKeys, Merge } from 'type-fest';
 import { NgxRxdbCollectionDump } from './rxdb-collection.class';
 import { NgxRxdbCollectionConfig } from './rxdb.model';
 import { NgxRxdbService } from './rxdb.service';
-import type { AnyAsyncResult, AnyObject, FunctionPropertyNames } from './types';
-import { logFn, NgxRxdbError } from './utils';
+import { logFn } from './utils';
 
 const debug = logFn('NgxRxdbCollectionService');
 
-// -----------------------------------------------------------------------------
 type QueryResult<T> = RxDocument<T[]> | RxDocument<T>;
 type LocalDocument = (RxDocumentBase<any> & { isLocal(): true }) | null;
 type AllDocsOptions = PouchAllDocsOptions; // & PouchDB.Core.AllDocsWithinRangeOptions;
 type CollectionFnNames =
-  | FunctionPropertyNames<RxCollectionGenerated<any>>
-  | FunctionPropertyNames<RxCollectionBase<any>>;
+  | ConditionalKeys<RxCollectionGenerated<any>, Function>
+  | ConditionalKeys<RxCollectionBase<any>, Function>;
 type CollectionFn = RxCollection<any>[CollectionFnNames];
-type CollectionFnReturnType<K extends CollectionFnNames> = AnyAsyncResult<
+type CollectionFnReturnType<K extends CollectionFnNames> = Subscribable<
   ReturnType<RxCollection<any>[K]>
 >;
-// -----------------------------------------------------------------------------
+type NgxRxdbBulkResponse = {
+  ok: boolean;
+  id: string;
+  rev: string;
+}[];
 
-@Injectable()
-export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
-  private _init$: ReplaySubject<boolean>;
-  private _collection: RxCollection<T>;
+export type NgxRxdbCollection<T> = {
+  destroy(): Promise<void>;
+  initialized$(): Observable<boolean>;
+  import(docs: T[]): Observable<QueryResult<T>>;
+  sync(remoteDbName?: string, customHeaders?: { [h: string]: string }): RxReplicationState;
+  docs(query: MangoQuery<T>): Observable<RxDocument<T>[]>;
+  docsByIds(ids: string[]): Observable<RxDocument<T>[]>;
+  allDocs(options: AllDocsOptions): Observable<T[]>;
+  insertBulk(data: T[]): Observable<{ success: RxDocument<T>[]; error: any }>;
+  updateBulk(query: MangoQuery<T>, data: Partial<T>): Observable<T[]>;
+  removeBulk(query: MangoQuery<T>): Observable<any>;
+  get(id: string): Observable<RxDocument<T> | null>;
+  insert(data: T): Observable<RxDocument<T | null>>;
+  upsert(data: Partial<T>): Observable<RxDocument<T>>;
+  set(id: string, data: Partial<T>): Observable<RxDocument<T> | null>;
+  remove(id: string): Observable<any>;
+  getLocal(id: string): Observable<LocalDocument>;
+  insertLocal(id: string, data: any): Observable<LocalDocument>;
+  upsertLocal(id: string, data: any): Observable<LocalDocument>;
+  setLocal(id: string, prop: string, value: any): Observable<any>;
+  removeLocal(id: string): Observable<boolean>;
+};
+
+export const NgxRxdbCollectionService = new InjectionToken<NgxRxdbCollection<any>>(
+  'NgxRxdbCollection'
+);
+
+export class NgxRxdbCollectionServiceImpl<T> implements NgxRxdbCollection<T> {
+  private _init$!: ReplaySubject<boolean>;
+  private _collection!: RxCollection<T>;
 
   get collection() {
     return this._collection;
@@ -50,9 +78,7 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
     protected readonly config: NgxRxdbCollectionConfig
   ) {}
 
-  /** @internal */
-  async ngOnDestroy() {
-    // eslint-disable-next-line no-unused-expressions
+  async destroy(): Promise<void> {
     isRxCollection(this.collection) && (await this.collection.destroy());
   }
 
@@ -63,8 +89,8 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
     }
     this._init$ = new ReplaySubject();
     this.dbService
-      .initCollection(this.config)
-      .then(collection => {
+      .initCollection(this.config)!
+      .then((collection: RxCollection) => {
         this._collection = collection;
         this._init$.next(true);
         this._init$.complete();
@@ -76,14 +102,12 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
     return this._init$.asObservable();
   }
 
-  sync(
-    remoteDbName: string = 'db',
-    customHeaders?: { [h: string]: string }
-  ): RxReplicationState {
-    return this.dbService.syncCollection(this.collection, remoteDbName, customHeaders);
+  sync(remoteDbName = 'db', customHeaders?: { [h: string]: string }): RxReplicationState {
+    return this.dbService.syncCollection(this.collection, remoteDbName, customHeaders)!;
   }
 
   /** import array of docs into collection */
+  // @ts-expect-error
   import(docs: T[]) {
     return this.initialized$().pipe(
       switchMap(() => {
@@ -121,11 +145,11 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
     );
   }
 
-  get(id: string): Observable<RxDocument<T>> {
+  get(id: string): Observable<RxDocument<T> | null> {
     return this.initialized$().pipe(switchMap(() => this.collection.findOne(id).$));
   }
 
-  insert(data: T): Observable<RxDocument<T>> {
+  insert(data: T): Observable<RxDocument<T | null>> {
     return this.execute('insert', data);
   }
 
@@ -133,11 +157,11 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
     return this.execute('bulkInsert', data);
   }
 
-  upsert(data: T): Observable<RxDocument<T>> {
+  upsert(data: Partial<T>): Observable<RxDocument<T>> {
     return this.execute('upsert', data);
   }
 
-  set(id: string, data: Partial<T>): Observable<RxDocument<T>> {
+  set(id: string, data: Partial<T>): Observable<RxDocument<T> | null> {
     return this.initialized$().pipe(
       switchMap(() => this.collection.findOne(id).update({ $set: data }))
     );
@@ -165,27 +189,23 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
   _updateBulkByPouch(
     query: MangoQuery<T>,
     values: Partial<T>
-  ): Observable<
-    {
-      ok: boolean;
-      id: string;
-      rev: string;
-    }[]
-  > {
+  ): Observable<NgxRxdbBulkResponse> {
     return defer(async () => {
       try {
         const docs = await this.collection.find(query).exec();
-        if (docs?.length) {
-          const docsToUpdate = docs.map(doc => ({
-            _id: doc.primary,
-            _rev: doc['_rev'],
-            ...doc.toJSON(),
-            ...values,
-          }));
-          return this.collection.pouch.bulkDocs(docsToUpdate);
+        if (!docs?.length) {
+          return of([]) as Observable<NgxRxdbBulkResponse>;
         }
+        const docsToUpdate = docs.map(doc => ({
+          _id: doc.primary,
+          // @ts-ignore
+          _rev: doc['_rev'],
+          ...doc.toJSON(),
+          ...values,
+        }));
+        return this.collection.pouch.bulkDocs(docsToUpdate);
       } catch (error) {
-        return null;
+        return EMPTY as any;
       }
     });
   }
@@ -210,13 +230,13 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
     return defer(async () => {
       const localDoc: LocalDocument = await this.collection.getLocal(id);
       // change data
-      localDoc.set(prop, value);
-      await localDoc.save();
+      localDoc!.set(prop, value);
+      await localDoc!.save();
     });
   }
 
   removeLocal(id: string): Observable<boolean> {
-    return this.getLocal(id).pipe(switchMap(doc => doc.remove()));
+    return this.getLocal(id).pipe(switchMap(doc => doc!.remove()));
   }
 
   /**
@@ -227,12 +247,10 @@ export class NgxRxdbCollectionService<T = AnyObject> implements OnDestroy {
   private execute<K extends CollectionFnNames>(
     method: K,
     ...args: Parameters<RxCollection<any>[K]>
-  ): Observable<CollectionFnReturnType<K>> {
+  ): Observable<any> {
     return this.initialized$().pipe(
       switchMap(() => {
-        return this.collection[method].apply(this.collection, args) as
-          | Subscribable<any>
-          | PromiseLike<any>;
+        return this.collection[method].apply(this.collection, args) as PromiseLike<any>;
       })
     );
   }

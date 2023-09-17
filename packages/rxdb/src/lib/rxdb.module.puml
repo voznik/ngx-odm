@@ -1,0 +1,31 @@
+@startuml NgxRxdbModule Initialization
+
+actor User
+participant ApplicationInitStatus
+participant NgxRxdbModule
+participant NgxRxdbService
+participant NgxRxdbCollectionService
+participant RXDB_CONFIG
+
+User -> ApplicationInitStatus: Start Application
+User -> NgxRxdbModule: Import NgxRxdbModule.forRoot(config)
+NgxRxdbModule -> RXDB_CONFIG: Provide RXDB_CONFIG
+NgxRxdbModule -> NgxRxdbService: Provide NgxRxdbService
+NgxRxdbModule -> ApplicationInitStatus: APP_INITIALIZER
+
+activate NgxRxdbService
+NgxRxdbService -> NgxRxdbModule: Initialize NgxRxdbService
+NgxRxdbModule -> RXDB_CONFIG: Initialize with RXDB_CONFIG
+NgxRxdbService -> RXDB_CONFIG: Use RXDB_CONFIG
+NgxRxdbService -> NgxRxdbModule: NgxRxdbService Initialized
+NgxRxdbService -> ApplicationInitStatus: Done with Initialization
+
+deactivate NgxRxdbService
+
+User -> NgxRxdbCollectionService: Use NgxRxdbCollectionService
+NgxRxdbCollectionService -> NgxRxdbService: Use NgxRxdbService
+NgxRxdbService --> NgxRxdbCollectionService: Provide NgxRxdbService
+NgxRxdbCollectionService -> RXDB_CONFIG: Use RXDB_CONFIG
+NgxRxdbService --> RXDB_CONFIG: Provide RXDB_CONFIG
+
+@enduml
