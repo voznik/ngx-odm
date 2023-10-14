@@ -11,9 +11,7 @@
     "noFallthroughCasesInSwitch": true
   },
   "files": [],
-  "include": [
-    "../../typings.d.ts"
-  ],
+  "include": ["../../typings.d.ts"],
   "references": [
     {
       "path": "./tsconfig.lib.json"

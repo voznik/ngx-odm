@@ -9,15 +9,13 @@ import {
   SkipSelf,
 } from '@angular/core';
 import { from } from 'rxjs';
-import { NgxRxdbAsyncNoZonePipe } from './rxdb-async-no-zone.pipe';
 import {
-  NgxRxdbCollection,
+  NgxRxdbFeatureModule,
   NgxRxdbCollectionService,
-  NgxRxdbCollectionServiceImpl,
-} from './rxdb-collection.service';
-import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.model';
-import { NgxRxdbService } from './rxdb.service';
-import { RXDB_CONFIG } from './rxdb.token';
+  collectionServiceFactory,
+} from '@ngx-odm/rxdb/collection';
+import { NgxRxdbCollectionConfig, NgxRxdbConfig, RXDB_CONFIG } from '@ngx-odm/rxdb/config';
+import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 
 /** run at APP_INITIALIZER cycle */
 export function dbInitializerFactory(
@@ -27,11 +25,6 @@ export function dbInitializerFactory(
   return async () => {
     await dbService.initDb(dbConfig);
   };
-}
-
-export function collectionServiceFactory(config: NgxRxdbCollectionConfig) {
-  return (dbService: NgxRxdbService): NgxRxdbCollection<any> =>
-    new NgxRxdbCollectionServiceImpl(dbService, config);
 }
 
 /**
@@ -83,8 +76,9 @@ export function collectionServiceFactory(config: NgxRxdbCollectionConfig) {
  * <example-url>http://localhost/demo/mysample.component.html</example-url>
  * <example-url>../index.html</example-url>
  */
-// @dynamic
-@NgModule()
+@NgModule({
+  // id: 'NgxRxdbModule',
+})
 export class NgxRxdbModule {
   static forFeature(
     collectionConfig: NgxRxdbCollectionConfig
@@ -158,20 +152,5 @@ export class NgxRxdbModule {
         // doSmth
       });
     }
-  }
-}
-/**
- * feature module which should be imported in lazy feature modules, will init RxDbCollection with given configuration
- */
-@NgModule({
-  declarations: [NgxRxdbAsyncNoZonePipe],
-  exports: [NgxRxdbAsyncNoZonePipe],
-})
-export class NgxRxdbFeatureModule {
-  /** also init collection via loader */
-  constructor(
-    @Inject(NgxRxdbCollectionService) public collectionService: NgxRxdbCollection<any>
-  ) {
-    this.collectionService.initialized$().subscribe();
   }
 }

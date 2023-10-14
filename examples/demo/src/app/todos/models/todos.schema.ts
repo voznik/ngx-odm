@@ -1,4 +1,4 @@
-import { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb';
+import { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb/config';
 import { initialState } from './todos.model';
 
 export async function percentageCompletedFn() {

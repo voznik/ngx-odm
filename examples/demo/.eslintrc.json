@@ -13,7 +13,6 @@
           "error",
           {
             "type": "attribute",
-            "prefix": "nx16",
             "style": "camelCase"
           }
         ],
@@ -21,10 +20,10 @@
           "error",
           {
             "type": "element",
-            "prefix": "nx16",
             "style": "kebab-case"
           }
-        ]
+        ],
+        "import/no-unresolved": 0
       }
     },
     {

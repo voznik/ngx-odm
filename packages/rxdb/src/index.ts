@@ -1,11 +1,3 @@
-/*
- * Public API Surface of ngx-rxdb
- */
-
-export * from './lib/rxdb-async-no-zone.pipe';
-export * from './lib/rxdb.token';
-export * from './lib/rxdb.service';
-export * from './lib/rxdb-collection.service';
-export * from './lib/rxdb-collection.class';
+// start:ng42.barrel
 export * from './lib/rxdb.module';
-export * from './lib/rxdb.model';
+// end:ng42.barrel

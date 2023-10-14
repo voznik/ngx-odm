@@ -1,8 +1,8 @@
 import { ApplicationInitStatus } from '@angular/core';
 import { TestBed, waitForAsync } from '@angular/core/testing';
 import { addRxPlugin } from 'rxdb/plugins/core';
-import { TEST_DB_CONFIG_1, TEST_DB_CONFIG_2 } from './rxdb.mock';
-import { NgxRxdbModule } from './rxdb.module';
+import { TEST_DB_CONFIG_1, TEST_DB_CONFIG_2 } from '../../../utils/src/lib/rxdb.mock';
+import { NgxRxdbModule } from '../../../src/lib/rxdb.module';
 import { NgxRxdbService } from './rxdb.service';
 
 addRxPlugin(require('pouchdb-adapter-node-websql'));
@@ -33,15 +33,12 @@ describe('NgxRxdbService', () => {
       service = TestBed.inject(NgxRxdbService);
       await TestBed.inject(ApplicationInitStatus).donePromise;
     });
-    it(
-      `should init database AND collection`,
-      waitForAsync(() => {
-        expect(service.db).toBeDefined();
-        expect(service.db.name).toBeDefined();
-        // expect(service.db.name).toEqual(TEST_DB_CONFIG_2.name);
-        expect(service.db.collections['todo']).toBeDefined();
-        // expect(service.db.collections['todo']?.statics?.countAllDocuments).toBeInstanceOf(Function);
-      })
-    );
+    it(`should init database AND collection`, waitForAsync(() => {
+      expect(service.db).toBeDefined();
+      expect(service.db.name).toBeDefined();
+      // expect(service.db.name).toEqual(TEST_DB_CONFIG_2.name);
+      expect(service.db.collections['todo']).toBeDefined();
+      // expect(service.db.collections['todo']?.statics?.countAllDocuments).toBeInstanceOf(Function);
+    }));
   });
 });

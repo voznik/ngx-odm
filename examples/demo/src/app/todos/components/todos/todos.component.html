@@ -1,5 +1,5 @@
 <!-- https://angular.io/guide/template-typecheck#disabling-type-checking-using-any -->
-<section class="todoapp" *ngIf="$any(todos$ | asyncNoZone) as todos">
+<section class="todoapp" *ngIf="todos$ | async as todos">
   <header class="header">
     <h1>todos</h1>
     <input
@@ -33,7 +33,7 @@
             (change)="toggleTodo(todo)"
           />
           <label (dblclick)="newTodoChange(todo)">{{ todo.title }}</label>
-          <button class="destroy" (click)="toggleTodo(todo)"></button>
+          <button class="destroy" (click)="removeTodo(todo)"></button>
         </div>
         <input
           class="edit"

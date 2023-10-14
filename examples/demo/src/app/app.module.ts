@@ -1,7 +1,8 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule, Routes } from '@angular/router';
-import { NgxRxdbConfig, NgxRxdbModule } from '@ngx-odm/rxdb';
+import { NgxRxdbConfig } from '@ngx-odm/rxdb/config';
+import { NgxRxdbModule } from '@ngx-odm/rxdb';
 import { AppComponent } from './app.component';
 
 /** NgxRxdbConfig extends RxDatabaseCreator, will be merged with default config */

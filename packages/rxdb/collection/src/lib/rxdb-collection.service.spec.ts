@@ -1,94 +1,36 @@
 /* eslint-disable @angular-eslint/directive-class-suffix */
-/* eslint-disable no-console */
+import { ApplicationInitStatus } from '@angular/core';
+import { TestBed, waitForAsync } from '@angular/core/testing';
+import { addRxPlugin } from 'rxdb/plugins/core';
+import { Observable } from 'rxjs';
 import {
-  ApplicationInitStatus,
-  Directive,
-  Injectable,
-  InjectFlags,
-  NgModule,
-  NgModuleFactoryLoader,
-  NgZone,
-} from '@angular/core';
-import {
-  fakeAsync,
-  flush,
-  flushMicrotasks,
-  TestBed,
-  tick,
-  waitForAsync,
-} from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
-import { addRxPlugin, RxCollection } from 'rxdb/plugins/core';
-import { Observable, of } from 'rxjs';
-import * as _async from 'rxjs/scheduler/async';
-import { NgxRxdbCollectionService } from './rxdb-collection.service';
+  NgxRxdbCollection,
+  NgxRxdbCollectionService,
+  NgxRxdbCollectionServiceImpl,
+} from './rxdb-collection.service';
 import {
   MockNgxRxdbService,
-  TEST_DB_CONFIG_1,
   TEST_DB_CONFIG_2,
   TEST_FEATURE_CONFIG_1,
-} from './rxdb.mock';
-import { NgxRxdbFeatureModule, NgxRxdbModule } from './rxdb.module';
-import { NgxRxdbService } from './rxdb.service';
+} from '../../../utils/src/lib/rxdb.mock';
+import { NgxRxdbService } from '@ngx-odm/rxdb/core';
+import { NgxRxdbModule } from '@ngx-odm/rxdb';
 
 addRxPlugin(require('pouchdb-adapter-node-websql'));
-// jest.mock('./rxdb.service');
 
 describe(`NgxRxdbCollectionService`, () => {
-  /* beforeAll(async () => {
-    if (isTestMode()) {
-      await import('pouchdb-adapter-memory').then(module => addRxPlugin(module));
-    }
-  }); */
-
   describe(`test methods using mock NgxRxdbService`, () => {
     let dbService: NgxRxdbService;
-    let service: NgxRxdbCollectionService;
+    let service: NgxRxdbCollection<any>;
 
     beforeEach(() => {
-      // setupNavigationWarnStub();
-      /*
-    @Directive({ selector: 'lazy' })
-    class LazyComponent {}
-
-    @NgModule({
-      declarations: [LazyComponent],
-      imports: [NgxRxdbModule.forFeature(TEST_FEATURE_CONFIG_1)],
-    })
-    class LazyModule {}
-    const lazyModuleRoute = [
-      {
-        path: 'todos',
-        loadChildren: () => Promise.resolve(LazyModule),
-      },
-    ];
-
-    let ngZone: NgZone;
-    let router: Router;
-    TestBed.configureTestingModule({
-      imports: [
-        RouterTestingModule.withRoutes([]),
-        NgxRxdbModule.forRoot(TEST_DB_CONFIG_1),
-      ],
-      providers: [
-        { provide: NgxRxdbService, useClass: MockNgxRxdbService },
-        NgxRxdbCollectionService,
-      ],
-    });
-    ngZone = TestBed.inject(NgZone);
-    router = TestBed.inject(Router);
-    dbService = TestBed.inject(NgxRxdbService);
-    await TestBed.inject(ApplicationInitStatus).donePromise; */
-
       dbService = new MockNgxRxdbService();
-      service = new NgxRxdbCollectionService(dbService, TEST_FEATURE_CONFIG_1);
+      service = new NgxRxdbCollectionServiceImpl(dbService, TEST_FEATURE_CONFIG_1);
     });
 
     it(`should return Observable via init method`, () => {
       expect(service).toBeDefined();
-      const spy = jest.spyOn(service, 'initialized$');
-      service.initialized$();
+      const spy = jest.spyOn(service, 'initialized$', 'get');
       const calls = spy.mock.calls;
       const results = spy.mock.results;
       expect(calls[0].length).toEqual(0);
@@ -97,7 +39,7 @@ describe(`NgxRxdbCollectionService`, () => {
 
     it(`should subscribe until collection init `, () => {
       const spy = jest.spyOn(dbService, 'initCollection');
-      service.initialized$().subscribe(() => {
+      service.initialized$.subscribe(() => {
         expect(spy).toHaveBeenCalled();
         expect(service.collection).toBeDefined();
       });
@@ -179,42 +121,10 @@ describe(`NgxRxdbCollectionService`, () => {
         expect(result).toBeDefined();
       });
     });
-
-    /** FIXME: I can't write test for lazy module ;(   */
-    /* it(
-    `should init database ONLY`,
-    waitForAsync(() => {
-      expect(dbService).toBeDefined();
-      expect(dbService.db).toBeDefined();
-      // expect(service).toBeUndefined();
-    })
-  ); */
-    /* xit(
-    `should provide itself via lazy-loaded feature module`,
-    waitForAsync(() => {
-      ngZone.run(() => {
-        router.initialNavigation();
-        router.resetConfig(lazyModuleRoute);
-        router.navigateByUrl('/todos').then(r => {
-          tick(250);
-          flushMicrotasks();
-          expect(NgxRxdbFeatureModule).toBeDefined();
-          service = TestBed.inject(
-            NgxRxdbCollectionService,
-            new NgxRxdbCollectionService(dbService, TEST_FEATURE_CONFIG_1),
-            InjectFlags.Self
-          );
-          expect(service).toBeDefined();
-          // expect(initializedSpy).toHaveBeenCalled();
-          flush();
-        });
-      });
-    })
-  ); */
   });
 
   describe(`test init by db config`, () => {
-    let service: NgxRxdbCollectionService;
+    let service: NgxRxdbCollection<any>;
 
     beforeEach(async () => {
       TestBed.configureTestingModule({
@@ -226,16 +136,13 @@ describe(`NgxRxdbCollectionService`, () => {
       service = TestBed.inject(NgxRxdbCollectionService);
       await TestBed.inject(ApplicationInitStatus).donePromise;
     });
-    it(
-      `should init database AND collection`,
-      waitForAsync(() => {
-        expect(service.db).toBeDefined();
-        expect(service.db.name).toEqual(TEST_DB_CONFIG_2.name);
-        const col = service.db.collections['todo'];
-        expect(col).toBeDefined();
-        expect(col.statics).toBeDefined();
-        expect(col.statics.countAllDocuments).toBeInstanceOf(Function);
-      })
-    );
+    it(`should init database AND collection`, waitForAsync(() => {
+      expect(service.db).toBeDefined();
+      expect(service.db.name).toEqual(TEST_DB_CONFIG_2.name);
+      const col = service.db.collections['todo'];
+      expect(col).toBeDefined();
+      expect(col.statics).toBeDefined();
+      expect(col.statics.countAllDocuments).toBeInstanceOf(Function);
+    }));
   });
 });

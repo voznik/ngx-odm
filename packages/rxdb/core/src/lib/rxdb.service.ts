@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
-/**
- * Instead of using the default rxdb-import,
- * we do a custom build which lets us cherry-pick
- * only the modules that we need.
- * A default import would be: import RxDB from 'rxdb';
- */
+import {
+  DEFAULT_BACKOFF_FN,
+  NgxRxdbCollectionConfig,
+  NgxRxdbConfig,
+  RXDB_DEFAULT_CONFIG,
+} from '@ngx-odm/rxdb/config';
+import { isEmpty, loadRxDBPlugins, logFn, NgxRxdbError } from '@ngx-odm/rxdb/utils';
+//  INFO: Instead of using the default rxdb-import, we do a custom build which lets us cherry-pick only the modules that we need. A default import would be: import RxDB from 'rxdb';
 import {
   CollectionsOfDatabase,
   createRxDatabase,
@@ -15,25 +17,16 @@ import {
   RxReplicationState,
 } from 'rxdb/plugins/core';
 import { checkSchema } from 'rxdb/plugins/dev-mode';
-import { loadRxDBPlugins } from './plugin-loader';
-// NgxRxdb
-import {
-  NgxRxdbCollectionCreator,
-  NgxRxdbCollectionDump,
-  NgxRxdbDump,
-} from './rxdb-collection.class';
-import {
-  DEFAULT_BACKOFF_FN,
-  NgxRxdbCollectionConfig,
-  NgxRxdbConfig,
-  RXDB_DEFAULT_CONFIG,
-} from './rxdb.model';
-import { isEmpty, logFn, NgxRxdbError } from './utils';
+import { NgxRxdbCollectionCreator } from './rxdb-collection.class';
+import { NgxRxdbCollectionDump, NgxRxdbDump } from './rxdb-dump.class';
 
 const debug = logFn('NgxRxdbService');
 const IMPORTED_FLAG = '_ngx_rxdb_imported';
 
 @Injectable()
+/**
+ * Service for managing a RxDB database instance.
+ */
 export class NgxRxdbService {
   private dbInstance: RxDatabase | null = null;
 

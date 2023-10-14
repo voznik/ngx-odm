@@ -2,8 +2,8 @@ import { ensureDirSync } from 'fs-extra';
 import { resolve } from 'path';
 import { RxCollection, RxCollectionCreator, RxJsonSchema } from 'rxdb/plugins/core';
 import { of } from 'rxjs';
-import { NgxRxdbConfig } from './rxdb.model';
-import { NgxRxdbService } from './rxdb.service';
+import { NgxRxdbConfig } from '../../../config/src/lib/rxdb.config';
+import { NgxRxdbService } from '../../../core/src/lib/rxdb.service';
 
 const rootDir = resolve(__dirname, '../../../../');
 const dbPath = resolve(rootDir, 'tmp', 'websql', 'test');
@@ -60,15 +60,15 @@ export const TEST_DB_CONFIG_2: NgxRxdbConfig = {
 export class MockNgxRxdbService extends NgxRxdbService {
   // private _imported = 0;
   // private dbInstance = {} as any;
-  get db() {
+  override get db() {
     return {} as any;
   }
-  get collections() {
+  override get collections() {
     return {} as any;
   }
-  initDb = jest.fn().mockResolvedValue({});
-  destroyDb = jest.fn().mockResolvedValue({});
-  initCollection = jest.fn().mockResolvedValue(({
+  override initDb = jest.fn().mockResolvedValue({});
+  override destroyDb = jest.fn().mockResolvedValue({});
+  override initCollection = jest.fn().mockResolvedValue({
     find: jest.fn().mockReturnValue({
       $: of({ id: '0' }),
       remove: jest.fn().mockResolvedValue([]),
@@ -87,13 +87,13 @@ export class MockNgxRxdbService extends NgxRxdbService {
     insert: jest.fn().mockImplementation(obj => of(obj)),
     bulkInsert: jest.fn().mockImplementation(arr => Promise.resolve(arr)),
     upsert: jest.fn().mockImplementation(obj => of(obj)),
-  } as unknown) as RxCollection);
-  initCollections = this.initCollection;
-  getCollection = jest.fn().mockReturnValue({});
-  syncCollection = jest.fn().mockReturnValue({});
-  syncAllCollections = jest.fn().mockReturnValue({});
-  importDbDump = jest.fn().mockResolvedValue({});
-  importColDump = jest.fn().mockResolvedValue({});
+  } as unknown as RxCollection);
+  override initCollections = this.initCollection;
+  override getCollection = jest.fn().mockReturnValue({});
+  override syncCollection = jest.fn().mockReturnValue({});
+  override syncAllCollections = jest.fn().mockReturnValue({});
+  override importDbDump = jest.fn().mockResolvedValue({});
+  override importColDump = jest.fn().mockResolvedValue({});
   // prepareCollections = jest.fn().mockResolvedValue({});
   // prepareDbDump = jest.fn().mockResolvedValue({});
 }

@@ -42,7 +42,15 @@
         "lintFilePatterns": [
           "packages/rxdb/**/*.ts",
           "packages/rxdb/**/*.html",
-          "packages/rxdb/package.json"
+          "packages/rxdb/package.json",
+          "packages/rxdb/utils/**/*.ts",
+          "packages/rxdb/utils/**/*.html",
+          "packages/rxdb/core/**/*.ts",
+          "packages/rxdb/core/**/*.html",
+          "packages/rxdb/collection/**/*.ts",
+          "packages/rxdb/collection/**/*.html",
+          "packages/rxdb/config/**/*.ts",
+          "packages/rxdb/config/**/*.html"
         ]
       }
     }

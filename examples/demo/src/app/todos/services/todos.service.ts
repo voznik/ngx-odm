@@ -1,14 +1,15 @@
 /* eslint-disable no-console */
 import { Inject, Injectable } from '@angular/core';
-import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb';
-import { Observable, ReplaySubject } from 'rxjs';
+import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
+import { Observable, ReplaySubject, Subject } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { v4 as uuid } from 'uuid';
 import { Todo, TodosFilter } from '../models';
+import { MangoQuery } from 'rxdb/dist/types/types';
 
 @Injectable()
 export class TodosService {
-  private _filter$ = new ReplaySubject<TodosFilter>();
+  private _filter$ = new Subject<TodosFilter>();
   filter$ = this._filter$.asObservable();
 
   constructor(
@@ -16,33 +17,19 @@ export class TodosService {
   ) {}
 
   select(completedOnly = false): Observable<Todo[]> {
-    const queryObj = {
-      selector: {
-        createdAt: {
-          $gt: null,
-        },
-      },
-      sort: [{ createdAt: 'desc' } as any],
-    };
-    if (completedOnly) {
-      Object.assign(queryObj.selector, {
-        completed: false,
-      });
-      return this.collectionService.docs(queryObj);
-    } else {
-      return this.filter$.pipe(
-        switchMap(filterValue => {
-          if (filterValue !== 'ALL') {
-            Object.assign(queryObj.selector, {
-              completed: filterValue === 'COMPLETED',
-            });
-          } else {
-            delete queryObj.selector['completed'];
-          }
-          return this.collectionService.docs(queryObj);
-        })
-      );
-    }
+    const queryObj = this.buildQueryObject(completedOnly);
+    return this.filter$.pipe(
+      switchMap(filterValue => {
+        if (filterValue !== 'ALL') {
+          Object.assign(queryObj.selector, {
+            completed: filterValue === 'COMPLETED',
+          });
+        } else {
+          delete queryObj.selector['completed'];
+        }
+        return this.collectionService.docs(queryObj);
+      })
+    );
   }
 
   add(title: string): void {
@@ -52,22 +39,21 @@ export class TodosService {
       completed: false,
       createdAt: Date.now(),
     };
-    this.collectionService.insert(payload).subscribe();
+    this.collectionService.insert(payload);
   }
 
   toggle(id: string, completed: boolean): void {
-    this.collectionService.set(id, { completed }).subscribe();
+    this.collectionService.set(id, { completed });
   }
 
   remove(id: string): void {
-    this.collectionService.remove(id).subscribe();
+    this.collectionService.remove(id);
   }
 
   removeCompletedTodos(): void {
     const rulesObject = { selector: { completed: true } };
-    this.collectionService
-      .removeBulk(rulesObject)
-      .subscribe(res => this.changeFilter('ALL'));
+    this.collectionService.removeBulk(rulesObject);
+    this.changeFilter('ALL');
   }
 
   restoreFilter(): void {
@@ -81,5 +67,22 @@ export class TodosService {
     this.collectionService.upsertLocal('local', { filterValue }).subscribe(local => {
       this._filter$.next(filterValue);
     });
+  }
+
+  private buildQueryObject(completedOnly: boolean): MangoQuery<Todo> {
+    const queryObj: MangoQuery<Todo> = {
+      selector: {
+        createdAt: {
+          $gt: null,
+        },
+      },
+      sort: [{ createdAt: 'desc' } as any],
+    };
+    if (completedOnly) {
+      Object.assign(queryObj.selector, {
+        completed: false,
+      });
+    }
+    return queryObj;
   }
 }

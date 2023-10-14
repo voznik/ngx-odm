@@ -5,6 +5,8 @@ import type {
   SyncOptions,
 } from 'rxdb/plugins/core';
 
+import { InjectionToken } from '@angular/core';
+
 export interface NgxRxdbCollectionConfig extends Partial<RxCollectionCreator> {
   schema?: RxCollectionCreator['schema'];
   options?: {
@@ -14,6 +16,11 @@ export interface NgxRxdbCollectionConfig extends Partial<RxCollectionCreator> {
     recreate?: boolean;
   };
 }
+
+export const RXDB_CONFIG = new InjectionToken<NgxRxdbConfig>('NgxRxdbConfig');
+export const RXDB_CONFIG_COLLECTION = new InjectionToken<NgxRxdbCollectionConfig>(
+  'NgxRxdbCollectionConfig'
+);
 
 export interface NgxRxdbConfig extends RxDatabaseCreator {
   options?: {

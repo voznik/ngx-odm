@@ -17,8 +17,8 @@
         "tsConfig": "examples/demo/tsconfig.app.json",
         "assets": ["examples/demo/src/favicon.ico", "examples/demo/src/assets"],
         "styles": [
-              "node_modules/todomvc-common/base.css",
-              "node_modules/todomvc-app-css/index.css"
+          "node_modules/todomvc-common/base.css",
+          "node_modules/todomvc-app-css/index.css"
         ],
         "scripts": []
       },

@@ -2,6 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { Pipe, PipeTransform } from '@angular/core';
 
 /**
+ * @deprecated
  * @see https://github.com/pubkey/rxdb/blob/master/examples/angular/src/app/pipes/async-no-zone.pipe.ts
  * Because RxDB calculates queries with caching and things,
  * they do not run in angulars zone.
