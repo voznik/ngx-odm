@@ -1,7 +1,7 @@
 import { isDevMode, logFn } from '@ngx-odm/rxdb/utils';
 import * as PouchdbAdapterHttp from 'pouchdb-adapter-http';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
+// @ts-ignore
 import * as PouchdbAdapterIdb from 'pouchdb-adapter-idb';
 import { RxDBAdapterCheckPlugin } from 'rxdb/plugins/adapter-check';
 import { addRxPlugin } from 'rxdb/plugins/core';

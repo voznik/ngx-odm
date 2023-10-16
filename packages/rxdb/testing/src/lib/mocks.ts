@@ -44,13 +44,13 @@ export const TEST_FEATURE_CONFIG_1: RxCollectionCreator = {
 
 export const TEST_DB_CONFIG_1: NgxRxdbConfig = {
   name: dbPath, // 'test',
-  adapter: 'websql',
+  adapter: 'memory',
   multiInstance: false,
   ignoreDuplicate: true,
 };
 export const TEST_DB_CONFIG_2: NgxRxdbConfig = {
   name: dbPath, // 'test',
-  adapter: 'websql',
+  adapter: 'memory',
   multiInstance: false,
   ignoreDuplicate: true,
   options: {

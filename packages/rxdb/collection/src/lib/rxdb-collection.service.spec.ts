@@ -16,7 +16,7 @@ import {
   NgxRxdbCollectionServiceImpl,
 } from './rxdb-collection.service';
 
-addRxPlugin(require('pouchdb-adapter-node-websql'));
+addRxPlugin(require('pouchdb-adapter-memory'));
 
 describe(`NgxRxdbCollectionService`, () => {
   describe(`test methods using mock NgxRxdbService`, () => {

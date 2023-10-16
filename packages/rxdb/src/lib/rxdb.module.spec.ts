@@ -13,7 +13,7 @@ import {
 import { addRxPlugin } from 'rxdb/plugins/core';
 import { NgxRxdbModule } from './rxdb.module';
 
-addRxPlugin(require('pouchdb-adapter-node-websql'));
+addRxPlugin(require('pouchdb-adapter-memory'));
 
 describe('NgxRxdbModule', () => {
   beforeAll(() => {
