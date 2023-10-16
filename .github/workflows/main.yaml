@@ -22,7 +22,7 @@ jobs:
     #   matrix:
     #     node-version: [12.x, 14.x]
     steps:
-      - name: My first step
+      - name: Echo step
         if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' }}
         run: echo This event is a pull request that was opened.
       #
@@ -35,7 +35,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           #   node-version: ${{ matrix.node-version }}
-          node-version: 12
+          node-version: 18
       #
       - name: Cache node modules
         uses: actions/cache@v2
