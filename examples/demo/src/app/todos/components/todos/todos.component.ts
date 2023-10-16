@@ -12,7 +12,8 @@ import { TodosService } from '../../services';
 export class TodosComponent implements OnInit {
   filter$ = this.todosService.filter$;
   todos$: Observable<Todo[]> = this.todosService.select();
-  remainig$: Observable<Todo[]> = this.todosService.select(true);
+  count$ = this.todosService.count$;
+  remainig$: Observable<number> = this.todosService.remaining$;
   newTodo = '';
   isEditing = false;
 

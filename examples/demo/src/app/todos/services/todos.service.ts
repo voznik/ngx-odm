@@ -1,20 +1,43 @@
 /* eslint-disable no-console */
+import { Location } from '@angular/common';
 import { Inject, Injectable } from '@angular/core';
 import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
-import { Observable, ReplaySubject, Subject } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { MangoQuery } from 'rxdb/dist/types/types';
+import { Observable } from 'rxjs';
+import { distinctUntilChanged, startWith, switchMap, map, tap } from 'rxjs/operators';
 import { v4 as uuid } from 'uuid';
 import { Todo, TodosFilter } from '../models';
-import { MangoQuery } from 'rxdb/dist/types/types';
 
 @Injectable()
 export class TodosService {
-  private _filter$ = new Subject<TodosFilter>();
-  filter$ = this._filter$.asObservable();
+  filter$ = this.collectionService.getLocal('local', 'filterValue').pipe(
+    startWith('ALL'),
+    distinctUntilChanged(),
+    tap(filterValue => console.log('filterValue', filterValue))
+  );
+
+  count$ = this.collectionService.count();
+
+  remaining$: Observable<number> = this.collectionService.docs().pipe(
+    map(docs => docs.filter(doc => !doc.completed).length),
+    tap(remaining => console.log('remaining', remaining))
+  );
 
   constructor(
-    @Inject(NgxRxdbCollectionService) private collectionService: NgxRxdbCollection<Todo>
-  ) {}
+    @Inject(NgxRxdbCollectionService) private collectionService: NgxRxdbCollection<Todo>,
+    private location: Location
+  ) {
+    this.collectionService.initialized$
+      .pipe(switchMap(() => this.getCount()))
+      .subscribe(count => {
+        console.debug('count', count);
+      });
+  }
+
+  async getCount() {
+    const count = await this.collectionService.collection?.['countAllDocuments']?.();
+    return count;
+  }
 
   select(completedOnly = false): Observable<Todo[]> {
     const queryObj = this.buildQueryObject(completedOnly);
@@ -57,16 +80,16 @@ export class TodosService {
   }
 
   restoreFilter(): void {
-    this.collectionService.getLocal('local').subscribe((local: any) => {
-      const filterValue = local?.get('filterValue');
-      this.changeFilter(filterValue || 'ALL');
-    });
+    const query = this.location.path().split('?')[1];
+    const searchParams = new URLSearchParams(query);
+    const filterValue = searchParams.get('filter') || 'ALL';
+    this.collectionService.upsertLocal('local', { filterValue });
   }
 
   changeFilter(filterValue: TodosFilter): void {
-    this.collectionService.upsertLocal('local', { filterValue }).subscribe(local => {
-      this._filter$.next(filterValue);
-    });
+    const path = this.location.path().split('?')[0];
+    this.location.replaceState(path, `filter=${filterValue}`);
+    this.collectionService.upsertLocal('local', { filterValue });
   }
 
   private buildQueryObject(completedOnly: boolean): MangoQuery<Todo> {

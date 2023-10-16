@@ -86,8 +86,8 @@ export class NgxRxdbService {
       debug(`created database ${this.db.name}`);
 
       if (dbConfig.multiInstance) {
-        await this.dbInstance.waitForLeadership();
-        debug(`database isLeader now`);
+        // await this.dbInstance.waitForLeadership(); // TODO: clean-up
+        // debug(`database isLeader now`);
       }
 
       // optional: can create collections from root config

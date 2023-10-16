@@ -1,4 +1,4 @@
 export * from './lib/rxdb-collection.module';
 export * from './lib/rxdb-collection.service';
 export * from './lib/rxdb-collection.helpers';
-export * from './lib/rxdb-async-no-zone.pipe';
+export * from './lib/rxdb-collection.pipe';
