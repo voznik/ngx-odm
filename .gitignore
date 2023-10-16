@@ -4,6 +4,7 @@
 /dist
 /docs
 /documentation
+/public
 /tmp
 /out-tsc
 **/builds

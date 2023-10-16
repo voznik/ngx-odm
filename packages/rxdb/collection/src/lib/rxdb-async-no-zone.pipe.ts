@@ -9,13 +9,11 @@ import { Pipe, PipeTransform } from '@angular/core';
  * @link https://stackoverflow.com/questions/35513015/async-pipe-not-rendering-the-stream-updates
  * To not have to run changeDetection on each emit for each subscribed query,
  * we use a different async-pipe that runs the change-detection on emit.
- *
  * @note in Angular 10+ you may need to disable checking of a binding expression
  *  by surrounding the expression in a call to the $any() cast pseudo-function
  * in your html template, e.g.
  *
  * ``` *ngIf="$any(todos$ | asyncNoZone) as todos"> ```
- *
  */
 @Pipe({
   name: 'asyncNoZone',

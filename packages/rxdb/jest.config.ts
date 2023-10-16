@@ -1,7 +1,6 @@
 /* eslint-disable import/no-default-export */
+import { workspaceRoot } from '@nrwl/tao/src/utils/app-root';
 import type { Config } from 'jest';
-
-const CI = process.env.CI === 'true' || true;
 
 const config: Config = {
   displayName: '@ngx-odm/rxdb',
@@ -22,19 +21,7 @@ const config: Config = {
     ],
   },
   transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
-  collectCoverage: CI,
-  coverageDirectory: '../../coverage/packages',
-  coverageReporters: [
-    'text-summary',
-    'json',
-    ['lcov', { file: 'rxdb-coverage.lcov' }],
-    ['json-summary', { file: 'rxdb-coverage-summary.json' }],
-  ],
-  bail: true,
-  verbose: true,
-  // resetModules: true,
-  // clearMocks: true,
-  passWithNoTests: true,
+  coverageDirectory: `${workspaceRoot}/coverage/packages`,
 };
 
 export default config;

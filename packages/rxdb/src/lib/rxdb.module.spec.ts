@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { ApplicationInitStatus } from '@angular/core';
 import { TestBed, waitForAsync } from '@angular/core/testing';
 import { NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
 import { RXDB_CONFIG } from '@ngx-odm/rxdb/config';
@@ -98,6 +97,7 @@ describe('NgxRxdbModule', () => {
       expect(calls[0][0]).toEqual(TEST_DB_CONFIG_1);
       await Promise.resolve();
     }));
+
     /* it(`should provide collectionConfig & collection service`, waitForAsync(() => {
       expect(NgxRxdbFeatureModule).toBeDefined();
       expect(TestBed.inject(NgxRxdbCollectionService)).toBeDefined();

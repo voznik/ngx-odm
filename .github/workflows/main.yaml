@@ -18,6 +18,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
     # strategy:
     #   matrix:
     #     node-version: [12.x, 14.x]
@@ -76,16 +80,29 @@ jobs:
           path:
             dist/packages
             # !dist/**/*.md
+      # Build if release published
+      - name: Build Demo
+        # if: github.event.release.published
+        run: npm run build:demo && npm run compodoc
+      ###
+      - name: Upload demo artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: 'dist/demo'
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v2 # or the latest "vX.X.X" version tag for this action
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          preview: false
 
   publish:
-    # if: github.event.pull_request.merged
-    # if: github.event.release.published
+    if: github.event.pull_request.merged || github.event.release.published
     needs: build
     runs-on: ubuntu-latest
     steps:
       # - uses: actions/checkout@v2
       # - name: Download all workflow run artifacts
-      - uses: actions/cache@v2
+      # - uses: actions/cache@v2
       - uses: actions/download-artifact@v2
       - name: Version and publish
         run: |
@@ -97,7 +114,7 @@ jobs:
           git push gh-origin HEAD:master --tags
       - uses: actions/setup-node@v2
         with:
-          node-version: 12
+          node-version: 18
           registry-url: 'https://registry.npmjs.org'
       - run: |
           npm run packages:publish:dev

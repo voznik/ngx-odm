@@ -89,6 +89,10 @@ export function dbInitializerFactory(
   // id: 'NgxRxdbModule',
 })
 export class NgxRxdbModule {
+  /**
+   * Creates a feature module with providers for a specific RxDB collection.
+   * @param collectionConfig The configuration for the RxDB collection.
+   */
   static forFeature(
     collectionConfig: NgxRxdbCollectionConfig
   ): ModuleWithProviders<NgxRxdbFeatureModule> {
@@ -105,6 +109,10 @@ export class NgxRxdbModule {
     };
   }
 
+  /**
+   * Configures and initializes RxDB with the given configuration, during the `APP_INITIALIZER` cycle.
+   * @param config The configuration options for NgxRxdbModule.
+   */
   static forRoot(config: NgxRxdbConfig): ModuleWithProviders<NgxRxdbModule> {
     return {
       ngModule: NgxRxdbModule,

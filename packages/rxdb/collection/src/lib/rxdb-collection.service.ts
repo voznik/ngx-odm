@@ -107,7 +107,7 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
     protected readonly config: NgxRxdbCollectionConfig
   ) {
     dbService
-      .initCollection(this.config)!
+      .initCollection(this.config)
       .then((collection: RxCollection) => {
         this._collection = collection;
         this._init$.next(true);
