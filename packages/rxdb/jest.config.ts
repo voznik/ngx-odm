@@ -1,6 +1,9 @@
 /* eslint-disable import/no-default-export */
-/// <reference types="jest" />
-export default {
+import type { Config } from 'jest';
+
+const CI = process.env.CI === 'true' || true;
+
+const config: Config = {
   displayName: '@ngx-odm/rxdb',
   preset: '../../jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts', 'jest-localstorage-mock'],
@@ -19,9 +22,19 @@ export default {
     ],
   },
   transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
-  /* snapshotSerializers: [
-    'jest-preset-angular/build/serializers/no-ng-attributes',
-    'jest-preset-angular/build/serializers/ng-snapshot',
-    'jest-preset-angular/build/serializers/html-comment',
-  ], */
+  collectCoverage: CI,
+  coverageDirectory: '../../coverage/packages',
+  coverageReporters: [
+    'text-summary',
+    'json',
+    ['lcov', { file: 'rxdb-coverage.lcov' }],
+    ['json-summary', { file: 'rxdb-coverage-summary.json' }],
+  ],
+  bail: true,
+  verbose: true,
+  // resetModules: true,
+  // clearMocks: true,
+  passWithNoTests: true,
 };
+
+export default config;
