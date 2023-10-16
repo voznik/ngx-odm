@@ -189,5 +189,9 @@
     "kinto",
     "rxdb"
   ],
-  "overrides": {}
+  "overrides": {
+    "@nrwl/eslint-plugin-nx": {
+      "eslint-config-prettier": "9.0.0"
+    }
+  }
 }

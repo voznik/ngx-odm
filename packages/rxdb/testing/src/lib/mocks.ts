@@ -1,6 +1,7 @@
 /// <reference types="jest" />
 
 import { resolve } from 'path';
+import { Injectable } from '@angular/core';
 import type { NgxRxdbConfig } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import { ensureDirSync } from 'fs-extra';
@@ -59,7 +60,11 @@ export const TEST_DB_CONFIG_2: NgxRxdbConfig = {
   },
 };
 
+@Injectable()
 export class MockNgxRxdbService extends NgxRxdbService {
+  constructor() {
+    super(localStorage);
+  }
   // private _imported = 0;
   // private dbInstance = {} as any;
   override get db() {
@@ -81,14 +86,16 @@ export class MockNgxRxdbService extends NgxRxdbService {
       remove: jest.fn().mockResolvedValue({}),
       update: jest.fn().mockResolvedValue({}),
     }),
+    findByIds: jest.fn().mockReturnValue(Promise.resolve(new Map([[0, { id: '0' }]]))),
     findByIds$: jest.fn().mockReturnValue(of(new Map([[0, { id: '0' }]]))),
     pouch: {
       allDocs: jest.fn().mockResolvedValue({ rows: [{ id: '0' }] }),
       bulkDocs: jest.fn().mockResolvedValue([]),
     },
-    insert: jest.fn().mockImplementation(obj => of(obj)),
+    info: jest.fn().mockImplementation(obj => Promise.resolve(obj)),
+    insert: jest.fn().mockImplementation(obj => Promise.resolve(obj)),
     bulkInsert: jest.fn().mockImplementation(arr => Promise.resolve(arr)),
-    upsert: jest.fn().mockImplementation(obj => of(obj)),
+    upsert: jest.fn().mockImplementation(obj => Promise.resolve(obj)),
   } as unknown as RxCollection);
   override initCollections = this.initCollection;
   override getCollection = jest.fn().mockReturnValue({});

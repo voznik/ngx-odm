@@ -24,7 +24,7 @@ describe(`NgxRxdbCollectionService`, () => {
     let service: NgxRxdbCollection<any>;
 
     beforeEach(() => {
-      dbService = new MockNgxRxdbService(localStorage);
+      dbService = new MockNgxRxdbService();
       service = new NgxRxdbCollectionServiceImpl(dbService, TEST_FEATURE_CONFIG_1);
     });
 
