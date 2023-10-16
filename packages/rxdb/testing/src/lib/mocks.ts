@@ -1,11 +1,13 @@
-import { ensureDirSync } from 'fs-extra';
+/// <reference types="jest" />
+
 import { resolve } from 'path';
+import type { NgxRxdbConfig } from '@ngx-odm/rxdb/config';
+import { NgxRxdbService } from '@ngx-odm/rxdb/core';
+import { ensureDirSync } from 'fs-extra';
 import { RxCollection, RxCollectionCreator, RxJsonSchema } from 'rxdb/plugins/core';
 import { of } from 'rxjs';
-import { NgxRxdbConfig } from '../../../config/src/lib/rxdb.config';
-import { NgxRxdbService } from '../../../core/src/lib/rxdb.service';
 
-const rootDir = resolve(__dirname, '../../../../');
+const rootDir = resolve(__dirname, '../../../../../');
 const dbPath = resolve(rootDir, 'tmp', 'websql', 'test');
 ensureDirSync(dbPath);
 

@@ -1,32 +1,17 @@
 import { InjectionToken } from '@angular/core';
-import { DEFAULT_BACKOFF_FN, NgxRxdbCollectionConfig } from '@ngx-odm/rxdb/config';
-import { NgxRxdbCollectionDump, NgxRxdbService } from '@ngx-odm/rxdb/core';
-import { logFn } from '@ngx-odm/rxdb/utils';
-import { RxCollectionBase } from 'rxdb/dist/types/rx-collection';
+import type { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb/config';
+import { NgxRxdbCollectionDump, NgxRxdbError, NgxRxdbService } from '@ngx-odm/rxdb/core';
 import type { PouchAllDocsOptions } from 'rxdb/dist/types/types/pouch';
 import type {
   MangoQuery,
   RxCollection,
-  RxCollectionGenerated,
   RxDatabase,
   RxDocument,
   RxDocumentBase,
 } from 'rxdb/plugins/core';
 import { RxReplicationState } from 'rxdb/plugins/core';
-import {
-  EMPTY,
-  Observable,
-  ReplaySubject,
-  Subscribable,
-  defer,
-  of,
-  shareReplay,
-  tap,
-} from 'rxjs';
-import { ConditionalKeys } from 'type-fest';
+import { EMPTY, Observable, ReplaySubject, defer, of, shareReplay } from 'rxjs';
 import { collectionMethod } from './rxdb-collection.helpers';
-
-const debug = logFn('NgxRxdbCollectionService');
 
 type AnyObject = Record<string, any>;
 type SubscribableOrPromise<T> = {
@@ -40,16 +25,8 @@ type SubscribableOrPromise<T> = {
     onrejected?: ((reason: any) => T | PromiseLike<T>) | undefined | null
   ) => Promise<T>;
 };
-type QueryResult<T> = RxDocument<T[]> | RxDocument<T>;
 type LocalDocument = (RxDocumentBase<any> & { isLocal(): true }) | null;
 type AllDocsOptions = PouchAllDocsOptions; // & PouchDB.Core.AllDocsWithinRangeOptions;
-type CollectionFnNames =
-  | ConditionalKeys<RxCollectionGenerated<any>, Function>
-  | ConditionalKeys<RxCollectionBase<any>, Function>;
-type CollectionFn = RxCollection<any>[CollectionFnNames];
-type CollectionFnReturnType<K extends CollectionFnNames> = Subscribable<
-  ReturnType<RxCollection<any>[K]>
->;
 type NgxRxdbBulkResponse = {
   ok: boolean;
   id: string;
@@ -63,7 +40,6 @@ export type NgxRxdbCollection<T extends AnyObject> = {
   readonly db: Readonly<RxDatabase>;
   readonly collection: Readonly<RxCollection<T>>;
   destroy(): void;
-  // initialized$(): Observable<boolean>;
   initialized$: Observable<boolean>;
   info(): SubscribableOrPromise<any>;
   import(docs: T[]): void;
@@ -94,8 +70,14 @@ export const NgxRxdbCollectionService = new InjectionToken<NgxRxdbCollection<any
   'NgxRxdbCollection'
 );
 
+/**
+ * Factory function that returns a new instance of NgxRxdbCollection
+ * with the provided NgxRxdbService and NgxRxdbCollectionConfig.
+ * @param config - The configuration object for the collection.
+ * @returns A new instance of NgxRxdbCollectionService.
+ */
 export function collectionServiceFactory(config: NgxRxdbCollectionConfig) {
-  return (dbService: NgxRxdbService): NgxRxdbCollection<any> =>
+  return (dbService: NgxRxdbService): NgxRxdbCollection<AnyObject> =>
     new NgxRxdbCollectionServiceImpl(dbService, config);
 }
 
@@ -107,14 +89,17 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
 {
   private _collection!: RxCollection<T>;
   private _init$ = new ReplaySubject<any>();
-  initialized$ = this._init$.asObservable();
+
+  get initialized$(): Observable<boolean> {
+    return this._init$.asObservable();
+  }
 
   get collection(): Readonly<RxCollection<T>> {
     return this._collection;
   }
 
   get db(): Readonly<RxDatabase> {
-    return this._collection.db as RxDatabase;
+    return this.dbService.db as RxDatabase;
   }
 
   constructor(
@@ -130,8 +115,7 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
       })
       .catch(e => {
         this._init$.complete();
-        debug('initCollection error');
-        // throw new NgxRxdbError(e.message ?? e);
+        throw new NgxRxdbError(e.message ?? e);
       });
   }
 
@@ -139,43 +123,19 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
     this.collection?.destroy();
   }
 
+  sync(remoteDbName = 'db', customHeaders?: { [h: string]: string }): RxReplicationState {
+    return this.dbService.syncCollection(this.collection, remoteDbName, customHeaders);
+  }
+
   @collectionMethod()
   info(): SubscribableOrPromise<any> {
     return this.collection.info();
   }
 
-  @collectionMethod()
-  sync(remoteDbName = 'db', customHeaders?: { [h: string]: string }): RxReplicationState {
-    if (!this.collection.options?.syncOptions?.remote) {
-      return {} as RxReplicationState;
-    }
-    const syncOptions = (this.collection.options as NgxRxdbCollectionConfig['options'])!
-      .syncOptions!;
-    syncOptions.remote = syncOptions.remote.concat('/', remoteDbName);
-    // merge options
-    syncOptions.options = Object.assign(
-      {
-        back_off_function: DEFAULT_BACKOFF_FN,
-      },
-      this.db.pouchSettings.ajax,
-      syncOptions.options
-    );
-    // append auth headers
-    if (customHeaders) {
-      (syncOptions.options as any).headers = Object.assign(
-        {},
-        (syncOptions.options as any).headers,
-        customHeaders
-      );
-    }
-    // set filtered sync
-    if (syncOptions.queryObj) {
-      syncOptions.query = this.collection.find(syncOptions.queryObj);
-    }
-    return this.collection.sync(syncOptions);
-  }
-
-  /** import array of docs into collection */
+  /**
+   * import array of docs into collection
+   * @param docs
+   */
   @collectionMethod()
   import(docs: T[]): void {
     const dump = new NgxRxdbCollectionDump<T>({
@@ -186,15 +146,13 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
     this.collection.importDump(dump as any);
   }
 
-  @collectionMethod({ startImmediately: false })
+  @collectionMethod({ startImmediately: false, asObservable: true })
   docs(query: MangoQuery<T>): Observable<RxDocument<T>[]> {
-    return this.collection
-      .find(query)
-      .$.pipe();
-      // tap(result => { debug('docs', result); })
+    return this.collection.find(query).$.pipe();
+    // tap(result => { debug('docs', result); })
   }
 
-  @collectionMethod({ startImmediately: false })
+  @collectionMethod({ startImmediately: false, asObservable: true })
   docsByIds(ids: string[]): Observable<RxDocument<T>[]> {
     return defer(async () => {
       const result = await this.collection.findByIds(ids);
@@ -202,7 +160,7 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
     });
   }
 
-  @collectionMethod({ startImmediately: false })
+  @collectionMethod({ startImmediately: false, asObservable: true })
   allDocs(options: AllDocsOptions): Observable<T[]> {
     const defaultOptions = {
       include_docs: true,
@@ -213,14 +171,14 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
       const result = await this.collection.pouch
         .allDocs({ ...defaultOptions, ...options })
         .catch(e => {
-          debug(e);
+          // debug(e);
           return { rows: [] };
         });
       return result.rows.map(({ doc, id }) => ({ ...doc, id }));
     }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
   }
 
-  @collectionMethod({ startImmediately: false })
+  @collectionMethod({ startImmediately: false, asObservable: true })
   get(id: string): Observable<RxDocument<T> | null> {
     return this.collection.findOne(id).$;
   }
@@ -261,6 +219,8 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
   }
 
   /**
+   * @param query
+   * @param values
    * @deprecated
    * updates all docs by given query
    * also represents a way to use 'pouch.bulkDocs' with RxDb

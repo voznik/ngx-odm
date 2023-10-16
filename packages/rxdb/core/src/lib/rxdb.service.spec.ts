@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import { ApplicationInitStatus } from '@angular/core';
 import { TestBed, waitForAsync } from '@angular/core/testing';
+import { NgxRxdbModule } from '@ngx-odm/rxdb';
+import { TEST_DB_CONFIG_1, TEST_DB_CONFIG_2 } from '@ngx-odm/rxdb/testing';
 import { addRxPlugin } from 'rxdb/plugins/core';
-import { TEST_DB_CONFIG_1, TEST_DB_CONFIG_2 } from '../../../utils/src/lib/rxdb.mock';
-import { NgxRxdbModule } from '../../../src/lib/rxdb.module';
 import { NgxRxdbService } from './rxdb.service';
 
 addRxPlugin(require('pouchdb-adapter-node-websql'));

@@ -7,7 +7,9 @@ import { Subject, first, shareReplay, switchMap, tap, identity } from 'rxjs';
  * through class init$ observable property which emits when collection is created
  * Additionally, if `startImmediately` is true, evaluate resulting method observable
  */
-export function collectionMethod({ startImmediately } = { startImmediately: true }) {
+export function collectionMethod(
+  { startImmediately, asObservable } = { startImmediately: true, asObservable: true }
+) {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
     descriptor.value = function (...args: any[]) {

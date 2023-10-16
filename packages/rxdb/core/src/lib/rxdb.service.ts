@@ -1,11 +1,11 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable, StaticProvider } from '@angular/core';
 import {
   DEFAULT_BACKOFF_FN,
   NgxRxdbCollectionConfig,
   NgxRxdbConfig,
   RXDB_DEFAULT_CONFIG,
 } from '@ngx-odm/rxdb/config';
-import { isEmpty, loadRxDBPlugins, logFn, NgxRxdbError } from '@ngx-odm/rxdb/utils';
+import { isEmpty, LOCAL_STORAGE, logFn, merge } from '@ngx-odm/rxdb/utils';
 //  INFO: Instead of using the default rxdb-import, we do a custom build which lets us cherry-pick only the modules that we need. A default import would be: import RxDB from 'rxdb';
 import {
   CollectionsOfDatabase,
@@ -19,19 +19,21 @@ import {
 import { checkSchema } from 'rxdb/plugins/dev-mode';
 import { NgxRxdbCollectionCreator } from './rxdb-collection.class';
 import { NgxRxdbCollectionDump, NgxRxdbDump } from './rxdb-dump.class';
+import { NgxRxdbError } from './rxdb-error.class';
+import { loadRxDBPlugins } from './rxdb-plugin.loader';
 
 const debug = logFn('NgxRxdbService');
 const IMPORTED_FLAG = '_ngx_rxdb_imported';
 
-@Injectable()
 /**
  * Service for managing a RxDB database instance.
  */
+@Injectable()
 export class NgxRxdbService {
   private dbInstance: RxDatabase | null = null;
 
   private static mergeConfig(config: NgxRxdbConfig): NgxRxdbConfig {
-    return Object.assign({}, RXDB_DEFAULT_CONFIG, config);
+    return merge(RXDB_DEFAULT_CONFIG, config);
   }
 
   static getCouchAuthProxyHeaders(
@@ -54,8 +56,8 @@ export class NgxRxdbService {
     return this.db!.collections;
   }
 
-  constructor() {
-    this._imported = window.localStorage[IMPORTED_FLAG];
+  constructor(@Inject(LOCAL_STORAGE) private localStorage: Storage) {
+    this._imported = this.localStorage[IMPORTED_FLAG];
   }
 
   async destroyDb() {
@@ -63,12 +65,16 @@ export class NgxRxdbService {
       await this.dbInstance!.remove();
       await this.dbInstance!.destroy();
       this.dbInstance = null;
-    } catch {}
+      debug(`database destroy`);
+    } catch {
+      debug(`database destroy error`);
+    }
   }
 
   /**
    * Runs via APP_INITIALIZER in app.module.ts
    * to ensure the database exists before the angular-app starts up
+   * @param config
    */
   async initDb(config: NgxRxdbConfig) {
     try {
@@ -99,7 +105,10 @@ export class NgxRxdbService {
     }
   }
 
-  /** uses bulk `addCollections` method at the end of array */
+  /**
+   * uses bulk `addCollections` method at the end of array
+   * @param colConfigs
+   */
   async initCollections(colConfigs: Record<string, NgxRxdbCollectionConfig>) {
     try {
       const colCreators = await this.prepareCollections(colConfigs);
@@ -152,24 +161,23 @@ export class NgxRxdbService {
     col: RxCollection,
     remoteDbName = 'db',
     customHeaders?: Record<string, string>
-  ): RxReplicationState | undefined {
+  ): RxReplicationState {
+    let rState: RxReplicationState = {} as RxReplicationState;
+
     if (!col.options?.syncOptions?.remote) {
-      return undefined;
+      return rState;
     }
     const syncOptions = (col.options as NgxRxdbCollectionConfig['options'])!.syncOptions!;
     syncOptions.remote = syncOptions.remote.concat('/', remoteDbName);
     // merge options
-    syncOptions.options = Object.assign(
-      {
-        back_off_function: DEFAULT_BACKOFF_FN,
-      },
+    syncOptions.options = merge(
       this.db.pouchSettings.ajax,
-      syncOptions.options
+      { back_off_function: DEFAULT_BACKOFF_FN },
+      syncOptions.options as any
     );
     // append auth headers
     if (customHeaders) {
-      (syncOptions.options as any).headers = Object.assign(
-        {},
+      (syncOptions.options as any).headers = merge(
         (syncOptions.options as any).headers,
         customHeaders
       );
@@ -178,7 +186,12 @@ export class NgxRxdbService {
     if (syncOptions.queryObj) {
       syncOptions.query = col.find(syncOptions.queryObj);
     }
-    return col.sync(syncOptions);
+    try {
+      rState = col.sync(syncOptions);
+    } catch (error) {
+      debug('syncCollection error', error);
+    }
+    return rState;
   }
 
   syncAllCollections(
@@ -201,6 +214,7 @@ export class NgxRxdbService {
 
   /**
    * imports pouchdb dump to the database, must be used only after db init
+   * @param dumpPath
    */
   async importDbDump(dumpPath: string) {
     try {
@@ -240,10 +254,10 @@ export class NgxRxdbService {
   }
 
   private get _imported() {
-    return window.localStorage[IMPORTED_FLAG];
+    return this.localStorage[IMPORTED_FLAG];
   }
   private set _imported(v: number) {
-    window.localStorage[IMPORTED_FLAG] = v;
+    this.localStorage[IMPORTED_FLAG] = v;
   }
 
   private async prepareCollections(
@@ -268,7 +282,10 @@ export class NgxRxdbService {
     }
   }
 
-  /** change schemaHashes from dump to existing schema hashes */
+  /**
+   * change schemaHashes from dump to existing schema hashes
+   * @param dumpPath
+   */
   private async prepareDbDump(dumpPath: string): Promise<NgxRxdbDump> {
     // fetch dump json
     const dumpObj = await (await fetch(dumpPath)).json();

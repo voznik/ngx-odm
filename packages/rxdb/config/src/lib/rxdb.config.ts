@@ -1,11 +1,10 @@
+import { InjectionToken } from '@angular/core';
 import type {
   MangoQuery,
   RxCollectionCreator,
   RxDatabaseCreator,
   SyncOptions,
 } from 'rxdb/plugins/core';
-
-import { InjectionToken } from '@angular/core';
 
 export interface NgxRxdbCollectionConfig extends Partial<RxCollectionCreator> {
   schema?: RxCollectionCreator['schema'];

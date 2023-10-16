@@ -1,4 +1,7 @@
+import { isDevMode, logFn } from '@ngx-odm/rxdb/utils';
 import * as PouchdbAdapterHttp from 'pouchdb-adapter-http';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 import * as PouchdbAdapterIdb from 'pouchdb-adapter-idb';
 import { RxDBAdapterCheckPlugin } from 'rxdb/plugins/adapter-check';
 import { addRxPlugin } from 'rxdb/plugins/core';
@@ -10,10 +13,15 @@ import { RxDBNoValidatePlugin } from 'rxdb/plugins/no-validate';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
 import { RxDBReplicationPlugin } from 'rxdb/plugins/replication';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
-import { isDevMode, logFn, NgxRxdbError } from './utils';
+import { NgxRxdbError } from './rxdb-error.class';
 
 const debug = logFn('NgxRxdb PluginLoader');
 
+/**
+ * Loads all the necessary RxDB plugins for the application to work.
+ * @returns A Promise that resolves when all the plugins have been loaded.
+ * @throws {NgxRxdbError} If there was an error loading the plugins.
+ */
 export async function loadRxDBPlugins(): Promise<void> {
   try {
     addRxPlugin(RxDBReplicationPlugin);

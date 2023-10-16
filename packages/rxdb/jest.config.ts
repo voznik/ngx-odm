@@ -1,21 +1,18 @@
-// TODO: review https://github.com/Angular-RU/angular-jest-utils/blob/master/src/create-ts-jest-config.ts
-
+/* eslint-disable import/no-default-export */
 const CI = process.env['CI'] || true;
 
-/* if (!CI) {
-  console.log('[DEBUG]: moduleNameMapper');
-  console.log(JSON.stringify(moduleNameMapper, null, 4));
-} */
-
-module.exports = {
-  displayName: 'ngx-odm',
-  testMatch: ['**/+(*.)+(spec|test).+(ts|js)?(x)'],
-  transform: {
-    '^.+\\.(ts|js|html)$': 'ts-jest',
-  },
-  testEnvironment: 'jest-environment-jsdom-fourteen',
-  resolver: '@nrwl/jest/plugins/resolver',
-  moduleFileExtensions: ['ts', 'js', 'html'],
+export default {
+  displayName: '@ngx-odm/rxdb',
+  preset: '../../jest.preset.js',
+  setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts', 'jest-localstorage-mock'],
+  coverageReporters: [
+    'text-summary',
+    'json',
+    ['lcov', { file: 'rxdb-coverage.lcov' }],
+    ['json-summary', { file: 'rxdb-coverage-summary.json' }],
+  ],
+  // coverageReporters: ['json-summary', 'json', 'lcovonly', 'lcov', 'text-summary', 'html'],
+  coverageDirectory: '../../coverage/packages',
   /**
    * By default, Jest runs all tests and produces all errors into the console upon completion.
    * The bail config option can be used here to have Jest stop running tests after n failures.
@@ -53,7 +50,6 @@ module.exports = {
    * it may significantly slow down your tests.
    */
   collectCoverage: CI,
-  coverageReporters: ['json-summary', 'json', 'lcovonly', 'lcov', 'text-summary', 'html'],
   passWithNoTests: true,
   // A set of global variables that need to be available in all test environments
   globals: {
@@ -63,9 +59,19 @@ module.exports = {
       allowSyntheticDefaultImports: true,
     },
   },
-  /**
-   * A preset that is used as a base for Jest's configuration.
-   */
-  preset: 'jest-preset-angular',
-  setupFilesAfterEnv: ['jest-localstorage-mock'],
+  transform: {
+    '^.+\\.(ts|mjs|js|html)$': [
+      'jest-preset-angular',
+      {
+        tsconfig: '<rootDir>/tsconfig.spec.json',
+        stringifyContentPathRegex: '\\.(html|svg)$',
+      },
+    ],
+  },
+  transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
+  /* snapshotSerializers: [
+    'jest-preset-angular/build/serializers/no-ng-attributes',
+    'jest-preset-angular/build/serializers/ng-snapshot',
+    'jest-preset-angular/build/serializers/html-comment',
+  ], */
 };

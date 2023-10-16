@@ -1,3 +1,4 @@
+import { merge } from '@ngx-odm/rxdb/utils';
 import { RxDumpCollectionAny, RxDumpDatabaseAny } from 'rxdb/plugins/core';
 
 export class NgxRxdbDump implements RxDumpDatabaseAny<any> {
@@ -7,9 +8,9 @@ export class NgxRxdbDump implements RxDumpDatabaseAny<any> {
   encrypted = false;
   passwordHash = null;
   collections!: RxDumpCollectionAny<any>[];
-
+  /** @internal */
   constructor(data: Partial<NgxRxdbDump>) {
-    Object.assign(this, data);
+    merge(this, data);
   }
 }
 
@@ -19,8 +20,8 @@ export class NgxRxdbCollectionDump<T = any> implements RxDumpCollectionAny<T> {
   schemaHash!: string;
   name!: string;
   docs!: T[];
-
+  /** @internal */
   constructor(data: Partial<RxDumpCollectionAny<T>>) {
-    Object.assign(this, data);
+    merge(this, data);
   }
 }

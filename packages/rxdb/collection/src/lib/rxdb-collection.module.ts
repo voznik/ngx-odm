@@ -1,6 +1,6 @@
 import { Inject, NgModule } from '@angular/core';
-import { NgxRxdbCollectionService, NgxRxdbCollection } from './rxdb-collection.service';
 import { NgxRxdbAsyncNoZonePipe } from './rxdb-async-no-zone.pipe';
+import { NgxRxdbCollectionService, NgxRxdbCollection } from './rxdb-collection.service';
 
 /**
  * (Fake) Feature module for NgxRxdbModule
@@ -18,7 +18,7 @@ export class NgxRxdbFeatureModule {
     @Inject(NgxRxdbCollectionService) private collectionService: NgxRxdbCollection<any>
   ) {
     collectionService.info().subscribe!(info => {
-      console.log('NgxRxdbFeatureModule:collectionService:info', info);
+      // console.log('NgxRxdbFeatureModule:collectionService:info', info);
     });
   }
 }

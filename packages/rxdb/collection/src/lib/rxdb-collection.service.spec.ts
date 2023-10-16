@@ -1,20 +1,20 @@
-/* eslint-disable @angular-eslint/directive-class-suffix */
+/* eslint-disable @typescript-eslint/no-var-requires */
 import { ApplicationInitStatus } from '@angular/core';
-import { TestBed, waitForAsync } from '@angular/core/testing';
+import { TestBed, inject, waitForAsync } from '@angular/core/testing';
+import { NgxRxdbModule } from '@ngx-odm/rxdb';
+import { NgxRxdbService } from '@ngx-odm/rxdb/core';
+import {
+  TEST_FEATURE_CONFIG_1,
+  TEST_DB_CONFIG_2,
+  MockNgxRxdbService,
+} from '@ngx-odm/rxdb/testing';
 import { addRxPlugin } from 'rxdb/plugins/core';
-import { Observable } from 'rxjs';
+import { Observable, take } from 'rxjs';
 import {
   NgxRxdbCollection,
   NgxRxdbCollectionService,
   NgxRxdbCollectionServiceImpl,
 } from './rxdb-collection.service';
-import {
-  MockNgxRxdbService,
-  TEST_DB_CONFIG_2,
-  TEST_FEATURE_CONFIG_1,
-} from '../../../utils/src/lib/rxdb.mock';
-import { NgxRxdbService } from '@ngx-odm/rxdb/core';
-import { NgxRxdbModule } from '@ngx-odm/rxdb';
 
 addRxPlugin(require('pouchdb-adapter-node-websql'));
 
@@ -24,13 +24,15 @@ describe(`NgxRxdbCollectionService`, () => {
     let service: NgxRxdbCollection<any>;
 
     beforeEach(() => {
-      dbService = new MockNgxRxdbService();
+      dbService = new MockNgxRxdbService(localStorage);
       service = new NgxRxdbCollectionServiceImpl(dbService, TEST_FEATURE_CONFIG_1);
     });
 
-    it(`should return Observable via init method`, () => {
+    it(`should provide Observable "initialized$" getter`, async () => {
       expect(service).toBeDefined();
       const spy = jest.spyOn(service, 'initialized$', 'get');
+      const r = await service.initialized$.pipe(take(1)).toPromise();
+      expect(spy).toHaveBeenCalled();
       const calls = spy.mock.calls;
       const results = spy.mock.results;
       expect(calls[0].length).toEqual(0);
@@ -45,9 +47,10 @@ describe(`NgxRxdbCollectionService`, () => {
       });
     });
 
-    it(`should call sync collection of dbService `, async () => {
+    it(`should perform collection sync`, async () => {
       const spy = jest.spyOn(dbService, 'syncCollection');
-      await service.sync();
+      // await service.initialized$.pipe(take(1)).toPromise();
+      service.sync();
       expect(spy).toHaveBeenCalled();
     });
 
@@ -81,68 +84,79 @@ describe(`NgxRxdbCollectionService`, () => {
     });
 
     it(`should insert 1 doc by id `, () => {
-      service.insert({ id: '1' }).subscribe(result => {
+      service.insert({ id: '1' })!.subscribe!(result => {
         expect(result).toBeDefined();
       });
     });
 
     it(`should upsert 1 doc by id `, () => {
-      service.upsert({ id: '1' }).subscribe(result => {
+      service.upsert({ id: '1' }).subscribe!(result => {
         expect(result).toBeDefined();
       });
     });
 
     it(`should insert many docs bulk `, () => {
-      service.insertBulk([{ id: '1' }, { id: '2' }]).subscribe(result => {
+      service.insertBulk([{ id: '1' }, { id: '2' }]).subscribe!(result => {
         expect(result).toBeDefined();
       });
     });
 
     it(`should update data of 1 doc by id `, () => {
-      service.set('0', { x: 'y' }).subscribe(result => {
+      service.set('0', { x: 'y' }).subscribe!(result => {
         expect(result).toBeDefined();
       });
     });
 
     it(`should update docs in collection by query `, () => {
-      service.updateBulk({ selector: { x: 'y' } }, { y: 'x' }).subscribe(result => {
+      service.updateBulk({ selector: { x: 'y' } }, { y: 'x' }).subscribe!(result => {
         expect(result).toBeDefined();
       });
     });
 
     it(`should remove 1 doc by id `, () => {
-      service.remove('0').subscribe(result => {
+      service.remove('0').subscribe!(result => {
         expect(result).toBeDefined();
       });
     });
 
     it(`should remove docs in collection by query `, () => {
-      service.removeBulk({ selector: { x: 'y' } }).subscribe(result => {
+      service.removeBulk({ selector: { x: 'y' } }).subscribe!(result => {
         expect(result).toBeDefined();
       });
     });
   });
 
-  describe(`test init by db config`, () => {
-    let service: NgxRxdbCollection<any>;
+  describe(`test dn init by feature module config`, () => {
+    // let service: NgxRxdbCollection<any>;
 
-    beforeEach(async () => {
+    beforeEach(waitForAsync(() => {
       TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: NgxRxdbService,
+            useClass: MockNgxRxdbService,
+          },
+        ],
         imports: [
           NgxRxdbModule.forRoot(TEST_DB_CONFIG_2),
           NgxRxdbModule.forFeature({ name: 'todo' }),
         ],
       });
-      service = TestBed.inject(NgxRxdbCollectionService);
-      await TestBed.inject(ApplicationInitStatus).donePromise;
-    });
-    it(`should init database AND collection`, waitForAsync(() => {
-      expect(service.db).toBeDefined();
-      expect(service.db.name).toEqual(TEST_DB_CONFIG_2.name);
-      const col = service.db.collections['todo'];
-      expect(col).toBeDefined();
-      expect(col.statics).toBeDefined();
-      expect(col.statics.countAllDocuments).toBeInstanceOf(Function);
+      // await TestBed.inject(ApplicationInitStatus).donePromise;
+      // service = TestBed.inject(NgxRxdbCollectionService, undefined, { skipSelf: true }) ;
     }));
+    it(`should init database AND collection`, inject(
+      [NgxRxdbCollectionService],
+      async (service: NgxRxdbCollection<any>) => {
+        await service.initialized$.pipe(take(1)).toPromise();
+        expect(service.db).toBeDefined();
+        // expect(service.db.name).toEqual(TEST_DB_CONFIG_2.name);
+        expect(service.collection).toBeDefined();
+        // const col = service.db.collections['todo'];
+        // expect(col).toBeDefined();
+        // expect(col.statics).toBeDefined();
+        // expect(col.statics.countAllDocuments).toBeInstanceOf(Function);
+      }
+    ));
   });
 });

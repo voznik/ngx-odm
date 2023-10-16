@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-types */
-/// reference
+import { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb/config';
 import {
   PouchDBInstance,
   PouchSettings,
   RxCollectionCreator,
   RxJsonSchema,
 } from 'rxdb/plugins/core';
-import { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb/config';
 
 async function infoFn(this: { pouch: PouchDBInstance }): Promise<any> {
   return await this.pouch.info();
@@ -28,7 +27,10 @@ const DEFAULT_COLLECTION_METHODS: Record<string, Function> = {
   countAllDocuments: countAllDocumentsFn,
 };
 
-// @dynamic
+/**
+ * A class that implements the RxCollectionCreator interface and represents a collection creator for NgxRxdb.
+ * It defines the properties and methods required to create a new RxCollection instance.
+ */
 export class NgxRxdbCollectionCreator implements RxCollectionCreator {
   name!: string;
   schema!: RxJsonSchema;
@@ -41,6 +43,7 @@ export class NgxRxdbCollectionCreator implements RxCollectionCreator {
   autoMigrate?: boolean; // (optional)
   cacheReplacementPolicy?: NgxRxdbCollectionConfig['cacheReplacementPolicy']; // (optional) custoom cache replacement policy
 
+  /** @internal */
   constructor(config: NgxRxdbCollectionConfig, pouchSettings?: PouchSettings) {
     Object.assign(this, {
       ...config,
@@ -50,6 +53,7 @@ export class NgxRxdbCollectionCreator implements RxCollectionCreator {
     });
   }
 
+  /** @internal */
   static async fetchSchema(schemaUrl: string): Promise<RxJsonSchema> {
     return await (await fetch(schemaUrl)).json();
   }

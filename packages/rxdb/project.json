@@ -50,7 +50,9 @@
           "packages/rxdb/collection/**/*.ts",
           "packages/rxdb/collection/**/*.html",
           "packages/rxdb/config/**/*.ts",
-          "packages/rxdb/config/**/*.html"
+          "packages/rxdb/config/**/*.html",
+          "packages/rxdb/testing/**/*.ts",
+          "packages/rxdb/testing/**/*.html"
         ]
       }
     }
