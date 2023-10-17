@@ -1,4 +1,5 @@
-import { isDevMode, logFn } from '@ngx-odm/rxdb/utils';
+import { isDevMode } from '@angular/core';
+import { logFn } from '@ngx-odm/rxdb/utils';
 import * as PouchdbAdapterHttp from 'pouchdb-adapter-http';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -15,7 +16,7 @@ import { RxDBReplicationPlugin } from 'rxdb/plugins/replication';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { NgxRxdbError } from './rxdb-error.class';
 
-const debug = logFn('NgxRxdb PluginLoader');
+const log = logFn('PluginLoader');
 
 /**
  * Loads all the necessary RxDB plugins for the application to work.
@@ -40,7 +41,7 @@ export async function loadRxDBPlugins(): Promise<void> {
 
     /** * to reduce the build-size, we use some plugins in dev-mode only */
     if (isDevMode()) {
-      debug('load dev plugins');
+      log('load dev plugins');
       await Promise.all([
         // add dev-mode plugin
         // which does many checks and add full error-messages

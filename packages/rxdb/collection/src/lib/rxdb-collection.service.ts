@@ -1,6 +1,12 @@
 import { InjectionToken } from '@angular/core';
 import type { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb/config';
-import { NgxRxdbCollectionDump, NgxRxdbError, NgxRxdbService } from '@ngx-odm/rxdb/core';
+import {
+  NgxRxdbCollectionDump,
+  NgxRxdbCollectionStaticMethods,
+  NgxRxdbError,
+  NgxRxdbService,
+} from '@ngx-odm/rxdb/core';
+import { merge } from '@ngx-odm/rxdb/utils';
 import type { PouchAllDocsOptions } from 'rxdb/dist/types/types/pouch';
 import type {
   MangoQuery,
@@ -8,18 +14,19 @@ import type {
   RxDatabase,
   RxDocument,
   RxDocumentBase,
+  RxError,
 } from 'rxdb/plugins/core';
 import { RxReplicationState } from 'rxdb/plugins/core';
 import {
   EMPTY,
   Observable,
   ReplaySubject,
-  catchError,
   defer,
   identity,
   map,
+  merge as merge$,
   of,
-  shareReplay,
+  startWith,
   switchMap,
   tap,
 } from 'rxjs';
@@ -38,30 +45,38 @@ type SubscribableOrPromise<T> = {
     onrejected?: ((reason: any) => T | PromiseLike<T>) | undefined | null
   ) => Promise<T>;
 };
-type LocalDocument = (RxDocumentBase<any> & { isLocal(): true }) | null;
+type LocalDocument = (RxDocumentBase<AnyObject> & { isLocal(): true }) | null;
 type AllDocsOptions = PouchAllDocsOptions; // & PouchDB.Core.AllDocsWithinRangeOptions;
 type NgxRxdbBulkResponse = {
   ok: boolean;
   id: string;
   rev: string;
 }[];
+type RxCollectionWithStatics<T extends AnyObject> = RxCollection<
+  T,
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  {},
+  NgxRxdbCollectionStaticMethods
+>;
 
+/* eslint-disable jsdoc/require-jsdoc */
 /**
  * Service for interacting with a RxDB collection.
  */
 export type NgxRxdbCollection<T extends AnyObject> = {
   readonly db: Readonly<RxDatabase>;
-  readonly collection: Readonly<RxCollection<T>>;
-  initialized$: Observable<boolean>;
+  readonly collection: RxCollectionWithStatics<T>;
+  initialized$: Observable<unknown>;
 
   destroy(): void;
   info(): SubscribableOrPromise<any>;
+  getIndexes(): SubscribableOrPromise<any>;
   import(docs: T[]): void;
   sync(remoteDbName?: string, customHeaders?: { [h: string]: string }): RxReplicationState;
 
   docs(query?: MangoQuery<T>): Observable<RxDocument<T>[]>;
   docsByIds(ids: string[]): Observable<RxDocument<T>[]>;
-  allDocs(options: AllDocsOptions): Observable<T[]>;
+  allDocs(options?: AllDocsOptions): Observable<T[]>;
   count(): Observable<number>;
 
   get(id: string): Observable<RxDocument<T> | null>;
@@ -79,12 +94,13 @@ export type NgxRxdbCollection<T extends AnyObject> = {
   setLocal(id: string, prop: string, value: any): SubscribableOrPromise<any>;
   removeLocal(id: string): SubscribableOrPromise<boolean>;
 };
+/* eslint-enable jsdoc/require-jsdoc */
 
 /**
  * Injection token for Service for interacting with a RxDB collection.
  * This token is used to inject an instance of NgxRxdbCollection into a component or service.
  */
-export const NgxRxdbCollectionService = new InjectionToken<NgxRxdbCollection<any>>(
+export const NgxRxdbCollectionService = new InjectionToken<NgxRxdbCollection<AnyObject>>(
   'NgxRxdbCollection'
 );
 
@@ -104,15 +120,15 @@ export function collectionServiceFactory(config: NgxRxdbCollectionConfig) {
 export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
   implements NgxRxdbCollection<T>
 {
-  private _collection!: RxCollection<T>;
-  private _init$ = new ReplaySubject<any>();
+  private _collection!: RxCollectionWithStatics<T>;
+  private _init$ = new ReplaySubject();
 
-  get initialized$(): Observable<boolean> {
+  get initialized$(): Observable<unknown> {
     return this._init$.asObservable();
   }
 
-  get collection(): Readonly<RxCollection<T>> {
-    return this._collection;
+  get collection(): RxCollectionWithStatics<T> {
+    return this._collection as RxCollectionWithStatics<T>;
   }
 
   get db(): Readonly<RxDatabase> {
@@ -126,7 +142,7 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
     dbService
       .initCollection(this.config)
       .then((collection: RxCollection) => {
-        this._collection = collection;
+        this._collection = collection as RxCollectionWithStatics<T>;
         this._init$.next(true);
         this._init$.complete();
       })
@@ -149,6 +165,11 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
     return this.collection.info();
   }
 
+  @collectionMethod()
+  getIndexes(): SubscribableOrPromise<any> {
+    return this.collection.getIndexes();
+  }
+
   /**
    * import array of docs into collection
    * @param docs
@@ -164,12 +185,7 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
   }
 
   docs(query?: MangoQuery<T>): Observable<RxDocument<T>[]> {
-    return this.initialized$.pipe(
-      switchMap(() => this.collection.find(query).$),
-      tap(result => {
-        console.debug('docs', result);
-      })
-    );
+    return this.initialized$.pipe(switchMap(() => this.collection.find(query).$));
   }
 
   docsByIds(ids: string[]): Observable<RxDocument<T>[]> {
@@ -180,34 +196,27 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
   }
 
   @collectionMethod({ startImmediately: false, asObservable: true })
-  allDocs(options: AllDocsOptions): Observable<T[]> {
+  allDocs(options: AllDocsOptions = {}): Observable<T[]> {
     const defaultOptions = {
       include_docs: true,
       attachments: false,
       startkey: '_design\uffff', // INFO: to skip design docs
     };
+    options = merge(defaultOptions, options);
     return defer(async () => {
-      const result = await this.collection.pouch
-        .allDocs({ ...defaultOptions, ...options })
-        .catch(e => {
-          // debug(e);
-          return { rows: [] };
-        });
+      const result = await this.collection.pouch.allDocs(options).catch(e => {
+        return { rows: [] };
+      });
       return result.rows.map(({ doc, id }) => ({ ...doc, id }));
     });
   }
 
   count(): Observable<number> {
-    const defaultOptions = {
-      include_docs: false,
-      attachments: false,
-      startkey: '_design\uffff', // INFO: to skip design docs
-    };
     return this.initialized$.pipe(
-      switchMap(() => this.collection.$),
-      switchMap(() => this.collection.pouch.allDocs(defaultOptions)),
-      catchError(() => of({ total_rows: 0 })),
-      map(result => result.total_rows)
+      switchMap(() =>
+        merge$(this.collection.insert$, this.collection.remove$).pipe(startWith(null))
+      ),
+      switchMap(() => this.collection.countAllDocuments())
     );
   }
 
@@ -306,9 +315,12 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
   setLocal(id: string, prop: string, value: any): SubscribableOrPromise<boolean> {
     return defer(async () => {
       const localDoc: LocalDocument = await this.collection.getLocal(id);
+      if (!localDoc || localDoc[prop] === value) {
+        return false;
+      }
       // change data
-      localDoc!.set(prop, value);
-      return await localDoc!.save();
+      localDoc.set(prop, value);
+      return await localDoc.save();
     });
   }
 

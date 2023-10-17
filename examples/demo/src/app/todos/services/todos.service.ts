@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { Location } from '@angular/common';
 import { Inject, Injectable } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
 import { MangoQuery } from 'rxdb/dist/types/types';
 import { Observable } from 'rxjs';
@@ -10,29 +11,28 @@ import { Todo, TodosFilter } from '../models';
 
 @Injectable()
 export class TodosService {
-  filter$ = this.collectionService.getLocal('local', 'filterValue').pipe(
-    startWith('ALL'),
-    distinctUntilChanged(),
-    tap(filterValue => console.log('filterValue', filterValue))
-  );
+  filter$ = this.collectionService
+    .getLocal('local', 'filterValue')
+    .pipe(startWith('ALL'), distinctUntilChanged());
 
   count$ = this.collectionService.count();
 
   remaining$: Observable<number> = this.collectionService.docs().pipe(
-    map(docs => docs.filter(doc => !doc.completed).length),
-    tap(remaining => console.log('remaining', remaining))
+    map(docs => {
+      const total = docs.length;
+      const remaining = docs.filter(doc => !doc.completed).length;
+
+      this.title.setTitle(`(${total - remaining}/${total}) Todos done`);
+
+      return remaining;
+    })
   );
 
   constructor(
     @Inject(NgxRxdbCollectionService) private collectionService: NgxRxdbCollection<Todo>,
-    private location: Location
-  ) {
-    this.collectionService.initialized$
-      .pipe(switchMap(() => this.getCount()))
-      .subscribe(count => {
-        console.debug('count', count);
-      });
-  }
+    private location: Location,
+    private title: Title
+  ) {}
 
   async getCount() {
     const count = await this.collectionService.collection?.['countAllDocuments']?.();
@@ -56,13 +56,19 @@ export class TodosService {
   }
 
   add(title: string): void {
+    const id = uuid();
     const payload: Todo = {
-      id: uuid(),
+      id,
+      // _id: id,
       title,
       completed: false,
       createdAt: Date.now(),
     };
     this.collectionService.insert(payload);
+  }
+
+  edit(id: string, title: string): void {
+    this.collectionService.set(id, { title });
   }
 
   toggle(id: string, completed: boolean): void {

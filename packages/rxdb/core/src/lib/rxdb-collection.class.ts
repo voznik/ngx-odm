@@ -1,30 +1,42 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb/config';
-import {
-  PouchDBInstance,
-  PouchSettings,
-  RxCollectionCreator,
-  RxJsonSchema,
-} from 'rxdb/plugins/core';
+import type { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb/config';
+import type { KeyFunctionMap, PouchSettings, RxCollectionCreator } from 'rxdb/plugins/core';
+import { RxJsonSchema } from 'rxdb/plugins/core';
 
-async function infoFn(this: { pouch: PouchDBInstance }): Promise<any> {
+async function infoFn(this: {
+  pouch: PouchDB.Database;
+}): Promise<PouchDB.Core.DatabaseInfo> {
   return await this.pouch.info();
 }
 
-async function countAllDocumentsFn(this: { pouch: PouchDBInstance }): Promise<number> {
+async function countAllDocumentsFn(this: { pouch: PouchDB.Database }): Promise<number> {
   const res = await this.pouch.allDocs({
     include_docs: false,
     attachments: false,
-    deleted: 'ok',
-    startkey: '_design\uffff',
+    // deleted: 'ok',
+    startkey: '_design\uffff', // Omit design doc
   });
-  return res.rows.length;
+  return res.total_rows - 1; // Omit design doc
 }
 
+async function getIndexesFn(this: {
+  pouch: PouchDB.Database;
+}): Promise<PouchDB.Find.GetIndexesResponse<{}>> {
+  const res = await this.pouch.getIndexes();
+  return res;
+}
+
+export type NgxRxdbCollectionStaticMethods = KeyFunctionMap & {
+  info(): Promise<PouchDB.Core.DatabaseInfo>;
+  countAllDocuments(): Promise<number>;
+  getIndexes(): Promise<PouchDB.Find.GetIndexesResponse<{}>>;
+};
+
 const DEFAULT_INSTANCE_METHODS: Record<string, Function> = {};
-const DEFAULT_COLLECTION_METHODS: Record<string, Function> = {
+const DEFAULT_COLLECTION_METHODS: NgxRxdbCollectionStaticMethods = {
   info: infoFn,
   countAllDocuments: countAllDocumentsFn,
+  getIndexes: getIndexesFn,
 };
 
 /**
@@ -36,7 +48,7 @@ export class NgxRxdbCollectionCreator implements RxCollectionCreator {
   schema!: RxJsonSchema;
   pouchSettings?: NgxRxdbCollectionConfig['pouchSettings'];
   migrationStrategies?: NgxRxdbCollectionConfig['migrationStrategies'];
-  statics?: NgxRxdbCollectionConfig['statics'] & keyof typeof DEFAULT_COLLECTION_METHODS;
+  statics?: NgxRxdbCollectionStaticMethods;
   methods?: NgxRxdbCollectionConfig['methods'];
   attachments?: NgxRxdbCollectionConfig['attachments'];
   options?: NgxRxdbCollectionConfig['options'];

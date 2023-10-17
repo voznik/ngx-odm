@@ -15,14 +15,6 @@ export interface TodosState {
 export const initialState: TodosState = {
   items: [
     {
-      id: 'ac3ef2c6-c98b-43e1-9047-71d68b1f92f0',
-      title: 'Open Todo list example',
-      _deleted: true,
-      completed: true,
-      createdAt: 1546300800000,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any,
-    {
       id: 'ac3ef2c6-c98b-43e1-9047-71d68b1f92f4',
       title: 'Open Todo list example',
       completed: true,

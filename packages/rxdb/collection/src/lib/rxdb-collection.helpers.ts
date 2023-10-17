@@ -1,3 +1,4 @@
+import { debug } from '@ngx-odm/rxdb/utils';
 import { Subject, first, shareReplay, switchMap, tap, identity } from 'rxjs';
 
 /**
@@ -17,8 +18,8 @@ export function collectionMethod(
       const deffered$ = (this as any).initialized$.pipe(
         switchMap(() => originalMethod.apply(this, args)),
         startImmediately ? first() : identity,
-        tap(result$)
-        // shareReplay({ bufferSize: 1, refCount: true })
+        tap(result$),
+        debug(originalMethod.name)
       );
       if (startImmediately) {
         // console.info(`ensureCollection:${originalMethod.name} result$ has 0 observers, subscribe`);

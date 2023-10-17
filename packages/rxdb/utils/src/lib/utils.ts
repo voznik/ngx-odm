@@ -1,3 +1,7 @@
+import { isDevMode } from '@angular/core';
+import { Observable, OperatorFunction, tap } from 'rxjs';
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 type Cast<I, O> = Exclude<I, O> extends never ? I : O;
 type Nil = null | undefined;
 type EmptyObject = Record<string, never>;
@@ -154,30 +158,28 @@ export function coerceBooleanProperty(value: any): boolean {
   return value != null && `${value}` !== 'false';
 }
 
-/** @internal */
-export function isEmpty(object: Record<string, any> | null | undefined, deep = false) {
-  if (object == null || !object) {
-    return true;
-  } else {
-    if (Object.keys(object).length) {
-      return deep ? Object.values(object).every(val => val === null || !val) : false;
-    }
-    return true;
+/**
+ * Checks if `value` is an empty object or collection.
+ *
+ * Objects are considered empty if they have no own enumerable string keyed properties.
+ *
+ * Arrays are considered empty if they have a `length` of `0`.
+ *
+ * Contribution to minified bundle size, when it is the only function imported:
+ * - Lodash: 4,406 bytes
+ * - Micro-dash: 148 bytes
+ * @param value
+ */
+export function isEmpty(value: any): boolean {
+  if (!Array.isArray(value)) {
+    value = keysOfNonArray(value);
   }
+  return value.length === 0;
 }
 
 /** @internal */
 export function noop(): void {
   return void 0;
-}
-
-/** @internal */
-export function isDevMode(): boolean {
-  try {
-    return coerceBooleanProperty(process?.env?.DEBUG);
-  } catch (error) {
-    return coerceBooleanProperty((window as any).process?.env?.DEBUG);
-  }
 }
 
 /** @internal */
@@ -190,16 +192,45 @@ export function isTestMode(): boolean {
 }
 
 /** @internal */
-export function logFn(title?: string) {
-  if (isDevMode()) {
+export function logFn(title?: string, bgColor = '#8d2089') {
+  if (isDevMode() && localStorage['debug']?.includes('ngx-rxdb')) {
     // eslint-disable-next-line no-console
     return console.log.bind(
       window.console,
-      `%c[DEBUG:: ${title ?? 'NgxODM'}::]`,
-      'background: #8d2089; color: #fff; padding: 2px; font-size: normal;'
+      `%c[DEBUG::${title ?? 'NgxODM'}::]`,
+      `background:${bgColor};color:#fff;padding:2px;font-size:normal;`
       // ...args
     );
   } else {
     return noop;
   }
+}
+
+/**
+ * Operator to log debug (in dev mode only)
+ * @param tag
+ * @see https://gist.github.com/NetanelBasal/46d8266f3fa6d9be15dc1ea6ed6cbe3e#file-oper-16-ts
+ */
+export function debug<T>(tag = 'Event'): OperatorFunction<T, T> {
+  return function debugFn<T>(source: Observable<T>) {
+    if (!isDevMode()) {
+      return source;
+    }
+    const log = logFn(`Observable:${tag}:Next`, '#83c4a3');
+    const error = logFn(`Observable:${tag}:Error`);
+    const complete = logFn(`Observable:${tag}:Complete`, '#919bd4');
+    return source.pipe(
+      tap({
+        next(value: T) {
+          log(value);
+        },
+        error(e: any) {
+          error(e.message);
+        },
+        complete() {
+          complete('');
+        },
+      })
+    );
+  };
 }

@@ -31,7 +31,11 @@
       (click)="filterTodos('')"
     /> -->
     <ul class="todo-list">
-      <li *ngFor="let todo of $.todos" [class.completed]="todo.completed">
+      <li
+        *ngFor="let todo of $.todos"
+        [class.completed]="todo.completed"
+        [class.editing]="isEditing === todo.id"
+      >
         <div class="view">
           <input
             class="toggle"
@@ -40,27 +44,29 @@
             [checked]="todo.completed"
             (change)="toggleTodo(todo)"
           />
-          <label (dblclick)="newTodoChange(todo)">{{ todo.title }}</label>
+          <label (dblclick)="editTodo(todo, editInput)">{{ todo.title }}</label>
           <button class="destroy" (click)="removeTodo(todo)"></button>
         </div>
         <input
           class="edit"
-          *ngIf="isEditing"
+          [hidden]="!isEditing"
           [value]="todo.title"
-          #editedtodo
-          (blur)="stopEditing(todo, editedtodo.value)"
-          (keyup.enter)="updateEditingTodo(todo, editedtodo.value)"
+          #editInput
+          (blur)="stopEditing(todo, editInput.value)"
+          (keyup.enter)="updateEditingTodo(todo, editInput.value)"
           (keyup.escape)="cancelEditingTodo(todo)"
         />
       </li>
     </ul>
   </main>
-  <footer class="footer">
-    <span class="todo-count" [ngPlural]="$.remainig">
-      <ng-template ngPluralCase="other">{{ $.remainig }} items left</ng-template>
-      <ng-template ngPluralCase="=1">one item left</ng-template>
-      <ng-template ngPluralCase="=0">no items left</ng-template>
-    </span>
+  <footer class="footer" [hidden]="$.count === 0">
+    <ng-container *ngIf="showRemainig($.remainig)">
+      <span class="todo-count" [ngPlural]="$.remainig">
+        <ng-template ngPluralCase="other">{{ $.remainig }} items left</ng-template>
+        <ng-template ngPluralCase="=1">one item left</ng-template>
+        <ng-template ngPluralCase="=0">no items left</ng-template>
+      </span>
+    </ng-container>
     <ul class="filters">
       <li>
         <a
@@ -92,11 +98,11 @@
     </ul>
     <button
       class="clear-completed"
-      [disabled]="$.remaining > 0 || $.count <= 0"
+      [disabled]="$.todos?.length - $.remainig < $.todos?.length"
       (click)="removeCompletedTodos()"
       style="z-index: 3"
     >
-      Clear completed
+      Clear completed ({{ $.todos?.length - $.remainig }})
     </button>
   </footer>
 </section>
