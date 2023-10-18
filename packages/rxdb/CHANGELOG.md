@@ -2,6 +2,10 @@
 
 This file was generated using [@jscutlery/semver](https://github.com/jscutlery/semver).
 
+# [3.0.0](https://github.com/voznik/ngx-odm/compare/v3.0.0-dev.0...v3.0.0) (2023-10-18)
+
+
+
 # [3.0.0-dev.0](https://github.com/voznik/ngx-odm/compare/v2.5.1...v3.0.0-dev.0) (2023-10-18)
 
 
