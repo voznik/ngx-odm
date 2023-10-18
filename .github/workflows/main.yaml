@@ -1,4 +1,4 @@
-name: main
+name: Build, Test & Deploy demo
 
 # Controls when the action will run.
 on:
@@ -8,8 +8,8 @@ on:
   pull_request:
     branches: [master]
     types: [opened, synchronize, reopened]
-  release:
-    types: [published]
+  # release:
+  #   types: [published]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -95,35 +95,35 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           preview: false
 
-  publish:
-    if: github.event.pull_request.merged || github.event.release.published
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      # - uses: actions/checkout@v2
-      # - name: Download all workflow run artifacts
-      # - uses: actions/cache@v2
-      - uses: actions/download-artifact@v2
-      - name: Version and publish
-        run: |
-          git config user.name $GITHUB_ACTOR
-          git config user.email gh-actions-${GITHUB_ACTOR}@github.com
-          git remote add gh-origin https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+  # publish:
+  #   if: github.event.pull_request.merged || github.event.release.published
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     # - uses: actions/checkout@v2
+  #     # - name: Download all workflow run artifacts
+  #     # - uses: actions/cache@v2
+  #     - uses: actions/download-artifact@v2
+  #     - name: Version and publish
+  #       run: |
+  #         git config user.name $GITHUB_ACTOR
+  #         git config user.email gh-actions-${GITHUB_ACTOR}@github.com
+  #         git remote add gh-origin https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
 
-          npm version minor --force -m "v%s" -m "build(*): release new version [build-skip]"
-          git push gh-origin HEAD:master --tags
-      - uses: actions/setup-node@v2
-        with:
-          node-version: 18
-          registry-url: 'https://registry.npmjs.org'
-      - run: |
-          npm run packages:publish:dev
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - uses: actions/setup-node@v2
-        with:
-          registry-url: 'https://npm.pkg.github.com'
-      - run: |
-          npm run packages:publish:dev
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # https://docs.github.com/en/free-pro-team@latest/actions/reference/authentication-in-a-workflow#about-the-github_token-secret
+  #         npm version minor --force -m "v%s" -m "build(*): release new version [build-skip]"
+  #         git push gh-origin HEAD:master --tags
+  #     - uses: actions/setup-node@v2
+  #       with:
+  #         node-version: 18
+  #         registry-url: 'https://registry.npmjs.org'
+  #     - run: |
+  #         npm run packages:publish:dev
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  #     - uses: actions/setup-node@v2
+  #       with:
+  #         registry-url: 'https://npm.pkg.github.com'
+  #     - run: |
+  #         npm run packages:publish:dev
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # https://docs.github.com/en/free-pro-team@latest/actions/reference/authentication-in-a-workflow#about-the-github_token-secret
