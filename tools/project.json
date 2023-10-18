@@ -1,4 +1,6 @@
 {
+  "name": "tools",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "tools",
   "projectType": "library",
   "targets": {
@@ -13,9 +15,7 @@
         "assetsFolder": "dist/demo/assets",
         "unitTestCoverage": "coverage/packages/rxdb-coverage-summary.json",
         "navTabConfig": [],
-        "toggleMenuItems": [
-          "all"
-        ],
+        "toggleMenuItems": ["all"],
         "hideGenerator": true,
         "disablePrivate": false,
         "disableProtected": false,

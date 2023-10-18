@@ -1,17 +1,50 @@
+# @see https://superface.ai/blog/npm-publish-gh-actions-changelog
 name: Release package
 on:
   workflow_dispatch:
     inputs:
       release-type:
-        description: 'Release type (one of): patch, minor, major, dev, prerelease'
+        type: 'choice'
+        description: 'The release type. It can be one of: major, minor, patch, premajor, preminor, prepatch, or prerelease. Defaults to "patch"'
         required: true
+        default: 'patch'
+        options:
+          - major
+          - minor
+          - patch
+          - premajor
+          - preminor
+          - prepatch
+          - prerelease
+      git_bot_token:
+        description: Git Bot token used to push to protected branches because github token can't
+        required: false
 jobs:
   release:
     runs-on: ubuntu-latest
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      contents: write
+      actions: write
+      id-token: write # to verify the deployment originates from an appropriate source
     steps:
       # Checkout project repository
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          # persist-credentials: false
+          token: ${{secrets.PA_TOKEN}}
+
+      # Configure Git
+      - name: Git configuration
+        run: |
+          git config user.name $GITHUB_ACTOR
+          git config user.email gh-actions-${GITHUB_ACTOR}@github.com
+          #
+          # git config --global user.name "Vadym Parakonnyi"
+          # git config --global user.email ${{ secrets.PA_EMAIL }}
+          # git remote set-url origin https://x-access-token/:${{ secrets.PA_TOKEN }}@github.com/${{ github.repository }}
 
       # Setup Node.js environment
       - name: Setup Node.js
@@ -24,82 +57,56 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Tests
-      - name: Run tests
-        run: npm run packages:test
-
-      # Configure Git
-      - name: Git configuration
-        run: |
-          git config user.name $GITHUB_ACTOR
-          git config user.email gh-actions-${GITHUB_ACTOR}@github.com
-          # git remote add gh-origin https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-
       # Bump package version
       # Use tag latest
+      # Generates the changelog commit and tags and pushes them to Github.
+      # Use two post actions to Create a release in Github and for Publishing the package to NPM
       - name: Bump release version
         if: startsWith(github.event.inputs.release-type, 'pre') != true
         run: |
-          echo "NEW_VERSION=$(npm --no-git-tag-version version $RELEASE_TYPE)" >> $GITHUB_ENV
-          echo "RELEASE_TAG=latest" >> $GITHUB_ENV
+          # echo "NEW_VERSION=$(npm --no-git-tag-version version $RELEASE_TYPE)" >> $GITHUB_ENV
+          # echo "RELEASE_TAG=latest" >> $GITHUB_ENV
+          npx nx run rxdb:version --releaseAs=$RELEASE_TYPE
         env:
+          GITHUB_TOKEN: ${{ secrets.PA_TOKEN }}
           RELEASE_TYPE: ${{ github.event.inputs.release-type }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # Bump package pre-release version
-      # Use tag beta for pre-release versions
+      # Use tag dev for pre-release versions
+      # Generates the changelog commit and tags and pushes them to Github.
+      # Use two post actions to Create a release in Github and for Publishing the package to NPM
       - name: Bump pre-release version
         if: startsWith(github.event.inputs.release-type, 'pre')
         run: |
-          echo "NEW_VERSION=$(npm --no-git-tag-version --preid=beta version $RELEASE_TYPE
-          echo "RELEASE_TAG=beta" >> $GITHUB_ENV
+          # echo "NEW_VERSION=$(npm --no-git-tag-version --preid=dev version $RELEASE_TYPE
+          # echo "RELEASE_TAG=dev" >> $GITHUB_ENV
+          npx nx run rxdb:version --releaseAs=$RELEASE_TYPE --preid=dev
         env:
+          GITHUB_TOKEN: ${{ secrets.PA_TOKEN }}
           RELEASE_TYPE: ${{ github.event.inputs.release-type }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # Update changelog unreleased section with new version
-      - name: Update changelog
-        uses: superfaceai/release-changelog-action@v1
-        with:
-          path-to-changelog: CHANGELOG.md
-          version: ${{ env.NEW_VERSION }}
-          operation: release
-
-      # Commit changes
-      - name: Commit CHANGELOG.md and package.json changes and create tag
-        run: |
-          git add "package.json"
-          git add "CHANGELOG.md"
-          git commit -m "chore: release ${{ env.NEW_VERSION }}"
-          git tag ${{ env.NEW_VERSION }}
+      # Build
+      - name: Build
+        run: npx nx run rxdb:build
 
       # Publish version to public repository
-      - name: Publish
-        # run: yarn publish --verbose --access public --tag ${{ env.RELEASE_TAG }}
-        run: npm run packages:publish
+      - name: Publish release version
+        if: startsWith(github.event.inputs.release-type, 'pre') != true
+        working-directory: packages/rxdb
+        run: |
+          npm pack
+          npm publish --access public --non-interactive --no-git-tag-version --tag latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # Push repository changes
-      - name: Push changes to repository
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Publish version to public repository
+      - name: Publish pre-release version
+        if: startsWith(github.event.inputs.release-type, 'pre')
+        working-directory: packages/rxdb
         run: |
-          git push origin && git push --tags
-
-      # Read version changelog
-      - id: get-changelog
-        name: Get version changelog
-        uses: superfaceai/release-changelog-action@v1
-        with:
-          path-to-changelog: CHANGELOG.md
-          version: ${{ env.NEW_VERSION }}
-          operation: read
-
-      # Update GitHub release with changelog
-      - name: Update GitHub release documentation
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ env.NEW_VERSION }}
-          body: ${{ steps.get-changelog.outputs.changelog }}
-          prerelease: ${{ startsWith(github.event.inputs.release-type, 'pre') }}
+          npm pack
+          npm publish --access public --non-interactive --no-git-tag-version --tag dev
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
