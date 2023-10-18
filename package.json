@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "ngx-odm",
-  "version": "2.5.1",
+  "version": "3.0.0",
   "private": false,
   "description": "Angular ODMs for NoSql DBs like RxDB, Kinto",
   "keywords": [
@@ -54,8 +54,8 @@
     "packages:lint": "npm run nx -- run-many --target=lint --projects=rxdb,kinto",
     "packages:build": "npm run nx -- run-many --target=build --projects=rxdb,kinto --prod",
     "packages:docs": "nx run demo:build --prod && nx run tools:compodoc",
-    "packages:publish": "ts-node tools/scripts/publish-tagged-builds.ts",
-    "packages:publish:dev": "ts-node tools/scripts/publish-dev-builds.ts",
+    "packages:publish": "ts-node -P ../tsconfig.tools.json --cwd tools/scripts publish-tagged-builds.ts",
+    "packages:publish:dev": "ts-node -P ../tsconfig.tools.json --cwd tools/scripts publish-dev-builds.ts",
     "test": "nx test",
     "test:hook": "npm run affected:test -- --reporters='jest-junit' --parallel --pass-with-no-tests --base=master --head=HEAD",
     "lint:hook": "npm run affected:lint -- --parallel --base=master --head=HEAD",
@@ -185,7 +185,6 @@
   "npmScope": "@ngx-odm",
   "packageScope": "@ngx-odm",
   "packages": [
-    "kinto",
     "rxdb"
   ],
   "overrides": {

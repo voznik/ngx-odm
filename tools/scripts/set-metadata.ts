@@ -1,3 +1,4 @@
+/* eslint-disable import/no-default-export, @typescript-eslint/no-var-requires */
 import { writeFile } from 'fs';
 import { getPackages } from './utils';
 

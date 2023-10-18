@@ -1,5 +1,5 @@
-import { getPackages, ArgvType } from './utils';
 import { join } from 'path';
+import { getPackages, ArgvType } from './utils';
 
 type Options = {
   specificPackage?: string;

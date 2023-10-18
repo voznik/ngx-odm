@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-var-requires, @typescript-eslint/no-non-null-assertion */
 import { parse, SemVer } from 'semver';
 import { setMetadata } from './set-metadata';
 import { execute, publishAllPackagesToNpm } from './utils';
 
-async function main() {
+export async function main() {
   const json = require('../../package.json');
 
   // determine commit from either circle ci or last git commit
