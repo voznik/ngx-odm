@@ -4,7 +4,9 @@
 
 ## Demo
 
-[demo](https://voznik.github.io/ngx-odm/)
+![Example screenshot](examples/demo/src/assets/images/screenshot.png)
+
+[demo](https://voznik.github.io/ngx-odm/) - based on TodoMVC
 
 ## Table of contents
 
@@ -12,15 +14,14 @@
   - [Demo](#demo)
   - [Table of contents](#table-of-contents)
   - [General info](#general-info)
-  - [Screenshots](#screenshots)
   - [Technologies](#technologies)
   - [Install](#install)
   - [Usage](#usage)
     - [In your `AppModule`](#in-your-appmodule)
     - [In your `FeatureModule`](#in-your-featuremodule)
     - [In your `FeatureService`](#in-your-featureservice)
-    - [AOT](#aot)
   - [Features](#features)
+  - [Diagrams](#diagrams)
   - [Status](#status)
   - [Inspiration](#inspiration)
   - [Contact](#contact)
@@ -28,10 +29,6 @@
 ## General info
 
 If you don't want to setup RxDB manually in your next Angular project - just import `NgxRxdbModule`
-
-## Screenshots
-
-![Example screenshot](./apps/demo/src/assets/images/screenshot.png)
 
 ## Technologies
 
@@ -107,8 +104,13 @@ export class TodosModule {}
 ```typescript
 @Injectable()
 export class TodosService {
-  // ...
-  filter$ = new BehaviorSubject<TodosFilter>('ALL');
+  // store & get filter as property of a `local` document
+  filter$ = this.collectionService
+    .getLocal('local', 'filterValue')
+    .pipe(startWith('ALL'), distinctUntilChanged());
+  // get count of documents in collection as observable (use fast calculation with static colection method)
+  count$ = this.collectionService.count();
+
   constructor(private collectionService: NgxRxdbCollectionService<Todo>) {}
   // get documents from collection as observable using `RxQuery` mango-queries
   selectTodos(): Observable<Todo[]> {
@@ -131,26 +133,22 @@ export class TodosService {
   // add new document
   add(name: string): void {
     const payload: Todo = { guid: uuid(), name, done: false, dateCreated: Date.now() };
-    this.collectionService.insert(payload).subscribe(doc => console.log(doc));
+    this.collectionService.insert(payload);
   }
 
   // update prop od existing document
   toggle(guid: string, done: boolean): void {
-    this.collectionService.update(guid, { done }).subscribe(doc => console.log(doc));
+    this.collectionService.update(guid, { done });
   }
 
-  // use `pouchdb.bulkDocs` to delete all dcouments by qeury
+  // use `bulk` to delete all dcouments by qeury
   removeDoneTodos(): void {
     const rulesObject = { done: { $eq: true } };
-    this.collectionService.removeBulkBy(rulesObject).subscribe(res => this.changeFilter('ALL'));
+    this.collectionService.removeBulkBy(rulesObject);
   }
   // ...
 }
 ```
-
-### AOT
-
-ATM, set **"buildOptimizer": false** in your `angular.json` _production_ configuration
 
 ## Features
 
@@ -164,6 +162,14 @@ To-do list:
 
 * Enable sync
 * ...
+
+## Diagrams
+
+![NgxRxdbModule Initialization UML](examples/uml.NgxRxdbModule.png)
+NgxRxdbModule Initialization UML
+
+![NgxRxdbService Sequence UML](examples/uml.NgxRxdbService.png)
+NgxRxdbModule Initialization UML
 
 ## Status
 
