@@ -1,22 +1,20 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../dist/out-tsc",
-    "types": [
-      "node"
-      // "pouchdb-core", "pouchdb-find", "pouchdb-replication"
-    ],
-    "lib": ["dom", "es2018"],
-    "skipLibCheck": true,
-    "composite": false,
-    "traceResolution": false
+    "outDir": "../dist/out-tsc",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "inlineSources": true,
+    "lib": ["dom", "es2020"],
+    "types": ["node"]
   },
-  "angularCompilerOptions": {
-    "annotateForClosureCompiler": true,
-    "skipTemplateCodegen": true,
-    "strictMetadataEmit": true,
-    "strictInjectionParameters": true
-  },
-  "exclude": ["src/test-setup.ts", "**/*.spec.ts", "**/*.mock.ts"],
-  "include": ["**/*.ts", "./**/*.d.ts"]
+  "exclude": [
+    "**/*.spec.ts",
+    "test-setup.ts",
+    "jest.config.ts",
+    "**/*.test.ts",
+    "**/*.mock.ts"
+  ],
+  "include": ["**/*.ts"]
 }

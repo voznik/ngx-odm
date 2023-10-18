@@ -18,23 +18,29 @@
     "skipDefaultLibCheck": true,
     "skipLibCheck": true,
     "sourceMap": true,
+    "ignoreDeprecations": "5.0",
     "suppressImplicitAnyIndexErrors": true,
     "target": "es2015",
     "typeRoots": ["node_modules/@types"],
     "types": ["node"],
     "paths": {
+      "@ngx-odm/kinto": ["dist/packages/kinto", "packages/kinto/src/index.ts"],
       "@ngx-odm/rxdb": ["dist/packages/rxdb", "packages/rxdb/src/index.ts"],
-      "@ngx-odm/kinto": ["dist/packages/kinto", "packages/kinto/src/index.ts"]
-    },
-    "plugins": [
-      {
-        "name": "typescript-tslint-plugin",
-        "ignoreDefinitionFiles": false
-      }
-    ]
-  },
-  "angularCompilerOptions": {
-    "disableTypeScriptVersionCheck": false
+      "@ngx-odm/rxdb/collection": [
+        "dist/packages/rxdb/collection",
+        "packages/rxdb/collection/src/index.ts"
+      ],
+      "@ngx-odm/rxdb/config": [
+        "dist/packages/rxdb/config",
+        "packages/rxdb/config/src/index.ts"
+      ],
+      "@ngx-odm/rxdb/core": ["dist/packages/rxdb/core", "packages/rxdb/core/src/index.ts"],
+      "@ngx-odm/rxdb/testing": ["packages/rxdb/testing/src/index.ts"],
+      "@ngx-odm/rxdb/utils": [
+        "dist/packages/rxdb/utils",
+        "packages/rxdb/utils/src/index.ts"
+      ]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

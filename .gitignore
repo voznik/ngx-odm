@@ -4,6 +4,7 @@
 /dist
 /docs
 /documentation
+/public
 /tmp
 /out-tsc
 **/builds
@@ -11,6 +12,7 @@
 
 # dependencies
 /node_modules
+.angular
 
 # IDEs and editors
 /.idea

@@ -1,8 +1,9 @@
-import { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb';
+import { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb/config';
+import { RxCollection } from 'rxdb';
 import { initialState } from './todos.model';
 
 export async function percentageCompletedFn() {
-  const allDocs = await this.find().exec();
+  const allDocs = await (this as RxCollection).find().exec();
   return allDocs.filter(doc => !!doc.completed).length / allDocs.length;
 }
 const collectionMethods = {

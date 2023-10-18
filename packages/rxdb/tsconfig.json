@@ -1,15 +1,27 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["src/**/*.d.ts"],
+  "compilerOptions": {
+    "target": "es2020",
+    "useDefineForClassFields": false,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
+  },
   "references": [
     {
       "path": "./tsconfig.lib.json"
     },
     {
-      "path": "./tsconfig.lib.prod.json"
-    },
-    {
       "path": "./tsconfig.spec.json"
     }
-  ]
+  ],
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  }
 }

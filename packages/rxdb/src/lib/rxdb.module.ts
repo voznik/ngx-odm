@@ -8,14 +8,25 @@ import {
   Self,
   SkipSelf,
 } from '@angular/core';
+import {
+  NgxRxdbFeatureModule,
+  NgxRxdbCollectionService,
+  collectionServiceFactory,
+} from '@ngx-odm/rxdb/collection';
+import {
+  NgxRxdbCollectionConfig,
+  NgxRxdbConfig,
+  RXDB_CONFIG,
+  RXDB_CONFIG_COLLECTION,
+} from '@ngx-odm/rxdb/config';
+import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import { from } from 'rxjs';
-import { NgxRxdbAsyncNoZonePipe } from './rxdb-async-no-zone.pipe';
-import { NgxRxdbCollectionService } from './rxdb-collection.service';
-import { NgxRxdbCollectionConfig, NgxRxdbConfig } from './rxdb.model';
-import { NgxRxdbService } from './rxdb.service';
-import { RXDB_CONFIG } from './rxdb.token';
 
-/** run at APP_INITIALIZER cycle */
+/**
+ * run at APP_INITIALIZER cycle
+ * @param dbService
+ * @param dbConfig
+ */
 export function dbInitializerFactory(
   dbService: NgxRxdbService,
   dbConfig: NgxRxdbConfig
@@ -23,11 +34,6 @@ export function dbInitializerFactory(
   return async () => {
     await dbService.initDb(dbConfig);
   };
-}
-
-export function collectionServiceFactory(config: NgxRxdbCollectionConfig) {
-  return (dbService: NgxRxdbService): NgxRxdbCollectionService =>
-    new NgxRxdbCollectionService(dbService, config);
 }
 
 /**
@@ -79,15 +85,21 @@ export function collectionServiceFactory(config: NgxRxdbCollectionConfig) {
  * <example-url>http://localhost/demo/mysample.component.html</example-url>
  * <example-url>../index.html</example-url>
  */
-// @dynamic
-@NgModule()
+@NgModule({
+  // id: 'NgxRxdbModule',
+})
 export class NgxRxdbModule {
+  /**
+   * Creates a feature module with providers for a specific RxDB collection.
+   * @param collectionConfig The configuration for the RxDB collection.
+   */
   static forFeature(
     collectionConfig: NgxRxdbCollectionConfig
   ): ModuleWithProviders<NgxRxdbFeatureModule> {
     return {
       ngModule: NgxRxdbFeatureModule,
       providers: [
+        { provide: RXDB_CONFIG_COLLECTION, useValue: collectionConfig, multi: true },
         {
           provide: NgxRxdbCollectionService,
           useFactory: collectionServiceFactory(collectionConfig),
@@ -97,6 +109,10 @@ export class NgxRxdbModule {
     };
   }
 
+  /**
+   * Configures and initializes RxDB with the given configuration, during the `APP_INITIALIZER` cycle.
+   * @param config The configuration options for NgxRxdbModule.
+   */
   static forRoot(config: NgxRxdbConfig): ModuleWithProviders<NgxRxdbModule> {
     return {
       ngModule: NgxRxdbModule,
@@ -117,23 +133,15 @@ export class NgxRxdbModule {
    * Prevents this module from being incorrectly imported
    * @param appInitStatus - A class that reflects the state of
    * running {@link https://v7.angular.io/api/core/APP_INITIALIZER|APP_INITIALIZER}s.
-   * @param parentModule - The parent module
    * @param ngxRxdbConfig - The configuration of the `NgxRxdbModule`
+   * @param trueNgxRxdbConfig
+   * @param ngxRxdbService
    */
   public constructor(
     appInitStatus: ApplicationInitStatus,
-    @Optional()
-    @SkipSelf()
-    @Inject(RXDB_CONFIG)
-    ngxRxdbConfig: NgxRxdbConfig,
-    @Optional()
-    @Self()
-    @Inject(RXDB_CONFIG)
-    trueNgxRxdbConfig: NgxRxdbConfig,
-    @Optional()
-    @SkipSelf()
-    @Self()
-    ngxRxdbService: NgxRxdbService
+    @Optional() @SkipSelf() @Inject(RXDB_CONFIG) ngxRxdbConfig: NgxRxdbConfig,
+    @Optional() @Self() @Inject(RXDB_CONFIG) trueNgxRxdbConfig: NgxRxdbConfig,
+    @Optional() @SkipSelf() @Self() ngxRxdbService: NgxRxdbService
   ) {
     if (!trueNgxRxdbConfig && !ngxRxdbConfig) {
       throw new Error(
@@ -153,18 +161,5 @@ export class NgxRxdbModule {
         // doSmth
       });
     }
-  }
-}
-/**
- * feature module which should be imported in lazy feature modules, will init RxDbCollection with given configuration
- */
-@NgModule({
-  declarations: [NgxRxdbAsyncNoZonePipe],
-  exports: [NgxRxdbAsyncNoZonePipe],
-})
-export class NgxRxdbFeatureModule {
-  /** also init collection via loader */
-  constructor(public collectionService: NgxRxdbCollectionService<any>) {
-    this.collectionService.initialized$().subscribe();
   }
 }

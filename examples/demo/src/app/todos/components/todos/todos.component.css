@@ -1,0 +1,5 @@
+.clear-completed:disabled {
+  color: #999;
+  cursor: not-allowed;
+  text-decoration: none;
+}

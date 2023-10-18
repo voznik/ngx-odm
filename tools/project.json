@@ -1,0 +1,41 @@
+{
+  "sourceRoot": "tools",
+  "projectType": "library",
+  "targets": {
+    "compodoc": {
+      "executor": "@twittwer/compodoc:compodoc",
+      "options": {
+        "name": "@ngx-odm documentation",
+        "tsConfig": "tools/tsconfig.compodoc.json",
+        "outputPath": "dist/demo/documentation",
+        "theme": "readthedocs",
+        "workspaceDocs": true,
+        "assetsFolder": "dist/demo/assets",
+        "unitTestCoverage": "coverage/packages/rxdb-coverage-summary.json",
+        "navTabConfig": [],
+        "toggleMenuItems": [
+          "all"
+        ],
+        "hideGenerator": true,
+        "disablePrivate": false,
+        "disableProtected": false,
+        "disableInternal": true,
+        "disableCoverage": true,
+        "disableRoutesGraph": true,
+        "disableStyleTab": true,
+        "disableGraph": false,
+        "silent": false
+      },
+      "configurations": {
+        "json": {
+          "exportFormat": "json"
+        },
+        "watch": {
+          "serve": true,
+          "watch": true,
+          "silent": false
+        }
+      }
+    }
+  }
+}

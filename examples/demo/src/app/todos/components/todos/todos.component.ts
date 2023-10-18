@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  OnInit,
+} from '@angular/core';
 import { Observable } from 'rxjs';
 import { Todo, TodosFilter } from '../../models';
 import { TodosService } from '../../services';
@@ -12,14 +18,30 @@ import { TodosService } from '../../services';
 export class TodosComponent implements OnInit {
   filter$ = this.todosService.filter$;
   todos$: Observable<Todo[]> = this.todosService.select();
-  remainig$: Observable<Todo[]> = this.todosService.select(true);
+  count$ = this.todosService.count$;
+  remainig$: Observable<number> = this.todosService.remaining$;
   newTodo = '';
-  isEditing = false;
+  isEditing = '';
 
-  constructor(private todosService: TodosService) {}
+  constructor(
+    private todosService: TodosService,
+    private cdRef: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     this.todosService.restoreFilter();
+  }
+
+  showRemainig(remaining: number | null) {
+    return remaining !== null;
+  }
+
+  shouldDisableClear(remaining: number | null, count: number | null) {
+    if (remaining === null || count === null) {
+      return true;
+    }
+
+    return remaining > 0 || count === 0;
   }
 
   get isAddTodoDisabled() {
@@ -34,28 +56,26 @@ export class TodosComponent implements OnInit {
     this.newTodo = '';
   }
 
-  editTodo() {
-    this.isEditing = true;
+  editTodo(todo: Todo, elm: HTMLInputElement) {
+    this.isEditing = todo.id;
+    setTimeout(() => {
+      elm.focus();
+    }, 0);
   }
 
   stopEditing(todo: Todo, editedTitle: string) {
-    todo.title = editedTitle;
-    this.isEditing = false;
+    this.isEditing = '';
   }
 
   cancelEditingTodo(todo: Todo) {
-    this.isEditing = false;
+    this.isEditing = '';
   }
 
   updateEditingTodo(todo: Todo, editedTitle: string) {
     editedTitle = editedTitle.trim();
-    this.isEditing = false;
+    this.isEditing = '';
 
-    /* if (editedTitle.length === 0) {
-      return this.todosService.remove(todo.id);
-    } */
-
-    todo.title = editedTitle;
+    this.todosService.edit(todo.id, editedTitle);
   }
 
   addTodo() {
