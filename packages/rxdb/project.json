@@ -7,7 +7,9 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:package",
-      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+      "outputs": [
+        "{workspaceRoot}/dist/{projectRoot}"
+      ],
       "options": {
         "project": "packages/rxdb/ng-package.json"
       },
@@ -23,7 +25,9 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
       "options": {
         "jestConfig": "packages/rxdb/jest.config.ts",
         "passWithNoTests": true
@@ -37,7 +41,9 @@
     },
     "lint": {
       "executor": "@nx/linter:eslint",
-      "outputs": ["{options.outputFile}"],
+      "outputs": [
+        "{options.outputFile}"
+      ],
       "options": {
         "lintFilePatterns": [
           "packages/rxdb/**/*.ts",
@@ -54,6 +60,37 @@
           "packages/rxdb/testing/**/*.ts",
           "packages/rxdb/testing/**/*.html"
         ]
+      }
+    },
+    "version": {
+      "executor": "@jscutlery/semver:version",
+      "options": {
+        "preset": "angular",
+        "tagPrefix": "v",
+        "noVerify": true,
+        "push": true,
+        "syncVersions": false,
+        "commitMessageFormat": "release(${projectName}): new version ${version}",
+        "skipCommitTypes": ["docs", "ci"],
+        "postTargets": ["rxdb:github"],
+        "types": [
+          { "type": "feat", "section": "Features" },
+          { "type": "fix", "section": "Bug Fixes" },
+          { "type": "chore", "hidden": false },
+          { "type": "docs", "hidden": false },
+          { "type": "style", "hidden": false },
+          { "type": "refactor", "section": "Features", "hidden": false },
+          { "type": "perf", "section": "Features", "hidden": false },
+          { "type": "test", "hidden": true },
+          { "type": "build", "hidden": true }
+        ]
+      }
+    },
+    "github": {
+      "executor": "@jscutlery/semver:github",
+      "options": {
+        "tag": "{tag}",
+        "notes": "{notes}"
       }
     }
   }

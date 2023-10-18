@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "ngx-odm",
-  "version": "3.0.0",
+  "version": "0.0.0-dev",
   "private": false,
   "description": "Angular ODMs for NoSql DBs like RxDB, Kinto",
   "keywords": [
@@ -35,12 +35,10 @@
     }
   ],
   "main": "decorate-angular-cli.js",
-  "directories": {
-    "doc": "docs"
-  },
   "scripts": {
     "nx": "nx",
     "ts-node": "ts-node",
+    "changelog": "conventional-changelog",
     "nyc": "nyc",
     "prettier": "prettier",
     "ng-high-memory": "node --max_old_space_size=8192 ./node_modules/@angular/cli/bin/ng",
@@ -61,7 +59,7 @@
     "lint:hook": "npm run affected:lint -- --parallel --base=master --head=HEAD",
     "lint:uncommitted": "npm run affected:lint -- --parallel --fix --uncommitted",
     "e2e": "ng e2e",
-    "postversion": "npm run packages:publish",
+    "_postversion": "npm run packages:publish",
     "affected:apps": "nx affected:apps",
     "affected:libs": "nx affected:libs",
     "affected:build": "nx affected:build",
@@ -77,8 +75,9 @@
     "workspace-schematic": "nx workspace-schematic",
     "dep-graph": "nx dep-graph",
     "analyze:demo": "node --max_old_space_size=8000 ./node_modules/.bin/source-map-explorer dist/demo/{vendor,main}-es2015.*.js{,.map} -m --no-border-checks --html dist/out/result.html",
-    "compodoc": "nx run tools:compodoc",
-    "deprecated::compodoc": "node node_modules/.bin/compodoc -c .compodocrc.json -p ./tools/tsconfig.compodoc.json"
+    "changelog:write": "conventional-changelog -p angular -i CHANGELOG.md --config=tools/scripts/conventional-changelog-config.js --skip-unstable -r 1",
+    "changelog:get": "ts-node -P ../tsconfig.tools.json --cwd tools/scripts changelog-write.ts",
+    "changelog:write:": "ts-node -P ../tsconfig.tools.json --cwd tools/scripts changelog-get.ts"
   },
   "dependencies": {
     "@angular/animations": "16.2.5",
@@ -114,9 +113,10 @@
     "@angular/cli": "~16.2.0",
     "@angular/compiler-cli": "~16.2.0",
     "@angular/language-service": "~16.2.0",
-    "@commitlint/cli": "^11.0.0",
-    "@commitlint/config-conventional": "^11.0.0",
+    "@commitlint/cli": "^17.0.0",
+    "@commitlint/config-conventional": "^17.0.0",
     "@compodoc/compodoc": "1.1.21",
+    "@jscutlery/semver": "^3.4.1",
     "@nrwl/eslint-plugin-nx": "16.8.1",
     "@nrwl/jest": "16.8.1",
     "@nrwl/tao": "16.8.1",
@@ -140,6 +140,7 @@
     "@types/webpack": "4.41.25",
     "@typescript-eslint/eslint-plugin": "^5.60.1",
     "@typescript-eslint/parser": "^5.60.1",
+    "conventional-changelog-cli": "^4.1.0",
     "document-register-element": "1.14.10",
     "dotenv": "^10.0.0",
     "dotenv-webpack": "8.0.1",
