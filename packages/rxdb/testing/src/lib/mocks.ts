@@ -61,6 +61,7 @@ export const TEST_DB_CONFIG_2: NgxRxdbConfig = {
   multiInstance: false,
   ignoreDuplicate: true,
   options: {
+    storageType: 'dexie',
     schemas: {
       todo: { ...TEST_FEATURE_CONFIG_1 },
     },

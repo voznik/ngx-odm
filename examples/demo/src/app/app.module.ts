@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule, Routes } from '@angular/router';
 import { NgxRxdbModule } from '@ngx-odm/rxdb';
 import { NgxRxdbConfig } from '@ngx-odm/rxdb/config';
@@ -32,6 +33,7 @@ const routes: Routes = [
   declarations: [AppComponent],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     RouterModule.forRoot(routes),
     NgxRxdbModule.forRoot(APP_RXDB_CONFIG),
   ],

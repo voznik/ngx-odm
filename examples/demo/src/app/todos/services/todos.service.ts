@@ -17,14 +17,11 @@ export class TodosService {
 
   count$ = this.collectionService.count();
 
-  remaining$: Observable<number> = this.collectionService.docs().pipe(
-    map(docs => {
+  todos$: Observable<Todo[]> = this.collectionService.docs().pipe(
+    tap(docs => {
       const total = docs.length;
       const remaining = docs.filter(doc => !doc.completed).length;
-
       this.title.setTitle(`(${total - remaining}/${total}) Todos done`);
-
-      return remaining;
     })
   );
 
@@ -100,11 +97,7 @@ export class TodosService {
 
   private buildQueryObject(completedOnly: boolean): MangoQuery<Todo> {
     const queryObj: MangoQuery<Todo> = {
-      selector: {
-        createdAt: {
-          $gt: null,
-        },
-      },
+      selector: {},
       sort: [{ createdAt: 'desc' } as any],
     };
     if (completedOnly) {

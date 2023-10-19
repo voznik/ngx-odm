@@ -6,7 +6,7 @@ import {
   NgxRxdbError,
   NgxRxdbService,
 } from '@ngx-odm/rxdb/core';
-import { merge } from '@ngx-odm/rxdb/utils';
+import { debug, merge } from '@ngx-odm/rxdb/utils';
 import type {
   MangoQuery,
   RxCollection,
@@ -77,9 +77,8 @@ export type NgxRxdbCollection<T extends AnyObject> = {
     customHeaders?: { [h: string]: string }
   ): RxReplicationState<any, any>;
 
-  docs(query?: MangoQuery<T>): Observable<RxDocument<T>[]>;
-  docsByIds(ids: string[]): Observable<RxDocument<T>[]>;
-  allDocs(options?: AllDocsOptions): Observable<T[]>;
+  docs(query?: MangoQuery<T>): Observable<T[]>;
+  docsByIds(ids: string[]): Observable<T[]>;
   count(): Observable<number>;
 
   get(id: string): Observable<RxDocument<T> | null>;
@@ -187,54 +186,33 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
       schemaHash: this.collection.schema.hash,
       docs,
     });
-    this.collection.importDump(dump as any);
+    this.collection.importJSON(dump);
   }
 
-  docs(query?: MangoQuery<T>): Observable<RxDocument<T>[]> {
-    return this.initialized$.pipe(switchMap(() => this.collection.find(query).$));
-  }
-
-  docsByIds(ids: string[]): Observable<RxDocument<T>[]> {
+  docs(query?: MangoQuery<T>): Observable<T[]> {
     return this.initialized$.pipe(
-      switchMap(() => this.collection.findByIds(ids).$),
-      map(result => [...result.values()])
+      switchMap(() => this.collection.find(query).$),
+      debug('docs'),
+      map(docs => docs.map(d => d.toMutableJSON())),
+      debug('docs:mapped')
     );
   }
 
-  /**
-   * @deprecated
-   * @param options
-   */
-  @collectionMethod({ startImmediately: false, asObservable: true })
-  allDocs(options: AllDocsOptions = {}): Observable<T[]> {
-    const defaultOptions = {
-      include_docs: true,
-      attachments: false,
-      startkey: '_design\uffff', // INFO: to skip design docs
-    };
-    options = merge(defaultOptions, options);
-    return EMPTY;
-    /* return defer(async () => {
-      const result = await this.collection.pouch.allDocs(options).catch(e => {
-        return { rows: [] };
-      });
-      return result.rows.map(({ doc, id }) => ({ ...doc, id }));
-    }); */
+  docsByIds(ids: string[]): Observable<T[]> {
+    return this.initialized$.pipe(
+      switchMap(() => this.collection.findByIds(ids).$),
+      map(result => [...result.values()].map(d => d.toMutableJSON())),
+      debug('docsByIds')
+    );
   }
 
   count(): Observable<number> {
-    // const query = this.collection.count({
-    //   // selector: { id: { $gte: null } },
-    //   // 'limit' and 'skip' MUST NOT be set for count queries.
-    // });
-    // const count = await query.exec(); // > number
-    // return count;
     return this.initialized$.pipe(
       switchMap(() =>
         merge$(this.collection.insert$, this.collection.remove$).pipe(startWith(null))
       ),
-      // switchMap(() => this.collection.count().exec())
-      switchMap(() => of(0))
+      switchMap(() => this.collection.count().exec()),
+      debug('count')
     );
   }
 

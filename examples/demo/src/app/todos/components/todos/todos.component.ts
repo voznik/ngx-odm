@@ -1,27 +1,45 @@
+import { trigger, transition, query, style, stagger, animate } from '@angular/animations';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  ElementRef,
   OnInit,
 } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Todo, TodosFilter } from '../../models';
 import { TodosService } from '../../services';
 
+const listAnimation = trigger('listAnimation', [
+  transition('* <=> *', [
+    query(
+      ':enter',
+      [
+        style({ opacity: 0 }),
+        stagger('100ms', animate('250ms ease-out', style({ opacity: 1 }))),
+      ],
+      { optional: true }
+    ),
+    query(':leave', animate('250ms', style({ opacity: 0 })), { optional: true }),
+  ]),
+]);
+
 @Component({
   selector: 'demo-todos',
   templateUrl: './todos.component.html',
   styleUrls: ['./todos.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  animations: [listAnimation],
 })
 export class TodosComponent implements OnInit {
   filter$ = this.todosService.filter$;
-  todos$: Observable<Todo[]> = this.todosService.select();
+  todos$: Observable<Todo[]> = this.todosService.todos$;
   count$ = this.todosService.count$;
-  remainig$: Observable<number> = this.todosService.remaining$;
   newTodo = '';
   isEditing = '';
+
+  trackByFn(index: number, item: Todo) {
+    return item.id;
+  }
 
   constructor(
     private todosService: TodosService,
