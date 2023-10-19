@@ -3,16 +3,19 @@
 import { resolve } from 'path';
 import { Injectable } from '@angular/core';
 import type { NgxRxdbConfig } from '@ngx-odm/rxdb/config';
-import { NgxRxdbService } from '@ngx-odm/rxdb/core';
+import { NgxRxdbCollectionCreator, NgxRxdbService } from '@ngx-odm/rxdb/core';
 import { ensureDirSync } from 'fs-extra';
-import { RxCollection, RxCollectionCreator, RxJsonSchema } from 'rxdb/plugins/core';
+import { RxCollection, RxJsonSchema } from 'rxdb/plugins/core';
+import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 import { of } from 'rxjs';
 
 const rootDir = resolve(__dirname, '../../../../../');
 const dbPath = resolve(rootDir, 'tmp', 'websql', 'test');
 ensureDirSync(dbPath);
 
-export const TEST_SCHEMA: RxJsonSchema = {
+type AnyObject = Record<string, any>;
+
+export const TEST_SCHEMA: RxJsonSchema<AnyObject> = {
   type: 'object',
   title: 'Todo',
   description: 'Todo Schema',
@@ -21,8 +24,8 @@ export const TEST_SCHEMA: RxJsonSchema = {
   properties: {
     id: {
       type: 'string',
-      primary: true,
       pattern: '^(.*)$',
+      maxLength: 32,
     },
     title: {
       type: 'string',
@@ -32,25 +35,29 @@ export const TEST_SCHEMA: RxJsonSchema = {
     },
     createdAt: {
       type: 'number',
+      multipleOf: 1,
+      minimum: 0,
+      maximum: Infinity,
     },
   },
   indexes: ['createdAt'],
+  primaryKey: 'id',
 };
 
-export const TEST_FEATURE_CONFIG_1: RxCollectionCreator = {
+export const TEST_FEATURE_CONFIG_1: NgxRxdbCollectionCreator = {
   name: 'todo',
   schema: TEST_SCHEMA,
 };
 
 export const TEST_DB_CONFIG_1: NgxRxdbConfig = {
   name: dbPath, // 'test',
-  adapter: 'memory',
+  storage: getRxStorageMemory(),
   multiInstance: false,
   ignoreDuplicate: true,
 };
 export const TEST_DB_CONFIG_2: NgxRxdbConfig = {
   name: dbPath, // 'test',
-  adapter: 'memory',
+  storage: getRxStorageMemory(),
   multiInstance: false,
   ignoreDuplicate: true,
   options: {

@@ -1,22 +1,23 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import type { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb/config';
-import type { KeyFunctionMap, PouchSettings, RxCollectionCreator } from 'rxdb/plugins/core';
+import type {
+  DefaultPreparedQuery,
+  KeyFunctionMap,
+  RxCollectionBase,
+  RxCollectionCreator,
+} from 'rxdb/plugins/core';
 import { RxJsonSchema } from 'rxdb/plugins/core';
+import { RxStorageDexieStatics } from 'rxdb/plugins/storage-dexie';
 
-async function infoFn(this: {
+async function infoPouchFn(this: {
   pouch: PouchDB.Database;
 }): Promise<PouchDB.Core.DatabaseInfo> {
   return await this.pouch.info();
 }
 
-async function countAllDocumentsFn(this: { pouch: PouchDB.Database }): Promise<number> {
-  const res = await this.pouch.allDocs({
-    include_docs: false,
-    attachments: false,
-    // deleted: 'ok',
-    startkey: '_design\uffff', // Omit design doc
-  });
-  return res.total_rows - 1; // Omit design doc
+async function infoFn(this: RxCollectionBase<any>): Promise<any> {
+  const { attachments, refCount, removed } = await this.storageInstance.internals;
+  return { attachments, refCount, removed };
 }
 
 async function getIndexesFn(this: {
@@ -27,15 +28,13 @@ async function getIndexesFn(this: {
 }
 
 export type NgxRxdbCollectionStaticMethods = KeyFunctionMap & {
-  info(): Promise<PouchDB.Core.DatabaseInfo>;
-  countAllDocuments(): Promise<number>;
-  getIndexes(): Promise<PouchDB.Find.GetIndexesResponse<{}>>;
+  info(): Promise<any>;
+  getIndexes(): Promise<any>;
 };
 
 const DEFAULT_INSTANCE_METHODS: Record<string, Function> = {};
 const DEFAULT_COLLECTION_METHODS: NgxRxdbCollectionStaticMethods = {
   info: infoFn,
-  countAllDocuments: countAllDocumentsFn,
   getIndexes: getIndexesFn,
 };
 
@@ -45,7 +44,7 @@ const DEFAULT_COLLECTION_METHODS: NgxRxdbCollectionStaticMethods = {
  */
 export class NgxRxdbCollectionCreator implements RxCollectionCreator {
   name!: string;
-  schema!: RxJsonSchema;
+  schema!: RxJsonSchema<any>;
   pouchSettings?: NgxRxdbCollectionConfig['pouchSettings'];
   migrationStrategies?: NgxRxdbCollectionConfig['migrationStrategies'];
   statics?: NgxRxdbCollectionStaticMethods;
@@ -56,7 +55,10 @@ export class NgxRxdbCollectionCreator implements RxCollectionCreator {
   cacheReplacementPolicy?: NgxRxdbCollectionConfig['cacheReplacementPolicy']; // (optional) custoom cache replacement policy
 
   /** @internal */
-  constructor(config: NgxRxdbCollectionConfig, pouchSettings?: PouchSettings) {
+  constructor(
+    config: NgxRxdbCollectionConfig,
+    pouchSettings?: NgxRxdbCollectionConfig['pouchSettings']
+  ) {
     Object.assign(this, {
       ...config,
       pouchSettings: { ...pouchSettings, ...config.pouchSettings },
@@ -66,7 +68,21 @@ export class NgxRxdbCollectionCreator implements RxCollectionCreator {
   }
 
   /** @internal */
-  static async fetchSchema(schemaUrl: string): Promise<RxJsonSchema> {
-    return await (await fetch(schemaUrl)).json();
+  static async fetchSchema(schemaUrl: string): Promise<RxJsonSchema<any> | undefined> {
+    let schema: RxJsonSchema<any> | undefined;
+    try {
+      const result = await fetch(schemaUrl);
+      if (result.ok) {
+        schema = await result.json();
+      } else {
+        throw new Error(
+          `Failed to fetch schema from "${schemaUrl}", status: ${result.status}`
+        );
+      }
+    } catch (error: any) {
+      throw new Error(`Failed to fetch schema from "${schemaUrl}"`);
+    }
+
+    return schema;
   }
 }

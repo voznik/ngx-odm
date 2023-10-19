@@ -16,12 +16,16 @@ export class NgxRxdbDump implements RxDumpDatabaseAny<any> {
 
 export class NgxRxdbCollectionDump<T = any> implements RxDumpCollectionAny<T> {
   encrypted = false;
-  passwordHash = null;
+  passwordHash = undefined;
   schemaHash!: string;
   name!: string;
   docs!: T[];
   /** @internal */
   constructor(data: Partial<RxDumpCollectionAny<T>>) {
     merge(this, data);
+  }
+
+  toJSON() {
+    return this as RxDumpCollectionAny<any>;
   }
 }

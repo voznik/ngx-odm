@@ -7,7 +7,7 @@
     "sourceMap": true,
     "inlineSources": true,
     "lib": ["dom", "es2020"],
-    "types": ["node"]
+    "types": ["node", "pouchdb"]
   },
   "exclude": [
     "**/*.spec.ts",

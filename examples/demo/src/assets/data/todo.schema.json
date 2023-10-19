@@ -10,8 +10,8 @@
     "id": {
       "type": "string",
       "title": "Id",
-      "primary": true,
-      "pattern": "^(.*)$"
+      "pattern": "^(.*)$",
+      "maxLength": 32
     },
     "title": {
       "type": "string",
@@ -23,8 +23,12 @@
     },
     "createdAt": {
       "type": "number",
-      "title": "Date Created"
+      "title": "Date Created",
+      "multipleOf": 1,
+      "minimum": 1697722545,
+      "maximum": 1918647345
     }
   },
-  "indexes": ["createdAt"]
+  "__indexes": ["createdAt"],
+  "primaryKey": "id"
 }

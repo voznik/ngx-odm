@@ -7,7 +7,6 @@ import {
   NgxRxdbService,
 } from '@ngx-odm/rxdb/core';
 import { merge } from '@ngx-odm/rxdb/utils';
-import type { PouchAllDocsOptions } from 'rxdb/dist/types/types/pouch';
 import type {
   MangoQuery,
   RxCollection,
@@ -15,8 +14,9 @@ import type {
   RxDocument,
   RxDocumentBase,
   RxError,
+  RxLocalDocument,
 } from 'rxdb/plugins/core';
-import { RxReplicationState } from 'rxdb/plugins/core';
+import { RxReplicationState } from 'rxdb/plugins/replication';
 import {
   EMPTY,
   Observable,
@@ -31,6 +31,7 @@ import {
   tap,
 } from 'rxjs';
 import { collectionMethod } from './rxdb-collection.helpers';
+// import { RxLocalDocument } from 'rxdb';
 
 type AnyObject = Record<string, any>;
 type SubscribableOrPromise<T> = {
@@ -45,8 +46,7 @@ type SubscribableOrPromise<T> = {
     onrejected?: ((reason: any) => T | PromiseLike<T>) | undefined | null
   ) => Promise<T>;
 };
-type LocalDocument = (RxDocumentBase<AnyObject> & { isLocal(): true }) | null;
-type AllDocsOptions = PouchAllDocsOptions; // & PouchDB.Core.AllDocsWithinRangeOptions;
+type AllDocsOptions = PouchDB.Core.AllDocsOptions; // & PouchDB.Core.AllDocsWithinRangeOptions;
 type NgxRxdbBulkResponse = {
   ok: boolean;
   id: string;
@@ -72,7 +72,10 @@ export type NgxRxdbCollection<T extends AnyObject> = {
   info(): SubscribableOrPromise<any>;
   getIndexes(): SubscribableOrPromise<any>;
   import(docs: T[]): void;
-  sync(remoteDbName?: string, customHeaders?: { [h: string]: string }): RxReplicationState;
+  sync(
+    remoteDbName?: string,
+    customHeaders?: { [h: string]: string }
+  ): RxReplicationState<any, any>;
 
   docs(query?: MangoQuery<T>): Observable<RxDocument<T>[]>;
   docsByIds(ids: string[]): Observable<RxDocument<T>[]>;
@@ -88,9 +91,9 @@ export type NgxRxdbCollection<T extends AnyObject> = {
   remove(id: string): SubscribableOrPromise<any>;
   removeBulk(query: MangoQuery<T>): SubscribableOrPromise<any>;
 
-  getLocal(id: string, key?: string): SubscribableOrPromise<LocalDocument>;
-  insertLocal(id: string, data: any): SubscribableOrPromise<LocalDocument>;
-  upsertLocal(id: string, data: any): SubscribableOrPromise<LocalDocument>;
+  getLocal(id: string, key?: string): SubscribableOrPromise<RxLocalDocument<any>>;
+  insertLocal(id: string, data: any): SubscribableOrPromise<RxLocalDocument<any>>;
+  upsertLocal(id: string, data: any): SubscribableOrPromise<RxLocalDocument<any>>;
   setLocal(id: string, prop: string, value: any): SubscribableOrPromise<any>;
   removeLocal(id: string): SubscribableOrPromise<boolean>;
 };
@@ -156,7 +159,10 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
     this.collection?.destroy();
   }
 
-  sync(remoteDbName = 'db', customHeaders?: { [h: string]: string }): RxReplicationState {
+  sync(
+    remoteDbName = 'db',
+    customHeaders?: { [h: string]: string }
+  ): RxReplicationState<any, any> {
     return this.dbService.syncCollection(this.collection, remoteDbName, customHeaders);
   }
 
@@ -190,11 +196,15 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
 
   docsByIds(ids: string[]): Observable<RxDocument<T>[]> {
     return this.initialized$.pipe(
-      switchMap(() => this.collection.findByIds$(ids)),
+      switchMap(() => this.collection.findByIds(ids).$),
       map(result => [...result.values()])
     );
   }
 
+  /**
+   * @deprecated
+   * @param options
+   */
   @collectionMethod({ startImmediately: false, asObservable: true })
   allDocs(options: AllDocsOptions = {}): Observable<T[]> {
     const defaultOptions = {
@@ -203,20 +213,28 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
       startkey: '_design\uffff', // INFO: to skip design docs
     };
     options = merge(defaultOptions, options);
-    return defer(async () => {
+    return EMPTY;
+    /* return defer(async () => {
       const result = await this.collection.pouch.allDocs(options).catch(e => {
         return { rows: [] };
       });
       return result.rows.map(({ doc, id }) => ({ ...doc, id }));
-    });
+    }); */
   }
 
   count(): Observable<number> {
+    // const query = this.collection.count({
+    //   // selector: { id: { $gte: null } },
+    //   // 'limit' and 'skip' MUST NOT be set for count queries.
+    // });
+    // const count = await query.exec(); // > number
+    // return count;
     return this.initialized$.pipe(
       switchMap(() =>
         merge$(this.collection.insert$, this.collection.remove$).pipe(startWith(null))
       ),
-      switchMap(() => this.collection.countAllDocuments())
+      // switchMap(() => this.collection.count().exec())
+      switchMap(() => of(0))
     );
   }
 
@@ -260,61 +278,45 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
     return this.collection.find(query).remove();
   }
 
-  /**
-   * @param query
-   * @param values
-   * @deprecated
-   * updates all docs by given query
-   * also represents a way to use 'pouch.bulkDocs' with RxDb
-   */
-  _updateBulkByPouch(
-    query: MangoQuery<T>,
-    values: Partial<T>
-  ): Observable<NgxRxdbBulkResponse> {
-    return defer(async () => {
-      try {
-        const docs = await this.collection.find(query).exec();
-        if (!docs?.length) {
-          return of([]) as Observable<NgxRxdbBulkResponse>;
-        }
-        const docsToUpdate = docs.map(doc => ({
-          _id: doc.primary,
-          _rev: doc['_rev'],
-          ...doc.toJSON(),
-          ...values,
-        }));
-        return this.collection.pouch.bulkDocs(docsToUpdate);
-      } catch (error) {
-        return EMPTY as any;
-      }
-    });
-  }
-
   // ---------------------------------------------------------------------------
   // Local Documents @see https://rxdb.info/rx-local-document.html
   // ---------------------------------------------------------------------------
 
   @collectionMethod({ startImmediately: false, asObservable: true })
-  getLocal(id: string, key?: string): SubscribableOrPromise<LocalDocument | any | null> {
-    return this.collection
-      .getLocal$(id)
-      .pipe(key ? map((doc: LocalDocument) => doc?.get(key)) : identity);
+  getLocal(
+    id: string,
+    key?: string
+  ): SubscribableOrPromise<RxLocalDocument<AnyObject> | any | null> {
+    return this.collection.getLocal$(id).pipe(
+      map(doc => {
+        if (!doc) {
+          return null;
+        }
+        return key ? doc.get(key) : doc;
+      })
+    );
   }
 
   @collectionMethod()
-  insertLocal(id: string, data: any): SubscribableOrPromise<LocalDocument> {
+  insertLocal(
+    id: string,
+    data: AnyObject
+  ): SubscribableOrPromise<RxLocalDocument<AnyObject>> {
     return this.collection.insertLocal(id, data);
   }
 
   @collectionMethod()
-  upsertLocal(id: string, data: any): SubscribableOrPromise<LocalDocument> {
+  upsertLocal(
+    id: string,
+    data: AnyObject
+  ): SubscribableOrPromise<RxLocalDocument<AnyObject>> {
     return this.collection.upsertLocal(id, data);
   }
 
   @collectionMethod()
   setLocal(id: string, prop: string, value: any): SubscribableOrPromise<boolean> {
     return defer(async () => {
-      const localDoc: LocalDocument = await this.collection.getLocal(id);
+      const localDoc: RxLocalDocument<any> | null = await this.collection.getLocal(id);
       if (!localDoc || localDoc[prop] === value) {
         return false;
       }
@@ -325,11 +327,11 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
   }
 
   @collectionMethod()
-  removeLocal(id: string): SubscribableOrPromise<boolean> {
+  removeLocal(id: string): SubscribableOrPromise<any> {
     return defer(async () => {
-      const localDoc: LocalDocument = await this.collection.getLocal(id);
+      const localDoc: RxLocalDocument<any> | null = await this.collection.getLocal(id);
       // change data
-      return await localDoc!.remove();
+      return await localDoc?.remove();
     });
   }
 }

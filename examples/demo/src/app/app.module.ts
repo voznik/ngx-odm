@@ -1,16 +1,17 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule, Routes } from '@angular/router';
-import { NgxRxdbConfig } from '@ngx-odm/rxdb/config';
 import { NgxRxdbModule } from '@ngx-odm/rxdb';
+import { NgxRxdbConfig } from '@ngx-odm/rxdb/config';
 import { AppComponent } from './app.component';
 
 /** NgxRxdbConfig extends RxDatabaseCreator, will be merged with default config */
 const APP_RXDB_CONFIG: NgxRxdbConfig = {
   name: 'demo', // <- name (required, 'ngx')
-  adapter: 'idb', // <- storage-adapter (required, default: 'idb')
+  storage: null,
   multiInstance: true,
   options: {
+    storageType: 'dexie',
     // dumpPath: 'assets/data/db.dump.json', // <- remote url (optional)
   },
 };

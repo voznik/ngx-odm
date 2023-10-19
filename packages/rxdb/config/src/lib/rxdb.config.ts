@@ -1,19 +1,25 @@
 import { InjectionToken } from '@angular/core';
-import type {
-  MangoQuery,
-  RxCollectionCreator,
-  RxDatabaseCreator,
-  SyncOptions,
-} from 'rxdb/plugins/core';
+import type { MangoQuery, RxCollectionCreator, RxDatabaseCreator } from 'rxdb/plugins/core';
+import type { SyncOptionsCouchDB } from 'rxdb/plugins/replication-couchdb';
+// import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
+import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
+
+// import type { RxReplicationState } from 'rxdb/plugins/replication';
 
 export interface NgxRxdbCollectionConfig extends Partial<RxCollectionCreator> {
+  name: string;
   schema?: RxCollectionCreator['schema'];
   options?: {
-    syncOptions?: SyncOptions & { queryObj?: MangoQuery<any> };
+    // syncOptions?: SyncOptionsCouchDB<any> & { queryObj?: MangoQuery<any> };
+    syncOptions?: PouchDB.Configuration.RemoteDatabaseConfiguration & {
+      queryObj?: MangoQuery<any>;
+    };
     schemaUrl?: string;
     initialDocs?: Record<string, any>[];
     recreate?: boolean;
   };
+  /** @deprecated */
+  pouchSettings?: PouchDB.Configuration.DatabaseConfiguration;
 }
 
 export const RXDB_CONFIG = new InjectionToken<NgxRxdbConfig>('NgxRxdbConfig');
@@ -23,6 +29,7 @@ export const RXDB_CONFIG_COLLECTION = new InjectionToken<NgxRxdbCollectionConfig
 
 export interface NgxRxdbConfig extends RxDatabaseCreator {
   options?: {
+    storageType: 'dexie' | 'memory';
     schemas?: Record<string, NgxRxdbCollectionConfig>;
     dumpPath?: string;
   };
@@ -31,10 +38,10 @@ export interface NgxRxdbConfig extends RxDatabaseCreator {
 export const RXDB_DEFAULT_ADAPTER = 'idb';
 export const RXDB_DEFAULT_CONFIG: NgxRxdbConfig = {
   name: 'ngx',
-  adapter: RXDB_DEFAULT_ADAPTER,
+  storage: getRxStorageMemory(),
   multiInstance: true,
   ignoreDuplicate: false,
-  pouchSettings: {
+  /* pouchSettings: {
     skip_setup: true,
     ajax: {
       withCredentials: false,
@@ -42,6 +49,6 @@ export const RXDB_DEFAULT_CONFIG: NgxRxdbConfig = {
       timeout: 10000,
       headers: {},
     },
-  },
+  }, */
 };
 export const DEFAULT_BACKOFF_FN = (delay: number) => (delay === 0 ? 2000 : delay * 3);

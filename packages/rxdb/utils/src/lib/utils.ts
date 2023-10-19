@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 import { isDevMode } from '@angular/core';
 import { Observable, OperatorFunction, tap } from 'rxjs';
 
@@ -176,6 +177,8 @@ export function isEmpty(value: any): boolean {
   }
   return value.length === 0;
 }
+
+export const isFunction = (value: any): value is Function => typeof value === 'function';
 
 /** @internal */
 export function noop(): void {

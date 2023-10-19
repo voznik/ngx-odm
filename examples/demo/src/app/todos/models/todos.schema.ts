@@ -12,7 +12,7 @@ const collectionMethods = {
 
 export const TODOS_COLLECTION_CONFIG: NgxRxdbCollectionConfig = {
   name: 'todo',
-  // schema: todoSchema,
+  localDocuments: true,
   statics: collectionMethods,
   options: {
     schemaUrl: 'assets/data/todo.schema.json',

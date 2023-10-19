@@ -1,19 +1,16 @@
 import { isDevMode } from '@angular/core';
 import { logFn } from '@ngx-odm/rxdb/utils';
-import * as PouchdbAdapterHttp from 'pouchdb-adapter-http';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import * as PouchdbAdapterIdb from 'pouchdb-adapter-idb';
-import { RxDBAdapterCheckPlugin } from 'rxdb/plugins/adapter-check';
-import { addRxPlugin } from 'rxdb/plugins/core';
+// import * as PouchdbAdapterIdb from 'pouchdb-adapter-idb';
+import { addRxPlugin } from 'rxdb';
+import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { RxDBJsonDumpPlugin } from 'rxdb/plugins/json-dump';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
 import { RxDBLocalDocumentsPlugin } from 'rxdb/plugins/local-documents';
 import { RxDBMigrationPlugin } from 'rxdb/plugins/migration';
-import { RxDBNoValidatePlugin } from 'rxdb/plugins/no-validate';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
-import { RxDBReplicationPlugin } from 'rxdb/plugins/replication';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
+import { wrappedValidateIsMyJsonValidStorage } from 'rxdb/plugins/validate-is-my-json-valid'; // TODO
+// import { RxDBReplicationPlugin } from 'rxdb/plugins/replication';
 import { NgxRxdbError } from './rxdb-error.class';
 
 const log = logFn('PluginLoader');
@@ -25,35 +22,20 @@ const log = logFn('PluginLoader');
  */
 export async function loadRxDBPlugins(): Promise<void> {
   try {
-    addRxPlugin(RxDBReplicationPlugin);
-    // http-adapter is always needed for replication with the node-server
-    addRxPlugin(PouchdbAdapterHttp);
-    /** default indexed-db adapter */
-    addRxPlugin(PouchdbAdapterIdb);
     // plugins
     addRxPlugin(RxDBLocalDocumentsPlugin);
     addRxPlugin(RxDBLeaderElectionPlugin);
     addRxPlugin(RxDBQueryBuilderPlugin);
     addRxPlugin(RxDBJsonDumpPlugin);
-    addRxPlugin(RxDBAdapterCheckPlugin);
     addRxPlugin(RxDBMigrationPlugin);
     addRxPlugin(RxDBUpdatePlugin);
 
     /** * to reduce the build-size, we use some plugins in dev-mode only */
     if (isDevMode()) {
       log('load dev plugins');
-      await Promise.all([
-        // add dev-mode plugin
-        // which does many checks and add full error-messages
-        import('rxdb/plugins/dev-mode').then(module => addRxPlugin(module)),
-        // we use the schema-validation only in dev-mode
-        // this validates each document if it is matching the jsonschema
-        import('rxdb/plugins/validate').then(module => addRxPlugin(module)),
-      ]);
-    } else {
-      // in production we use the no-validate module instead of the schema-validation
-      // to reduce the build-size
-      addRxPlugin(RxDBNoValidatePlugin);
+      // add dev-mode plugin
+      // which does many checks and add full error-messages
+      addRxPlugin(RxDBDevModePlugin);
     }
   } catch (error: any) {
     throw new NgxRxdbError(error.message ?? error);

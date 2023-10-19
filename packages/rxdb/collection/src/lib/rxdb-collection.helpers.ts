@@ -1,5 +1,5 @@
 import { debug } from '@ngx-odm/rxdb/utils';
-import { Subject, first, shareReplay, switchMap, tap, identity } from 'rxjs';
+import { Subject, first, switchMap, tap, identity } from 'rxjs';
 
 /**
  * Collection method decorator
@@ -22,7 +22,6 @@ export function collectionMethod(
         debug(originalMethod.name)
       );
       if (startImmediately) {
-        // console.info(`ensureCollection:${originalMethod.name} result$ has 0 observers, subscribe`);
         deffered$.subscribe();
         return result$;
       } else {
