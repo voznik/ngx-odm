@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { debug } from '@ngx-odm/rxdb/utils';
 import { Subject, first, switchMap, tap, identity } from 'rxjs';
 
@@ -7,6 +8,8 @@ import { Subject, first, switchMap, tap, identity } from 'rxjs';
  * Ensure the collection is created before the method is called by piping riginal method
  * through class init$ observable property which emits when collection is created
  * Additionally, if `startImmediately` is true, evaluate resulting method observable
+ *
+ * @internal
  */
 export function collectionMethod(
   { startImmediately, asObservable } = { startImmediately: true, asObservable: true }

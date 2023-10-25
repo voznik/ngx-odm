@@ -10,5 +10,6 @@
     "pouchdb-adapter-idb",
     "pouchdb-adapter-memory",
     "rxdb"
-  ]
+  ],
+  "deleteDestPath": true
 }

@@ -14,7 +14,7 @@
       placeholder="What needs to be done?"
       autofocus=""
       [(ngModel)]="newTodo"
-      (keyup)="newTodoChange($event.target.value)"
+      (keyup)="newTodoChange($any($event.target).value)"
       (keyup.enter)="!isAddTodoDisabled && addTodo()"
       (keyup.escape)="newTodoClear()"
     />

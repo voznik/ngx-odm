@@ -1,37 +1,28 @@
+/* eslint-disable @typescript-eslint/ban-types */
 import { InjectionToken } from '@angular/core';
 import type { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb/config';
-import {
-  NgxRxdbCollectionDump,
-  NgxRxdbCollectionStaticMethods,
-  NgxRxdbError,
-  NgxRxdbService,
-} from '@ngx-odm/rxdb/core';
-import { debug, merge } from '@ngx-odm/rxdb/utils';
+import { NgxRxdbService } from '@ngx-odm/rxdb/core';
+import { debug, logFn } from '@ngx-odm/rxdb/utils';
 import type {
   MangoQuery,
   RxCollection,
   RxDatabase,
   RxDocument,
-  RxDocumentBase,
-  RxError,
+  RxDumpCollectionAny,
   RxLocalDocument,
+  RxStorageWriteError,
 } from 'rxdb/plugins/core';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import {
-  EMPTY,
   Observable,
   ReplaySubject,
   defer,
-  identity,
   map,
   merge as merge$,
-  of,
   startWith,
   switchMap,
-  tap,
 } from 'rxjs';
 import { collectionMethod } from './rxdb-collection.helpers';
-// import { RxLocalDocument } from 'rxdb';
 
 type AnyObject = Record<string, any>;
 type SubscribableOrPromise<T> = {
@@ -46,18 +37,6 @@ type SubscribableOrPromise<T> = {
     onrejected?: ((reason: any) => T | PromiseLike<T>) | undefined | null
   ) => Promise<T>;
 };
-type AllDocsOptions = PouchDB.Core.AllDocsOptions; // & PouchDB.Core.AllDocsWithinRangeOptions;
-type NgxRxdbBulkResponse = {
-  ok: boolean;
-  id: string;
-  rev: string;
-}[];
-type RxCollectionWithStatics<T extends AnyObject> = RxCollection<
-  T,
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  {},
-  NgxRxdbCollectionStaticMethods
->;
 
 /* eslint-disable jsdoc/require-jsdoc */
 /**
@@ -65,35 +44,42 @@ type RxCollectionWithStatics<T extends AnyObject> = RxCollection<
  */
 export type NgxRxdbCollection<T extends AnyObject> = {
   readonly db: Readonly<RxDatabase>;
-  readonly collection: RxCollectionWithStatics<T>;
+  readonly collection: RxCollection<T>;
   initialized$: Observable<unknown>;
 
   destroy(): void;
   info(): SubscribableOrPromise<any>;
-  getIndexes(): SubscribableOrPromise<any>;
   import(docs: T[]): void;
   sync(
     remoteDbName?: string,
     customHeaders?: { [h: string]: string }
-  ): RxReplicationState<any, any>;
+  ): RxReplicationState<T, any>;
 
   docs(query?: MangoQuery<T>): Observable<T[]>;
   docsByIds(ids: string[]): Observable<T[]>;
   count(): Observable<number>;
 
   get(id: string): Observable<RxDocument<T> | null>;
-  insert(data: T): SubscribableOrPromise<RxDocument<T | null>>;
-  insertBulk(data: T[]): SubscribableOrPromise<{ success: RxDocument<T>[]; error: any }>;
+  insert(data: T): SubscribableOrPromise<RxDocument<T>>;
+  insertBulk(
+    data: T[]
+  ): SubscribableOrPromise<{ success: RxDocument<T>[]; error: RxStorageWriteError<T>[] }>;
   upsert(data: Partial<T>): SubscribableOrPromise<RxDocument<T>>;
-  updateBulk(query: MangoQuery<T>, data: Partial<T>): SubscribableOrPromise<T[]>;
+  updateBulk(
+    query: MangoQuery<T>,
+    data: Partial<T>
+  ): SubscribableOrPromise<RxDocument<T, {}>[]>;
   set(id: string, data: Partial<T>): SubscribableOrPromise<RxDocument<T> | null>;
-  remove(id: string): SubscribableOrPromise<any>;
-  removeBulk(query: MangoQuery<T>): SubscribableOrPromise<any>;
+  remove(id: string): SubscribableOrPromise<RxDocument<T> | null>;
+  removeBulk(query: MangoQuery<T>): SubscribableOrPromise<RxDocument<T>[]>;
 
-  getLocal(id: string, key?: string): SubscribableOrPromise<RxLocalDocument<any>>;
-  insertLocal(id: string, data: any): SubscribableOrPromise<RxLocalDocument<any>>;
-  upsertLocal(id: string, data: any): SubscribableOrPromise<RxLocalDocument<any>>;
-  setLocal(id: string, prop: string, value: any): SubscribableOrPromise<any>;
+  getLocal<I extends string, K extends string>(
+    id: I,
+    key?: K
+  ): SubscribableOrPromise<K extends never ? RxLocalDocument<AnyObject> : unknown>;
+  insertLocal(id: string, data: unknown): SubscribableOrPromise<RxLocalDocument<AnyObject>>;
+  upsertLocal(id: string, data: unknown): SubscribableOrPromise<RxLocalDocument<any>>;
+  setLocal(id: string, prop: string, value: unknown): SubscribableOrPromise<boolean>;
   removeLocal(id: string): SubscribableOrPromise<boolean>;
 };
 /* eslint-enable jsdoc/require-jsdoc */
@@ -122,15 +108,15 @@ export function collectionServiceFactory(config: NgxRxdbCollectionConfig) {
 export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
   implements NgxRxdbCollection<T>
 {
-  private _collection!: RxCollectionWithStatics<T>;
+  private _collection!: RxCollection<T>;
   private _init$ = new ReplaySubject();
 
   get initialized$(): Observable<unknown> {
     return this._init$.asObservable();
   }
 
-  get collection(): RxCollectionWithStatics<T> {
-    return this._collection as RxCollectionWithStatics<T>;
+  get collection(): RxCollection<T> {
+    return this._collection as RxCollection<T>;
   }
 
   get db(): Readonly<RxDatabase> {
@@ -144,13 +130,13 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
     dbService
       .initCollection(this.config)
       .then((collection: RxCollection) => {
-        this._collection = collection as RxCollectionWithStatics<T>;
+        this._collection = collection as RxCollection<T>;
         this._init$.next(true);
         this._init$.complete();
       })
       .catch(e => {
         this._init$.complete();
-        throw new NgxRxdbError(e.message ?? e);
+        throw new Error(e.message ?? e);
       });
   }
 
@@ -161,18 +147,13 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
   sync(
     remoteDbName = 'db',
     customHeaders?: { [h: string]: string }
-  ): RxReplicationState<any, any> {
-    return this.dbService.syncCollection(this.collection, remoteDbName, customHeaders);
+  ): RxReplicationState<T, any> {
+    throw new Error('Method not implemented.');
   }
 
   @collectionMethod()
   info(): SubscribableOrPromise<any> {
-    return this.collection.info();
-  }
-
-  @collectionMethod()
-  getIndexes(): SubscribableOrPromise<any> {
-    return this.collection.getIndexes();
+    return this.collection.count().$;
   }
 
   /**
@@ -181,11 +162,11 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
    */
   @collectionMethod({ startImmediately: false, asObservable: false })
   import(docs: T[]): void {
-    const dump = new NgxRxdbCollectionDump<T>({
+    const dump: RxDumpCollectionAny<T> = {
       name: this.collection.name,
       schemaHash: this.collection.schema.hash,
       docs,
-    });
+    };
     this.collection.importJSON(dump);
   }
 
@@ -222,12 +203,14 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
   }
 
   @collectionMethod()
-  insert(data: T): SubscribableOrPromise<RxDocument<T | null>> {
-    return this.collection.insert(data) as any;
+  insert(data: T): SubscribableOrPromise<RxDocument<T>> {
+    return this.collection.insert(data);
   }
 
   @collectionMethod()
-  insertBulk(data: T[]): SubscribableOrPromise<{ success: RxDocument<T>[]; error: any }> {
+  insertBulk(
+    data: T[]
+  ): SubscribableOrPromise<{ success: RxDocument<T>[]; error: RxStorageWriteError<T>[] }> {
     return this.collection.bulkInsert(data);
   }
 
@@ -242,17 +225,20 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
   }
 
   @collectionMethod()
-  updateBulk(query: MangoQuery<T>, data: Partial<T>): SubscribableOrPromise<T[]> {
+  updateBulk(
+    query: MangoQuery<T>,
+    data: Partial<T>
+  ): SubscribableOrPromise<RxDocument<T, {}>[]> {
     return this.collection.find(query).update({ $set: data });
   }
 
   @collectionMethod()
-  remove(id: string): SubscribableOrPromise<any> {
+  remove(id: string): SubscribableOrPromise<RxDocument<T> | null> {
     return this.collection.findOne(id).remove();
   }
 
   @collectionMethod()
-  removeBulk(query: MangoQuery<T>): SubscribableOrPromise<any> {
+  removeBulk(query: MangoQuery<T>): SubscribableOrPromise<RxDocument<T>[]> {
     return this.collection.find(query).remove();
   }
 
@@ -261,10 +247,10 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
   // ---------------------------------------------------------------------------
 
   @collectionMethod({ startImmediately: false, asObservable: true })
-  getLocal(
-    id: string,
-    key?: string
-  ): SubscribableOrPromise<RxLocalDocument<AnyObject> | any | null> {
+  getLocal<I extends string, K extends string>(
+    id: I,
+    key?: K
+  ): SubscribableOrPromise<K extends never ? RxLocalDocument<AnyObject> : unknown> {
     return this.collection.getLocal$(id).pipe(
       map(doc => {
         if (!doc) {
@@ -278,7 +264,7 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
   @collectionMethod()
   insertLocal(
     id: string,
-    data: AnyObject
+    data: unknown
   ): SubscribableOrPromise<RxLocalDocument<AnyObject>> {
     return this.collection.insertLocal(id, data);
   }
@@ -286,19 +272,18 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
   @collectionMethod()
   upsertLocal(
     id: string,
-    data: AnyObject
+    data: unknown
   ): SubscribableOrPromise<RxLocalDocument<AnyObject>> {
     return this.collection.upsertLocal(id, data);
   }
 
   @collectionMethod()
-  setLocal(id: string, prop: string, value: any): SubscribableOrPromise<boolean> {
+  setLocal(id: string, prop: string, value: unknown): SubscribableOrPromise<boolean> {
     return defer(async () => {
-      const localDoc: RxLocalDocument<any> | null = await this.collection.getLocal(id);
+      const localDoc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
       if (!localDoc || localDoc[prop] === value) {
         return false;
       }
-      // change data
       localDoc.set(prop, value);
       return await localDoc.save();
     });
@@ -307,8 +292,7 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
   @collectionMethod()
   removeLocal(id: string): SubscribableOrPromise<any> {
     return defer(async () => {
-      const localDoc: RxLocalDocument<any> | null = await this.collection.getLocal(id);
-      // change data
+      const localDoc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
       return await localDoc?.remove();
     });
   }

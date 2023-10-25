@@ -1,14 +1,11 @@
 {
   "name": "demo",
   "instanceToken": "idd3hnwvx7",
-  "encrypted": false,
   "passwordHash": null,
   "collections": [
     {
       "name": "todo",
       "schemaHash": "6239bd5a4250867cffaf5bea17b58dc0",
-      "encrypted": false,
-      "passwordHash": null,
       "docs": [
         {
           "title": "Check the other examples",

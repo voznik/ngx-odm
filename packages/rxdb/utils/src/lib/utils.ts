@@ -1,14 +1,20 @@
-/* eslint-disable @typescript-eslint/ban-types */
+/* eslint-disable @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any */
 import { isDevMode } from '@angular/core';
 import { Observable, OperatorFunction, tap } from 'rxjs';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/** @internal */
 type Cast<I, O> = Exclude<I, O> extends never ? I : O;
+/** @internal */
 type Nil = null | undefined;
+/** @internal */
 type EmptyObject = Record<string, never>;
+/** @internal */
 type StringifiedKey<T> = Cast<keyof T, string>;
+/** @internal */
 type ValueIteratee<T, O> = (value: T) => O;
+/** @internal */
 type ArrayIteratee<I, O> = (item: I, index: number) => O;
+/** @internal */
 type ObjectIteratee<T, O> = (item: T[keyof T], key: StringifiedKey<T>) => O;
 
 /**
@@ -38,8 +44,8 @@ export function clone<T>(value: T): T {
  * Contribution to minified bundle size, when it is the only function imported:
  * - Lodash: 3,473 bytes
  * - Micro-dash: 184 bytes
+ * @internal
  */
-
 export function keys<T>(object: Nil | T): Array<StringifiedKey<T>> {
   let val = keysOfNonArray(object);
   if (Array.isArray(object)) {
@@ -48,6 +54,7 @@ export function keys<T>(object: Nil | T): Array<StringifiedKey<T>> {
   return val as any;
 }
 
+/** @internal */
 export function keysOfNonArray<T>(object: Nil | T): Array<StringifiedKey<T>> {
   return object ? (Object.getOwnPropertyNames(object) as any) : [];
 }
@@ -63,12 +70,14 @@ export function keysOfNonArray<T>(object: Nil | T): Array<StringifiedKey<T>> {
  * - Micro-dash: 283 bytes
  * @param object
  * @param iteratee
+ * @internal
  */
 export function forOwn<T>(object: T, iteratee: ObjectIteratee<T, boolean | void>): T {
   forEachOfArray(keys(object), key => iteratee(object[key as keyof T], key));
   return object;
 }
 
+/** @internal */
 export function forOwnOfNonArray<T>(
   object: T,
   iteratee: ObjectIteratee<T, boolean | void>
@@ -85,6 +94,7 @@ export function forOwnOfNonArray<T>(
  * - Micro-dash: 258 bytes
  * @param array
  * @param iteratee
+ * @internal
  */
 export function forEach<T extends Nil | readonly any[]>(
   array: T,
@@ -95,6 +105,7 @@ export function forEach<T>(
   iteratee: ObjectIteratee<NonNullable<T>, boolean | void>
 ): T;
 
+/** @internal */
 export function forEach(collection: any, iteratee: any): any {
   if (Array.isArray(collection)) {
     forEachOfArray(collection, iteratee);
@@ -104,6 +115,7 @@ export function forEach(collection: any, iteratee: any): any {
   return collection;
 }
 
+/** @internal */
 export function forEachOfArray<T>(
   array: readonly T[],
   iteratee: ArrayIteratee<T, boolean | void>
@@ -131,6 +143,7 @@ export function forEachOfArray<T>(
  * - Micro-dash: 438 bytes
  * @param object
  * @param source
+ * @internal
  */
 export function merge<A extends object, B extends object>(object: A, source: B): A & B;
 export function merge<A extends object, B extends object, C extends object>(
@@ -154,6 +167,7 @@ export function merge(object: any, ...sources: any[]): any {
 /**
  * Coerces a data-bound value (typically a string) to a boolean.
  * @param value
+ * @internal
  */
 export function coerceBooleanProperty(value: any): boolean {
   return value != null && `${value}` !== 'false';
@@ -170,6 +184,7 @@ export function coerceBooleanProperty(value: any): boolean {
  * - Lodash: 4,406 bytes
  * - Micro-dash: 148 bytes
  * @param value
+ * @internal
  */
 export function isEmpty(value: any): boolean {
   if (!Array.isArray(value)) {
@@ -178,6 +193,7 @@ export function isEmpty(value: any): boolean {
   return value.length === 0;
 }
 
+/** @internal */
 export const isFunction = (value: any): value is Function => typeof value === 'function';
 
 /** @internal */
@@ -194,7 +210,6 @@ export function isTestMode(): boolean {
   }
 }
 
-/** @internal */
 export function logFn(title?: string, bgColor = '#8d2089') {
   if (isDevMode() && localStorage['debug']?.includes('ngx-rxdb')) {
     // eslint-disable-next-line no-console
@@ -202,7 +217,6 @@ export function logFn(title?: string, bgColor = '#8d2089') {
       window.console,
       `%c[DEBUG::${title ?? 'NgxODM'}::]`,
       `background:${bgColor};color:#fff;padding:2px;font-size:normal;`
-      // ...args
     );
   } else {
     return noop;

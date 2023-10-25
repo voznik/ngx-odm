@@ -1,80 +1,47 @@
-import { Inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import {
-  DEFAULT_BACKOFF_FN,
   NgxRxdbCollectionConfig,
   NgxRxdbConfig,
   RXDB_DEFAULT_CONFIG,
 } from '@ngx-odm/rxdb/config';
-import {
-  forEach,
-  isEmpty,
-  isFunction,
-  LOCAL_STORAGE,
-  logFn,
-  merge,
-} from '@ngx-odm/rxdb/utils';
-//  INFO: Instead of using the default rxdb-import, we do a custom build which lets us cherry-pick only the modules that we need. A default import would be: import RxDB from 'rxdb';
+import { clone, logFn, merge } from '@ngx-odm/rxdb/utils';
 import {
   CollectionsOfDatabase,
-  createRxDatabase,
-  isRxCollection,
   RxCollection,
   RxCollectionCreator,
   RxDatabase,
-  RxStorageDefaultStatics,
+  RxDatabaseCreator,
+  createRxDatabase,
+  isRxCollection,
 } from 'rxdb';
-import { checkSchema } from 'rxdb/plugins/dev-mode';
-import { RxReplicationState } from 'rxdb/plugins/replication';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
-import { NgxRxdbCollectionCreator } from './rxdb-collection.class';
-import { NgxRxdbCollectionDump, NgxRxdbDump } from './rxdb-dump.class';
-import { NgxRxdbError } from './rxdb-error.class';
+import { fetchSchema } from './rxdb-fetch-schema.plugin';
 import { loadRxDBPlugins } from './rxdb-plugin.loader';
 
 const log = logFn('NgxRxdbService');
-const IMPORTED_FLAG = '_ngx_rxdb_imported';
 
 /**
  * Service for managing a RxDB database instance.
  */
 @Injectable()
 export class NgxRxdbService {
-  private dbInstance: (RxDatabase & { pouchSettings?: any }) | null = null;
+  private dbInstance!: RxDatabase;
 
-  private static mergeConfig(config: NgxRxdbConfig): NgxRxdbConfig {
-    return merge(RXDB_DEFAULT_CONFIG, config);
-  }
-
-  static getCouchAuthProxyHeaders(
-    userName = '',
-    roles: string[] = [],
-    token = ''
-  ): { [h: string]: string } {
-    return {
-      'X-Auth-CouchDB-UserName': userName,
-      'X-Auth-CouchDB-Roles': roles.join(','),
-      'X-Auth-CouchDB-Token': token,
-    };
-  }
-
-  get db(): RxDatabase & { pouchSettings?: any } {
+  get db(): RxDatabase {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return this.dbInstance!;
   }
 
   get collections(): CollectionsOfDatabase {
-    return this.db!.collections;
-  }
-
-  constructor(@Inject(LOCAL_STORAGE) private localStorage: Storage) {
-    this._imported = this.localStorage[IMPORTED_FLAG];
+    return this.db.collections;
   }
 
   async destroyDb() {
     try {
-      await this.dbInstance!.remove();
-      await this.dbInstance!.destroy();
-      this.dbInstance = null;
+      await this.db.remove();
+      await this.db.destroy();
+      (this.dbInstance as unknown) = null;
       log(`database destroy`);
     } catch {
       log(`database destroy error`);
@@ -88,14 +55,14 @@ export class NgxRxdbService {
    */
   async initDb(config: NgxRxdbConfig) {
     try {
-      const dbConfig = NgxRxdbService.mergeConfig(config);
+      const dbConfig: RxDatabaseCreator = config;
       dbConfig.storage =
         dbConfig.options?.storageType === 'dexie'
           ? getRxStorageDexie()
           : getRxStorageMemory();
       await loadRxDBPlugins();
       this.dbInstance = await createRxDatabase(dbConfig).catch(e => {
-        throw new NgxRxdbError(e.message ?? e);
+        throw new Error(e.message ?? e);
       });
       log(`created database ${this.db.name}`);
 
@@ -105,17 +72,12 @@ export class NgxRxdbService {
       }
 
       // optional: can create collections from root config
-      if (!isEmpty(dbConfig?.options?.schemas)) {
-        const bulk = await this.initCollections(dbConfig!.options!.schemas!);
+      if (dbConfig?.options?.schemas) {
+        const bulk = await this.initCollections(dbConfig.options.schemas);
         log(`created ${Object.keys(bulk).length} collections bulk: ${Object.keys(bulk)}`);
       }
-
-      // optional: can import dump from remote file
-      if (dbConfig.options?.dumpPath) {
-        await this.importDbDump(dbConfig.options.dumpPath);
-      }
-    } catch (error: any) {
-      throw new NgxRxdbError(error.message ?? error);
+    } catch (error) {
+      throw new Error(error.message);
     }
   }
 
@@ -126,43 +88,40 @@ export class NgxRxdbService {
   async initCollections(colConfigs: Record<string, NgxRxdbCollectionConfig>) {
     try {
       const colCreators = await this.prepareCollections(colConfigs);
-      return await this.dbInstance!.addCollections(colCreators);
-    } catch (error: any) {
-      throw new NgxRxdbError(error.message ?? error);
+      return await this.db.addCollections(colCreators);
+    } catch (error) {
+      throw new Error(error.message);
     }
   }
 
   async initCollection(colConfig: NgxRxdbCollectionConfig) {
-    let col = this.getCollection(colConfig!.name!);
+    const { name, options } = colConfig;
+    let col = this.getCollection(name);
+    if (col) {
+      // delete  data in collection if exists
+      if (options?.recreate) {
+        await col.remove();
+      }
+      log('collection', col.name, 'exists, skip create');
+      return col;
+    }
+
     try {
-      if (col) {
-        // delete  data in collection if exists
-        if (colConfig.options?.recreate) {
-          await col.remove();
-        }
-        log('collection', col.name, 'exists, skip create');
-        return col;
-      }
-
       const colCreator = await this.prepareCollections({
-        [colConfig!.name!]: colConfig,
+        [name]: colConfig,
       });
-      const res = await this.dbInstance!.addCollections(colCreator);
-      col = res[colConfig!.name!];
-      log(`created collection "${col.name}"`);
-
-      if (colConfig.options?.initialDocs) {
-        await this.importColDump(col, colConfig.options.initialDocs);
-      }
+      const res = await this.db.addCollections(colCreator);
+      col = res[name];
+      log(`created collection "${name}"`);
 
       return col;
-    } catch (error: any) {
-      throw new NgxRxdbError(error.message ?? error);
+    } catch (error) {
+      throw new Error(error.message);
     }
   }
 
   getCollection(name: string): RxCollection | null {
-    const collection = this.db?.[name];
+    const collection = this.db.collections[name];
     if (isRxCollection(collection)) {
       return collection;
     } else {
@@ -171,159 +130,29 @@ export class NgxRxdbService {
     }
   }
 
-  syncCollection(
-    col: RxCollection,
-    remoteDbName = 'db',
-    customHeaders?: Record<string, string>
-  ): RxReplicationState<any, any> {
-    let rState: RxReplicationState<any, any> = {} as RxReplicationState<any, any>;
-
-    if (!col.options?.syncOptions?.remote) {
-      return rState;
-    }
-    // FIXME: as NgxRxdbCollectionConfig['options']
-    const syncOptions = (col.options as any)!.syncOptions!;
-    syncOptions.remote = syncOptions.remote.concat('/', remoteDbName);
-    // merge options
-    syncOptions.options = merge(
-      this.db.pouchSettings.ajax,
-      { back_off_function: DEFAULT_BACKOFF_FN },
-      syncOptions.options as any
-    );
-    // append auth headers
-    if (customHeaders) {
-      (syncOptions.options as any).headers = merge(
-        (syncOptions.options as any).headers,
-        customHeaders
-      );
-    }
-    // set filtered sync
-    if (syncOptions.queryObj) {
-      syncOptions.query = col.find(syncOptions.queryObj);
-    }
-    try {
-      rState = (col as any).sync(syncOptions); // FIXME: refactor replication
-    } catch (error) {
-      log('syncCollection error', error);
-    }
-    return rState;
-  }
-
-  syncAllCollections(
-    remoteDbName = 'db',
-    customHeaders?: { [h: string]: string }
-  ): RxReplicationState<any, any>[] {
-    if (isEmpty(this.collections)) {
-      throw new NgxRxdbError('collections must be initialized before importing dump');
-    }
-    const replicationStates: RxReplicationState<any, any>[] = [];
-    forEach(this.collections, col => {
-      if (!col.options?.syncOptions?.remote) {
-        return;
-      }
-      const sync = this.syncCollection(col, remoteDbName, customHeaders);
-      replicationStates.push(sync);
-    });
-    log('syncAllCollections = ', replicationStates);
-    return replicationStates;
-  }
-
   /**
-   * imports pouchdb dump to the database, must be used only after db init
-   * @param dumpPath
+   * Prepares the collections by creating a record of collection creators based on the provided collection configurations.
+   *
+   * Optionally fetch schema from remote url if jsonschema is not provided.
+   * @param colConfigs A record of collection configurations.
+   * @returns A promise that resolves to a record of collection creators.
    */
-  async importDbDump(dumpPath: string) {
-    try {
-      const dump = await this.prepareDbDump(dumpPath);
-      // import only new dump
-      if (!this._imported || this._imported !== dump.timestamp) {
-        await this.db.importJSON(dump);
-        this._imported = dump.timestamp;
-        log(`imported dump for db "${this.db.name}"`);
-      }
-    } catch (error: any) {
-      if (error.status !== 409) {
-        throw new NgxRxdbError(error.message ?? error);
-      } else {
-        // impoted but were conflicts with old docs - mark as imported
-        this._imported = Date.now(); // dump.timestamp;
-      }
-    }
-  }
-
-  async importColDump(col: RxCollection, initialDocs: any[]) {
-    if (initialDocs.length) {
-      let count = 0;
-      const info = await (col as any).info();
-      count = await col
-        .count()
-        .exec()
-        .catch(e => {
-          console.error(e);
-          return 0;
-        });
-      if (!count && (!info.refCount || info.refCount <= 1)) {
-        log(`collection "${col.name}" has "${count}" docs`);
-        // preload data into collection
-        const dump = new NgxRxdbCollectionDump({
-          name: col.name,
-          schemaHash: col.schema.hash,
-          docs: initialDocs,
-        });
-        await col.importJSON(dump);
-        log(`imported ${initialDocs.length} docs for collection "${col.name}"`);
-      }
-    }
-  }
-
-  private get _imported() {
-    return this.localStorage[IMPORTED_FLAG];
-  }
-  private set _imported(v: number) {
-    this.localStorage[IMPORTED_FLAG] = v;
-  }
-
   private async prepareCollections(
     colConfigs: Record<string, NgxRxdbCollectionConfig>
   ): Promise<Record<string, RxCollectionCreator>> {
     try {
-      const colCreators = {};
-      const configs = Object.values(colConfigs);
-      for (const config of configs) {
+      const colCreators: Record<string, RxCollectionCreator> = {};
+      for (const name in colConfigs) {
+        const config = colConfigs[name];
         // optionally fetch schema from remote url
         if (!config.schema && !!config.options?.schemaUrl) {
-          config.schema = await NgxRxdbCollectionCreator.fetchSchema(
-            config.options.schemaUrl
-          );
+          config.schema = await fetchSchema(config.options.schemaUrl);
         }
-        checkSchema(config.schema!);
-        colCreators[config.name!] = new NgxRxdbCollectionCreator(config);
+        colCreators[config.name] = clone(config) as RxCollectionCreator;
       }
       return colCreators;
-    } catch (error: any) {
-      throw new NgxRxdbError(error.message ?? error);
+    } catch (error) {
+      throw new Error(error.message);
     }
-  }
-
-  /**
-   * change schemaHashes from dump to existing schema hashes
-   * @param dumpPath
-   */
-  private async prepareDbDump(dumpPath: string): Promise<NgxRxdbDump> {
-    // fetch dump json
-    const dumpObj = await (await fetch(dumpPath)).json();
-    const dumpWithHashes = new NgxRxdbDump(dumpObj);
-    if (isEmpty(this.collections)) {
-      throw new NgxRxdbError('collections must be initialized before importing');
-    }
-    for (const dc of dumpWithHashes.collections) {
-      const col = this.getCollection(dc.name);
-      if (col) {
-        dc.schemaHash = col.schema['_hash'];
-      } else {
-        throw new NgxRxdbError('no such collection as provided in dump');
-      }
-    }
-    return dumpWithHashes;
   }
 }

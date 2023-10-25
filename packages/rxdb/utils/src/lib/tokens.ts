@@ -1,7 +1,10 @@
 import { DOCUMENT } from '@angular/common';
 import { inject, InjectionToken } from '@angular/core';
 
-/** An abstraction over global window object */
+/**
+ * An abstraction over global window object
+ * @internal
+ */
 export const WINDOW = new InjectionToken<Window>(
   'An abstraction over global window object',
   {
@@ -17,7 +20,10 @@ export const WINDOW = new InjectionToken<Window>(
   }
 );
 
-/** An abstraction over window.localStorage object */
+/**
+ * An abstraction over window.localStorage object
+ * @internal
+ */
 export const LOCAL_STORAGE = new InjectionToken<Storage>(
   'An abstraction over window.localStorage object',
   {
