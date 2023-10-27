@@ -9,7 +9,7 @@ import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 // import { wrappedValidateIsMyJsonValidStorage } from 'rxdb/plugins/validate-is-my-json-valid'; // TODO
 // import { RxDBReplicationPlugin } from 'rxdb/plugins/replication';
-import { RxDBFetchSchemaPlugin } from './rxdb-fetch-schema.plugin';
+import { RxDBPreparePlugin } from './rxdb-prepare.plugin';
 
 const log = logFn('PluginLoader');
 
@@ -27,7 +27,7 @@ export async function loadRxDBPlugins(): Promise<void> {
     addRxPlugin(RxDBJsonDumpPlugin);
     addRxPlugin(RxDBMigrationPlugin);
     addRxPlugin(RxDBUpdatePlugin);
-    addRxPlugin(RxDBFetchSchemaPlugin);
+    addRxPlugin(RxDBPreparePlugin);
 
     /** * to reduce the build-size, we use some plugins in dev-mode only */
     if (isDevMode()) {

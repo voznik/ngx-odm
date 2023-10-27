@@ -2,93 +2,70 @@
 import { InjectionToken } from '@angular/core';
 import type { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
-import { debug, logFn } from '@ngx-odm/rxdb/utils';
+import { debug } from '@ngx-odm/rxdb/utils';
 import type {
   MangoQuery,
   RxCollection,
   RxDatabase,
   RxDocument,
+  RxDumpCollection,
   RxDumpCollectionAny,
   RxLocalDocument,
   RxStorageWriteError,
-} from 'rxdb/plugins/core';
-import { RxReplicationState } from 'rxdb/plugins/replication';
+} from 'rxdb';
 import {
   Observable,
   ReplaySubject,
-  defer,
+  lastValueFrom,
   map,
   merge as merge$,
   startWith,
   switchMap,
 } from 'rxjs';
-import { collectionMethod } from './rxdb-collection.helpers';
 
-type AnyObject = Record<string, any>;
-type SubscribableOrPromise<T> = {
-  pipe?: (...args: any[]) => any;
-  subscribe?: (
-    next?: (value: T) => void,
-    error?: (error: any) => void,
-    complete?: () => void
-  ) => void;
-  then?: (
-    onfulfilled?: ((value: T) => T | PromiseLike<T>) | undefined | null,
-    onrejected?: ((reason: any) => T | PromiseLike<T>) | undefined | null
-  ) => Promise<T>;
-};
-
-/* eslint-disable jsdoc/require-jsdoc */
 /**
  * Service for interacting with a RxDB collection.
  */
-export type NgxRxdbCollection<T extends AnyObject> = {
+export type NgxRxdbCollection<T extends {}> = {
   readonly db: Readonly<RxDatabase>;
   readonly collection: RxCollection<T>;
   initialized$: Observable<unknown>;
 
   destroy(): void;
-  info(): SubscribableOrPromise<any>;
+  info(): Promise<{}>;
   import(docs: T[]): void;
-  sync(
-    remoteDbName?: string,
-    customHeaders?: { [h: string]: string }
-  ): RxReplicationState<T, any>;
+  export(docs: T[]): Promise<RxDumpCollection<T>>;
 
   docs(query?: MangoQuery<T>): Observable<T[]>;
   docsByIds(ids: string[]): Observable<T[]>;
   count(): Observable<number>;
 
-  get(id: string): Observable<RxDocument<T> | null>;
-  insert(data: T): SubscribableOrPromise<RxDocument<T>>;
+  get(id: string): Observable<T | null>;
+  insert(data: T): Promise<RxDocument<T>>;
   insertBulk(
     data: T[]
-  ): SubscribableOrPromise<{ success: RxDocument<T>[]; error: RxStorageWriteError<T>[] }>;
-  upsert(data: Partial<T>): SubscribableOrPromise<RxDocument<T>>;
-  updateBulk(
-    query: MangoQuery<T>,
-    data: Partial<T>
-  ): SubscribableOrPromise<RxDocument<T, {}>[]>;
-  set(id: string, data: Partial<T>): SubscribableOrPromise<RxDocument<T> | null>;
-  remove(id: string): SubscribableOrPromise<RxDocument<T> | null>;
-  removeBulk(query: MangoQuery<T>): SubscribableOrPromise<RxDocument<T>[]>;
+  ): Promise<{ success: RxDocument<T>[]; error: RxStorageWriteError<T>[] }>;
+  upsert(data: Partial<T>): Promise<RxDocument<T>>;
+  updateBulk(query: MangoQuery<T>, data: Partial<T>): Promise<RxDocument<T, {}>[]>;
+  set(id: string, data: Partial<T>): Promise<RxDocument<T> | null>;
+  remove(id: string): Promise<RxDocument<T> | null>;
+  removeBulk(query: MangoQuery<T>): Promise<RxDocument<T>[]>;
 
   getLocal<I extends string, K extends string>(
     id: I,
     key?: K
-  ): SubscribableOrPromise<K extends never ? RxLocalDocument<AnyObject> : unknown>;
-  insertLocal(id: string, data: unknown): SubscribableOrPromise<RxLocalDocument<AnyObject>>;
-  upsertLocal(id: string, data: unknown): SubscribableOrPromise<RxLocalDocument<any>>;
-  setLocal(id: string, prop: string, value: unknown): SubscribableOrPromise<boolean>;
-  removeLocal(id: string): SubscribableOrPromise<boolean>;
+  ): Observable<K extends never ? RxLocalDocument<{}> : unknown>;
+  insertLocal(id: string, data: unknown): Promise<RxLocalDocument<{}>>;
+  upsertLocal(id: string, data: unknown): Promise<RxLocalDocument<{}>>;
+  setLocal(id: string, prop: string, value: unknown): Promise<boolean>;
+  removeLocal(id: string): Promise<boolean>;
 };
-/* eslint-enable jsdoc/require-jsdoc */
 
 /**
  * Injection token for Service for interacting with a RxDB collection.
  * This token is used to inject an instance of NgxRxdbCollection into a component or service.
  */
-export const NgxRxdbCollectionService = new InjectionToken<NgxRxdbCollection<AnyObject>>(
+export const NgxRxdbCollectionService = new InjectionToken<NgxRxdbCollection<{}>>(
   'NgxRxdbCollection'
 );
 
@@ -98,16 +75,14 @@ export const NgxRxdbCollectionService = new InjectionToken<NgxRxdbCollection<Any
  * @param config - The configuration object for the collection to be created automatically.
  */
 export function collectionServiceFactory(config: NgxRxdbCollectionConfig) {
-  return (dbService: NgxRxdbService): NgxRxdbCollection<AnyObject> =>
+  return (dbService: NgxRxdbService): NgxRxdbCollection<{}> =>
     new NgxRxdbCollectionServiceImpl(dbService, config);
 }
 
 /**
  * Service for interacting with a RxDB collection.
  */
-export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
-  implements NgxRxdbCollection<T>
-{
+export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollection<T> {
   private _collection!: RxCollection<T>;
   private _init$ = new ReplaySubject();
 
@@ -144,30 +119,29 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
     this.collection?.destroy();
   }
 
-  sync(
-    remoteDbName = 'db',
-    customHeaders?: { [h: string]: string }
-  ): RxReplicationState<T, any> {
-    throw new Error('Method not implemented.');
-  }
-
-  @collectionMethod()
-  info(): SubscribableOrPromise<any> {
-    return this.collection.count().$;
+  async info(): Promise<{}> {
+    await lastValueFrom(this.initialized$);
+    const meta = (await this.collection.storageInstance.internals) || {};
+    return meta;
   }
 
   /**
    * import array of docs into collection
    * @param docs
    */
-  @collectionMethod({ startImmediately: false, asObservable: false })
-  import(docs: T[]): void {
+  async import(docs: T[]): Promise<void> {
+    await lastValueFrom(this.initialized$);
     const dump: RxDumpCollectionAny<T> = {
       name: this.collection.name,
       schemaHash: this.collection.schema.hash,
       docs,
     };
     this.collection.importJSON(dump);
+  }
+
+  async export(): Promise<RxDumpCollection<T>> {
+    await lastValueFrom(this.initialized$);
+    return this.collection.exportJSON();
   }
 
   docs(query?: MangoQuery<T>): Observable<T[]> {
@@ -197,48 +171,48 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
     );
   }
 
-  @collectionMethod({ startImmediately: false, asObservable: true })
-  get(id: string): Observable<RxDocument<T> | null> {
-    return this.collection.findOne(id).$;
+  get(id: string): Observable<T | null> {
+    return this.initialized$.pipe(
+      switchMap(() => this.collection.findOne(id).$),
+      map(doc => (doc ? doc.toMutableJSON() : null)),
+      debug('get one')
+    );
   }
 
-  @collectionMethod()
-  insert(data: T): SubscribableOrPromise<RxDocument<T>> {
+  async insert(data: T): Promise<RxDocument<T>> {
+    await lastValueFrom(this.initialized$);
     return this.collection.insert(data);
   }
 
-  @collectionMethod()
-  insertBulk(
+  async insertBulk(
     data: T[]
-  ): SubscribableOrPromise<{ success: RxDocument<T>[]; error: RxStorageWriteError<T>[] }> {
+  ): Promise<{ success: RxDocument<T>[]; error: RxStorageWriteError<T>[] }> {
+    await lastValueFrom(this.initialized$);
     return this.collection.bulkInsert(data);
   }
 
-  @collectionMethod()
-  upsert(data: Partial<T>): SubscribableOrPromise<RxDocument<T>> {
+  async upsert(data: Partial<T>): Promise<RxDocument<T>> {
+    await lastValueFrom(this.initialized$);
     return this.collection.upsert(data);
   }
 
-  @collectionMethod()
-  set(id: string, data: Partial<T>): SubscribableOrPromise<RxDocument<T> | null> {
+  async set(id: string, data: Partial<T>): Promise<RxDocument<T> | null> {
+    await lastValueFrom(this.initialized$);
     return this.collection.findOne(id).update({ $set: data });
   }
 
-  @collectionMethod()
-  updateBulk(
-    query: MangoQuery<T>,
-    data: Partial<T>
-  ): SubscribableOrPromise<RxDocument<T, {}>[]> {
+  async updateBulk(query: MangoQuery<T>, data: Partial<T>): Promise<RxDocument<T, {}>[]> {
+    await lastValueFrom(this.initialized$);
     return this.collection.find(query).update({ $set: data });
   }
 
-  @collectionMethod()
-  remove(id: string): SubscribableOrPromise<RxDocument<T> | null> {
+  async remove(id: string): Promise<RxDocument<T> | null> {
+    await lastValueFrom(this.initialized$);
     return this.collection.findOne(id).remove();
   }
 
-  @collectionMethod()
-  removeBulk(query: MangoQuery<T>): SubscribableOrPromise<RxDocument<T>[]> {
+  async removeBulk(query: MangoQuery<T>): Promise<RxDocument<T>[]> {
+    await lastValueFrom(this.initialized$);
     return this.collection.find(query).remove();
   }
 
@@ -246,54 +220,45 @@ export class NgxRxdbCollectionServiceImpl<T extends AnyObject>
   // Local Documents @see https://rxdb.info/rx-local-document.html
   // ---------------------------------------------------------------------------
 
-  @collectionMethod({ startImmediately: false, asObservable: true })
   getLocal<I extends string, K extends string>(
     id: I,
     key?: K
-  ): SubscribableOrPromise<K extends never ? RxLocalDocument<AnyObject> : unknown> {
-    return this.collection.getLocal$(id).pipe(
+  ): Observable<K extends never ? RxLocalDocument<{}> : unknown> {
+    return this.initialized$.pipe(
+      switchMap(() => this.collection.getLocal$(id)),
       map(doc => {
         if (!doc) {
           return null;
         }
         return key ? doc.get(key) : doc;
-      })
+      }),
+      debug('get local')
     );
   }
 
-  @collectionMethod()
-  insertLocal(
-    id: string,
-    data: unknown
-  ): SubscribableOrPromise<RxLocalDocument<AnyObject>> {
+  async insertLocal(id: string, data: unknown): Promise<RxLocalDocument<{}>> {
+    await lastValueFrom(this.initialized$);
     return this.collection.insertLocal(id, data);
   }
 
-  @collectionMethod()
-  upsertLocal(
-    id: string,
-    data: unknown
-  ): SubscribableOrPromise<RxLocalDocument<AnyObject>> {
+  async upsertLocal(id: string, data: unknown): Promise<RxLocalDocument<{}>> {
+    await lastValueFrom(this.initialized$);
     return this.collection.upsertLocal(id, data);
   }
 
-  @collectionMethod()
-  setLocal(id: string, prop: string, value: unknown): SubscribableOrPromise<boolean> {
-    return defer(async () => {
-      const localDoc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
-      if (!localDoc || localDoc[prop] === value) {
-        return false;
-      }
-      localDoc.set(prop, value);
-      return await localDoc.save();
-    });
+  async setLocal(id: string, prop: string, value: unknown): Promise<boolean> {
+    await lastValueFrom(this.initialized$);
+    const localDoc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
+    if (!localDoc || localDoc[prop] === value) {
+      return false;
+    }
+    localDoc.set(prop, value);
+    return await localDoc.save();
   }
 
-  @collectionMethod()
-  removeLocal(id: string): SubscribableOrPromise<any> {
-    return defer(async () => {
-      const localDoc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
-      return await localDoc?.remove();
-    });
+  async removeLocal(id: string): Promise<any> {
+    await lastValueFrom(this.initialized$);
+    const localDoc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
+    return await localDoc?.remove();
   }
 }

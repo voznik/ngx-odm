@@ -1,29 +1,28 @@
 {
   "name": "demo",
-  "instanceToken": "idd3hnwvx7",
-  "passwordHash": null,
+  "instanceToken": "vhngmgjupw",
   "collections": [
     {
       "name": "todo",
-      "schemaHash": "6239bd5a4250867cffaf5bea17b58dc0",
+      "schemaHash": "9b18d72e95209a29cdc5f4849e21dc3c7c399f7d0fa070f159820e80ec2dee29",
       "docs": [
         {
-          "title": "Check the other examples",
+          "id": "a4c6a479-7cca-4d3b-ab90-45d3eaa957f3",
+          "title": "Check other examples",
           "completed": false,
-          "createdAt": 1548979200000,
-          "id": "a4c6a479-7cca-4d3b-ab90-45d3eaa957f3"
+          "createdAt": 1548979200000
         },
         {
-          "title": "Use Angular ngRx Material Starter in your project",
+          "id": "a4c6a479-7cca-4d3b-bc10-45d3eaa957r5",
+          "title": "Use \"@ngx-odm/rxdb\" in your project",
           "completed": false,
-          "createdAt": 1608377615909,
-          "id": "a4c6a479-7cca-4d3b-bc10-45d3eaa957r5"
+          "createdAt": 1698404710931
         },
         {
+          "id": "ac3ef2c6-c98b-43e1-9047-71d68b1f92f4",
           "title": "Open Todo list example",
           "completed": true,
-          "createdAt": 1546300800000,
-          "id": "ac3ef2c6-c98b-43e1-9047-71d68b1f92f4"
+          "createdAt": 1546300800000
         }
       ]
     }

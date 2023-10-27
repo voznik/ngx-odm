@@ -1,4 +1,5 @@
 import { Inject, NgModule } from '@angular/core';
+import { from } from 'rxjs';
 import { NgxRxdbAsyncNoZonePipe, NgxRxdbLetDirective } from './rxdb-collection.pipe';
 import { NgxRxdbCollectionService, NgxRxdbCollection } from './rxdb-collection.service';
 
@@ -17,8 +18,8 @@ export class NgxRxdbFeatureModule {
   constructor(
     @Inject(NgxRxdbCollectionService) private collectionService: NgxRxdbCollection<any>
   ) {
-    collectionService.info().subscribe!(info => {
-      // console.debug('collectionService:info', info);
+    from(collectionService.info()).subscribe!(info => {
+      console.debug('collectionService:info', info);
     });
   }
 }

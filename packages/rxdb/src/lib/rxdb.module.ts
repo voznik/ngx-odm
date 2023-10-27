@@ -15,11 +15,11 @@ import {
 } from '@ngx-odm/rxdb/collection';
 import {
   NgxRxdbCollectionConfig,
-  NgxRxdbConfig,
   RXDB_CONFIG,
   RXDB_CONFIG_COLLECTION,
 } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
+import type { RxDatabaseCreator } from 'rxdb';
 import { from } from 'rxjs';
 
 /**
@@ -29,7 +29,7 @@ import { from } from 'rxjs';
  */
 export function dbInitializerFactory(
   dbService: NgxRxdbService,
-  dbConfig: NgxRxdbConfig
+  dbConfig: RxDatabaseCreator
 ): () => Promise<void> {
   return async () => {
     await dbService.initDb(dbConfig);
@@ -113,7 +113,7 @@ export class NgxRxdbModule {
    * Configures and initializes RxDB with the given configuration, during the `APP_INITIALIZER` cycle.
    * @param config The configuration options for NgxRxdbModule.
    */
-  static forRoot(config: NgxRxdbConfig): ModuleWithProviders<NgxRxdbModule> {
+  static forRoot(config: RxDatabaseCreator): ModuleWithProviders<NgxRxdbModule> {
     return {
       ngModule: NgxRxdbModule,
       providers: [
@@ -139,8 +139,8 @@ export class NgxRxdbModule {
    */
   public constructor(
     appInitStatus: ApplicationInitStatus,
-    @Optional() @SkipSelf() @Inject(RXDB_CONFIG) ngxRxdbConfig: NgxRxdbConfig,
-    @Optional() @Self() @Inject(RXDB_CONFIG) trueNgxRxdbConfig: NgxRxdbConfig,
+    @Optional() @SkipSelf() @Inject(RXDB_CONFIG) ngxRxdbConfig: RxDatabaseCreator,
+    @Optional() @Self() @Inject(RXDB_CONFIG) trueNgxRxdbConfig: RxDatabaseCreator,
     @Optional() @SkipSelf() @Self() ngxRxdbService: NgxRxdbService
   ) {
     if (!trueNgxRxdbConfig && !ngxRxdbConfig) {
