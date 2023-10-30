@@ -1,7 +1,6 @@
 /// <reference types="jest" />
 
 import { resolve } from 'path';
-import { Injectable } from '@angular/core';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import { ensureDirSync } from 'fs-extra';
 import {
@@ -11,7 +10,7 @@ import {
   RxJsonSchema,
 } from 'rxdb/plugins/core';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
-import { of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 
 const rootDir = resolve(__dirname, '../../../../../');
 const dbPath = resolve(rootDir, 'tmp', 'websql', 'test');
@@ -72,39 +71,67 @@ export const TEST_DB_CONFIG_2: RxDatabaseCreator = {
   },
 };
 
-@Injectable()
-export class MockNgxRxdbService extends NgxRxdbService {
-  // private _imported = 0;
-  // private dbInstance = {} as any;
-  override get db() {
-    return {} as any;
-  }
-  override get collections() {
-    return {} as any;
-  }
-  override initDb = jest.fn().mockResolvedValue({});
-  override destroyDb = jest.fn().mockResolvedValue({});
-  override initCollection = jest.fn().mockResolvedValue({
+export const getMocktRxCollection = () => {
+  return {
+    database: {
+      _imported: null,
+    } as any,
+    name: 'test',
+    schema: {},
+    storageInstance: {
+      internals: Promise.resolve({}),
+    },
+    destroy: jest.fn().mockResolvedValue(null),
+    importJSON: jest.fn().mockResolvedValue(null),
+    exportJSON: jest.fn().mockResolvedValue(null),
     find: jest.fn().mockReturnValue({
-      $: of({ id: '0' }),
-      remove: jest.fn().mockResolvedValue([]),
-      update: jest.fn().mockResolvedValue([]),
+      $: of([]),
+      update: jest.fn().mockResolvedValue(null),
+      remove: jest.fn().mockResolvedValue(null),
+    }),
+    findByIds: jest.fn().mockReturnValue({
+      $: of(new Map()),
+    }),
+    count: jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue(0),
     }),
     findOne: jest.fn().mockReturnValue({
-      $: of({ id: '0' }),
-      remove: jest.fn().mockResolvedValue({}),
-      update: jest.fn().mockResolvedValue({}),
+      $: of(null),
+      update: jest.fn().mockResolvedValue(null),
+      remove: jest.fn().mockResolvedValue(null),
     }),
-    findByIds: jest.fn().mockReturnValue(Promise.resolve(new Map([[0, { id: '0' }]]))),
-    findByIds$: jest.fn().mockReturnValue(of(new Map([[0, { id: '0' }]]))),
-    pouch: {
-      allDocs: jest.fn().mockResolvedValue({ rows: [{ id: '0' }] }),
-      bulkDocs: jest.fn().mockResolvedValue([]),
+    insert: jest.fn().mockResolvedValue(null),
+    insert$: EMPTY,
+    bulkInsert: jest.fn().mockResolvedValue(
+      of({
+        success: [],
+        error: [],
+      })
+    ),
+    upsert: jest.fn().mockResolvedValue(null),
+    update: jest.fn().mockResolvedValue([]),
+    remove: jest.fn().mockResolvedValue(null),
+    remove$: EMPTY,
+    getLocal: jest.fn().mockResolvedValue(null),
+    getLocal$: jest.fn().mockReturnValue(of(null)),
+    insertLocal: jest.fn().mockResolvedValue(null),
+    upsertLocal: jest.fn().mockResolvedValue(null),
+  } as unknown as RxCollection<any>;
+};
+
+export const getMockRxdbServiceFactory = (): NgxRxdbService => {
+  const service = {
+    db: {
+      _imported: null,
+    } as any,
+    collections: {
+      test: getMocktRxCollection(),
     },
-    info: jest.fn().mockImplementation(obj => Promise.resolve(obj)),
-    insert: jest.fn().mockImplementation(obj => Promise.resolve(obj)),
-    bulkInsert: jest.fn().mockImplementation(arr => Promise.resolve(arr)),
-    upsert: jest.fn().mockImplementation(obj => Promise.resolve(obj)),
-  } as unknown as RxCollection);
-  override initCollections = this.initCollection;
-}
+    initDb: jest.fn().mockResolvedValue({}),
+    destroyDb: jest.fn().mockResolvedValue({}),
+    initCollection: jest.fn().mockResolvedValue(getMocktRxCollection()),
+    // initCollections = this.initCollection;
+  } as unknown as NgxRxdbService;
+  Object.setPrototypeOf(service, NgxRxdbService.prototype);
+  return service;
+};

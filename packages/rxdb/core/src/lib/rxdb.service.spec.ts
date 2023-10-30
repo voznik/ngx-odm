@@ -3,10 +3,7 @@ import { ApplicationInitStatus } from '@angular/core';
 import { TestBed, waitForAsync } from '@angular/core/testing';
 import { NgxRxdbModule } from '@ngx-odm/rxdb';
 import { TEST_DB_CONFIG_1, TEST_DB_CONFIG_2 } from '@ngx-odm/rxdb/testing';
-import { addRxPlugin } from 'rxdb/plugins/core';
 import { NgxRxdbService } from './rxdb.service';
-
-addRxPlugin(require('pouchdb-adapter-memory'));
 
 describe('NgxRxdbService', () => {
   describe(`:: init`, () => {

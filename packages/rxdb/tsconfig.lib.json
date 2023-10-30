@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "../dist/out-tsc",
     "lib": ["dom", "es2020"],
-    "types": ["node", "pouchdb"]
+    "types": ["node"]
   },
   "exclude": [
     "**/*.spec.ts",

@@ -34,7 +34,7 @@ export type NgxRxdbCollection<T extends {}> = {
   destroy(): void;
   info(): Promise<{}>;
   import(docs: T[]): void;
-  export(docs: T[]): Promise<RxDumpCollection<T>>;
+  export(): Promise<RxDumpCollection<T>>;
 
   docs(query?: MangoQuery<T>): Observable<T[]>;
   docsByIds(ids: string[]): Observable<T[]>;
@@ -84,9 +84,9 @@ export function collectionServiceFactory(config: RxCollectionCreatorExtended) {
  */
 export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollection<T> {
   private _collection!: RxCollection<T>;
-  private _init$ = new ReplaySubject();
+  private _init$ = new ReplaySubject<boolean>();
 
-  get initialized$(): Observable<unknown> {
+  get initialized$(): Observable<boolean> {
     return this._init$.asObservable();
   }
 
@@ -120,7 +120,7 @@ export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollec
   }
 
   async info(): Promise<{}> {
-    await lastValueFrom(this.initialized$);
+    await this.ensureCollection();
     const meta = (await this.collection.storageInstance.internals) || {};
     return meta;
   }
@@ -130,7 +130,7 @@ export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollec
    * @param docs
    */
   async import(docs: T[]): Promise<void> {
-    await lastValueFrom(this.initialized$);
+    await this.ensureCollection();
     const dump: RxDumpCollectionAny<T> = {
       name: this.collection.name,
       schemaHash: this.collection.schema.hash,
@@ -140,7 +140,7 @@ export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollec
   }
 
   async export(): Promise<RxDumpCollection<T>> {
-    await lastValueFrom(this.initialized$);
+    await this.ensureCollection();
     return this.collection.exportJSON();
   }
 
@@ -179,39 +179,39 @@ export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollec
   }
 
   async insert(data: T): Promise<RxDocument<T>> {
-    await lastValueFrom(this.initialized$);
+    await this.ensureCollection();
     return this.collection.insert(data);
   }
 
   async insertBulk(
     data: T[]
   ): Promise<{ success: RxDocument<T>[]; error: RxStorageWriteError<T>[] }> {
-    await lastValueFrom(this.initialized$);
+    await this.ensureCollection();
     return this.collection.bulkInsert(data);
   }
 
   async upsert(data: Partial<T>): Promise<RxDocument<T>> {
-    await lastValueFrom(this.initialized$);
+    await this.ensureCollection();
     return this.collection.upsert(data);
   }
 
   async set(id: string, data: Partial<T>): Promise<RxDocument<T> | null> {
-    await lastValueFrom(this.initialized$);
+    await this.ensureCollection();
     return this.collection.findOne(id).update({ $set: data });
   }
 
   async updateBulk(query: MangoQuery<T>, data: Partial<T>): Promise<RxDocument<T, {}>[]> {
-    await lastValueFrom(this.initialized$);
+    await this.ensureCollection();
     return this.collection.find(query).update({ $set: data });
   }
 
   async remove(id: string): Promise<RxDocument<T> | null> {
-    await lastValueFrom(this.initialized$);
+    await this.ensureCollection();
     return this.collection.findOne(id).remove();
   }
 
   async removeBulk(query: MangoQuery<T>): Promise<RxDocument<T>[]> {
-    await lastValueFrom(this.initialized$);
+    await this.ensureCollection();
     return this.collection.find(query).remove();
   }
 
@@ -236,17 +236,17 @@ export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollec
   }
 
   async insertLocal(id: string, data: unknown): Promise<RxLocalDocument<{}>> {
-    await lastValueFrom(this.initialized$);
+    await this.ensureCollection();
     return this.collection.insertLocal(id, data);
   }
 
   async upsertLocal(id: string, data: unknown): Promise<RxLocalDocument<{}>> {
-    await lastValueFrom(this.initialized$);
+    await this.ensureCollection();
     return this.collection.upsertLocal(id, data);
   }
 
   async setLocal(id: string, prop: string, value: unknown): Promise<boolean> {
-    await lastValueFrom(this.initialized$);
+    await this.ensureCollection();
     const localDoc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
     if (!localDoc || localDoc[prop] === value) {
       return false;
@@ -256,8 +256,15 @@ export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollec
   }
 
   async removeLocal(id: string): Promise<any> {
-    await lastValueFrom(this.initialized$);
+    await this.ensureCollection();
     const localDoc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
     return await localDoc?.remove();
+  }
+
+  async ensureCollection(): Promise<boolean> {
+    if (!this.collection) {
+      await lastValueFrom(this.initialized$);
+    }
+    return !!this.collection;
   }
 }

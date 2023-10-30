@@ -21,15 +21,12 @@ export interface RxCollectionCreatorExtended extends RxCollectionCreator {
 /**
  * Instance of RxDatabaseCreator
  */
-export const RXDB_CONFIG = new InjectionToken<RxDatabaseCreator>(
-  'Instance of RxDatabaseCreator'
-);
+export const RXDB_CONFIG = new InjectionToken<RxDatabaseCreator>('RxDatabaseCreator');
 /**
  * Instance of RxCollectionCreator
  */
-export const RXDB_CONFIG_COLLECTION = new InjectionToken<RxCollectionCreator>(
-  'Instance of RxCollectionCreator'
-);
+/* prettier-ignore */
+export const RXDB_CONFIG_COLLECTION = new InjectionToken<RxCollectionCreator>('RxCollectionCreator');
 
 /**
  * Custom options object for {@link RxDatabaseCreator}

@@ -162,7 +162,7 @@ const afterCreateRxCollection = async ({
   collection: RxCollection;
   creator: RxCollectionCreator;
 }) => {
-  const internals = await col.database.internalStore.internals;
+  const internals = await col.storageInstance.internals;
   log('hook:createRxCollection:after', creator, internals);
   const initialDocs = creator.options?.initialDocs || [];
   let count = 0;
@@ -171,7 +171,7 @@ const afterCreateRxCollection = async ({
     .count()
     .exec()
     .catch(e => {
-      console.error(e);
+      log('count error, return 0', e);
       return 0;
     });
   if (!initialDocs.length || count || imported) {
