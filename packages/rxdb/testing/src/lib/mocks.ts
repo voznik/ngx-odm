@@ -2,10 +2,14 @@
 
 import { resolve } from 'path';
 import { Injectable } from '@angular/core';
-import type { NgxRxdbConfig } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import { ensureDirSync } from 'fs-extra';
-import { RxCollection, RxCollectionCreator, RxJsonSchema } from 'rxdb/plugins/core';
+import {
+  RxCollection,
+  RxCollectionCreator,
+  RxDatabaseCreator,
+  RxJsonSchema,
+} from 'rxdb/plugins/core';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 import { of } from 'rxjs';
 
@@ -49,13 +53,13 @@ export const TEST_FEATURE_CONFIG_1: RxCollectionCreator & { name: string } = {
   schema: TEST_SCHEMA,
 };
 
-export const TEST_DB_CONFIG_1: NgxRxdbConfig = {
+export const TEST_DB_CONFIG_1: RxDatabaseCreator = {
   name: dbPath, // 'test',
   storage: getRxStorageMemory(),
   multiInstance: false,
   ignoreDuplicate: true,
 };
-export const TEST_DB_CONFIG_2: NgxRxdbConfig = {
+export const TEST_DB_CONFIG_2: RxDatabaseCreator = {
   name: dbPath, // 'test',
   storage: getRxStorageMemory(),
   multiInstance: false,
@@ -103,5 +107,4 @@ export class MockNgxRxdbService extends NgxRxdbService {
     upsert: jest.fn().mockImplementation(obj => Promise.resolve(obj)),
   } as unknown as RxCollection);
   override initCollections = this.initCollection;
-  override getCollection = jest.fn().mockReturnValue({});
 }

@@ -1,10 +1,10 @@
 <!-- https://angular.io/guide/template-typecheck#disabling-type-checking-using-any -->
 <section
   class="todoapp"
-  *ngxLet="{
-    todos: todos$ | asyncNoZone,
-    count: count$ | async,
-    filter: filter$ | async
+  *ngrxLet="{
+    todos: todos$,
+    count: count$,
+    filter: filter$
   } as $"
 >
   <header class="header">
@@ -61,13 +61,11 @@
   <footer
     class="footer"
     [hidden]="$.count === 0"
-    *ngxLet="{
-      remainig: ($.todos | byStatus: 'ACTIVE')?.length
-    } as $$"
+    *ngrxLet="($.todos | byStatus: 'ACTIVE')?.length; let remainig"
   >
-    <ng-container *ngIf="showRemainig($$.remainig)">
-      <span class="todo-count" [ngPlural]="$$.remainig">
-        <ng-template ngPluralCase="other">{{ $$.remainig }} items left</ng-template>
+    <ng-container *ngIf="showRemainig(remainig)">
+      <span class="todo-count" [ngPlural]="remainig">
+        <ng-template ngPluralCase="other">{{ remainig }} items left</ng-template>
         <ng-template ngPluralCase="=1">one item left</ng-template>
         <ng-template ngPluralCase="=0">no items left</ng-template>
       </span>
@@ -103,11 +101,11 @@
     </ul>
     <button
       class="clear-completed"
-      [disabled]="$.todos?.length - $$.remainig < $.todos?.length"
+      [disabled]="$.todos?.length - remainig < $.todos?.length"
       (click)="removeCompletedTodos()"
       style="z-index: 3"
     >
-      Clear completed ({{ $.todos?.length - $$.remainig }})
+      Clear completed ({{ $.todos?.length - remainig }})
     </button>
   </footer>
 </section>

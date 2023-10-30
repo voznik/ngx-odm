@@ -11,9 +11,9 @@ import { Todo, TodosFilter } from '../models';
 
 @Injectable()
 export class TodosService {
-  filter$ = this.collectionService
+  filter$: Observable<TodosFilter> = this.collectionService
     .getLocal('local', 'filterValue')
-    .pipe(startWith('ALL'), distinctUntilChanged());
+    .pipe(startWith('ALL'), distinctUntilChanged()) as Observable<TodosFilter>;
 
   count$ = this.collectionService.count();
 

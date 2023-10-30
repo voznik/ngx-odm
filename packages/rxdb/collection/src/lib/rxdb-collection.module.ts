@@ -1,6 +1,5 @@
 import { Inject, NgModule } from '@angular/core';
 import { from } from 'rxjs';
-import { NgxRxdbAsyncNoZonePipe, NgxRxdbLetDirective } from './rxdb-collection.pipe';
 import { NgxRxdbCollectionService, NgxRxdbCollection } from './rxdb-collection.service';
 
 /**
@@ -11,8 +10,8 @@ import { NgxRxdbCollectionService, NgxRxdbCollection } from './rxdb-collection.s
  * this module actually creates a collection with collectionService and provided config
  */
 @NgModule({
-  declarations: [NgxRxdbAsyncNoZonePipe, NgxRxdbLetDirective],
-  exports: [NgxRxdbAsyncNoZonePipe, NgxRxdbLetDirective],
+  declarations: [],
+  exports: [],
 })
 export class NgxRxdbFeatureModule {
   constructor(

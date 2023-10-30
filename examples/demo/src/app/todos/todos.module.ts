@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Inject, NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { LetDirective } from '@ngrx/component';
 import { NgxRxdbModule } from '@ngx-odm/rxdb';
 import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
 import { getFetchWithAuthorizationBasic } from '@ngx-odm/rxdb/core';
@@ -16,6 +17,7 @@ import { TodosRoutingModule } from './todos-routing.module';
   imports: [
     CommonModule,
     FormsModule,
+    LetDirective,
     TodosRoutingModule,
     NgxRxdbModule.forFeature({
       name: 'todo',
