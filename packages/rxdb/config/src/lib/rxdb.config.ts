@@ -4,9 +4,8 @@ import type { RxCollectionCreator, RxDatabaseCreator } from 'rxdb/plugins/core';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 import { Merge, SetOptional, SetRequired } from 'type-fest';
-// import type { RxReplicationState } from 'rxdb/plugins/replication';
 
-export interface NgxRxdbCollectionConfigOptions {
+export interface RxCollectionCreatorOptions {
   syncOptions?: {}; // SyncOptionsCouchDB<any> & { queryObj?: MangoQuery<any> };
   schemaUrl?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -14,9 +13,9 @@ export interface NgxRxdbCollectionConfigOptions {
   recreate?: boolean;
 }
 
-export interface NgxRxdbCollectionConfig extends RxCollectionCreator {
+export interface RxCollectionCreatorExtended extends RxCollectionCreator {
   name: string;
-  options?: NgxRxdbCollectionConfigOptions;
+  options?: RxCollectionCreatorOptions;
 }
 
 /**
@@ -36,7 +35,7 @@ export const RXDB_CONFIG_COLLECTION = new InjectionToken<RxCollectionCreator>(
  * Custom options object for {@link RxDatabaseCreator}
  */
 interface NgxRxdbConfigOptions {
-  schemas?: Record<string, NgxRxdbCollectionConfig>;
+  schemas?: Record<string, RxCollectionCreatorExtended>;
   storageType: 'dexie' | 'memory';
   storageOptions?: {};
   dumpPath?: string;

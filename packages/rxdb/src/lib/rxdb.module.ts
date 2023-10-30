@@ -14,7 +14,7 @@ import {
   collectionServiceFactory,
 } from '@ngx-odm/rxdb/collection';
 import {
-  NgxRxdbCollectionConfig,
+  RxCollectionCreatorExtended,
   RXDB_CONFIG,
   RXDB_CONFIG_COLLECTION,
 } from '@ngx-odm/rxdb/config';
@@ -94,7 +94,7 @@ export class NgxRxdbModule {
    * @param collectionConfig The configuration for the RxDB collection.
    */
   static forFeature(
-    collectionConfig: NgxRxdbCollectionConfig
+    collectionConfig: RxCollectionCreatorExtended
   ): ModuleWithProviders<NgxRxdbFeatureModule> {
     return {
       ngModule: NgxRxdbFeatureModule,
@@ -153,13 +153,6 @@ export class NgxRxdbModule {
       throw new Error(
         `${RXDB_CONFIG.toString()} is already provided. Make sure you call the 'forRoot' method of the NgxRxdbModule in the AppModule only.`
       );
-    }
-
-    // TODO: initialize the service only when this is a Root module ('forRoot' was called)
-    if (trueNgxRxdbConfig && !ngxRxdbConfig) {
-      from(appInitStatus.donePromise).subscribe(() => {
-        // doSmth
-      });
     }
   }
 }

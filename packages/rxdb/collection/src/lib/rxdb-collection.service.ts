@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { InjectionToken } from '@angular/core';
-import type { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb/config';
+import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import { debug } from '@ngx-odm/rxdb/utils';
 import type {
@@ -74,7 +74,7 @@ export const NgxRxdbCollectionService = new InjectionToken<NgxRxdbCollection<{}>
  * with the provided NgxRxdbService and NgxRxdbCollectionConfig.
  * @param config - The configuration object for the collection to be created automatically.
  */
-export function collectionServiceFactory(config: NgxRxdbCollectionConfig) {
+export function collectionServiceFactory(config: RxCollectionCreatorExtended) {
   return (dbService: NgxRxdbService): NgxRxdbCollection<{}> =>
     new NgxRxdbCollectionServiceImpl(dbService, config);
 }
@@ -100,7 +100,7 @@ export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollec
 
   constructor(
     protected readonly dbService: NgxRxdbService,
-    protected readonly config: NgxRxdbCollectionConfig
+    protected readonly config: RxCollectionCreatorExtended
   ) {
     dbService
       .initCollection(this.config)
@@ -147,9 +147,8 @@ export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollec
   docs(query?: MangoQuery<T>): Observable<T[]> {
     return this.initialized$.pipe(
       switchMap(() => this.collection.find(query).$),
-      debug('docs'),
       map(docs => docs.map(d => d.toMutableJSON())),
-      debug('docs:mapped')
+      debug('docs')
     );
   }
 

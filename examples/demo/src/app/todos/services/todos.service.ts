@@ -5,7 +5,7 @@ import { Title } from '@angular/platform-browser';
 import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
 import { MangoQuery } from 'rxdb/dist/types/types';
 import { Observable } from 'rxjs';
-import { distinctUntilChanged, startWith, switchMap, map, tap } from 'rxjs/operators';
+import { distinctUntilChanged, startWith, switchMap, tap } from 'rxjs/operators';
 import { v4 as uuid } from 'uuid';
 import { Todo, TodosFilter } from '../models';
 
@@ -30,11 +30,6 @@ export class TodosService {
     private location: Location,
     private title: Title
   ) {}
-
-  async getCount() {
-    const count = await this.collectionService.collection?.['countAllDocuments']?.();
-    return count;
-  }
 
   select(completedOnly = false): Observable<Todo[]> {
     const queryObj = this.buildQueryObject(completedOnly);
@@ -98,7 +93,7 @@ export class TodosService {
   private buildQueryObject(completedOnly: boolean): MangoQuery<Todo> {
     const queryObj: MangoQuery<Todo> = {
       selector: {},
-      sort: [{ createdAt: 'desc' } as any],
+      sort: [{ createdAt: 'desc' }],
     };
     if (completedOnly) {
       Object.assign(queryObj.selector, {

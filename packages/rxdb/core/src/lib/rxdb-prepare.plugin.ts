@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
-import { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb/config';
-import { clone, logFn } from '@ngx-odm/rxdb/utils';
+import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
+import { logFn } from '@ngx-odm/rxdb/utils';
 import type {
   CollectionsOfDatabase,
   RxCollection,
@@ -12,7 +12,6 @@ import type {
   RxJsonSchema,
   RxPlugin,
 } from 'rxdb';
-import { checkSchema } from 'rxdb/plugins/dev-mode';
 
 const log = logFn('RxDBFetchSchemaPlugin');
 
@@ -26,6 +25,26 @@ export const getDefaultFetch = () => {
     return fetch;
   }
 };
+
+/**
+ * Returns a fetch handler that contains the username and password
+ * in the Authorization header
+ * @param username
+ * @param password
+ */
+export function getFetchWithAuthorizationBasic(username: string, password: string) {
+  const fetch = getDefaultFetch();
+  const ret = (url: string, options: Record<string, any>) => {
+    options = Object.assign({}, options) as any;
+    if (!options.headers) {
+      options.headers = {};
+    }
+    const encoded = btoa(username.trim() + ':' + password.trim());
+    options.headers['Authorization'] = 'Basic ' + encoded;
+    return fetch(url, options);
+  };
+  return ret;
+}
 
 export const fetchSchema = async (
   schemaUrl: string
@@ -56,7 +75,7 @@ export const fetchSchema = async (
  * @returns A promise that resolves to a record of collection creators.
  */
 export const prepareCollections = async (
-  colConfigs: Record<string, NgxRxdbCollectionConfig>
+  colConfigs: Record<string, RxCollectionCreatorExtended>
 ): Promise<Record<string, RxCollectionCreator>> => {
   try {
     const colCreators: Record<string, RxCollectionCreator> = {};
@@ -66,7 +85,7 @@ export const prepareCollections = async (
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         config.schema = (await fetchSchema(config.options.schemaUrl))!;
       }
-      colCreators[config.name] = clone(config) as RxCollectionCreator;
+      colCreators[config.name] = structuredClone(config) as RxCollectionCreator;
     }
     return colCreators;
   } catch (error) {
@@ -92,7 +111,6 @@ const prepareDbDump = async (
   } else {
     throw new Error(`Failed to fetch db dump from "${dumpPath}", status: ${result.status}`);
   }
-  // const dumpWithHashes = new NgxRxdbDump(dumpObj);
   if (!collections || !Object.keys(collections).length) {
     throw new Error('collections must be initialized before importing');
   }
@@ -119,7 +137,6 @@ const afterCreateRxDatabase = async ({
   creator: RxDatabaseCreator<any, any>;
 }) => {
   log('hook:createRxDatabase:after', db, creator);
-  // || db._imported !== dump.timestamp // import only new dump
   if (!creator.options?.dumpPath || db._imported) {
     return;
   }
@@ -149,6 +166,7 @@ const afterCreateRxCollection = async ({
   log('hook:createRxCollection:after', creator, internals);
   const initialDocs = creator.options?.initialDocs || [];
   let count = 0;
+  const imported = (col.database as any)._imported;
   count = await col
     .count()
     .exec()
@@ -156,7 +174,7 @@ const afterCreateRxCollection = async ({
       console.error(e);
       return 0;
     });
-  if (!initialDocs.length || count) {
+  if (!initialDocs.length || count || imported) {
     return;
   }
   const dump: RxDumpCollectionAny<any> = {
@@ -166,6 +184,7 @@ const afterCreateRxCollection = async ({
   };
   try {
     await col.importJSON(dump);
+    (col.database as any)._imported = Date.now();
     log(`imported ${initialDocs.length} docs for collection "${col.name}"`);
   } catch (error) {
     log('imported dump error', error);
@@ -178,7 +197,17 @@ export const RxDBPreparePlugin: RxPlugin = {
   prototypes: {
     RxDatabase: (proto: RxDatabase) => {
       (proto as any).fetchSchema = fetchSchema;
-      (proto as any)._imported = undefined;
+      // create proxy to get & set value from localstorage
+      Object.defineProperty(proto, '_imported', {
+        enumerable: false,
+        get(): number | null {
+          const imported = localStorage.getItem('_imported');
+          return imported ? parseInt(imported) : null;
+        },
+        set(value) {
+          localStorage.setItem('_imported', value);
+        },
+      });
     },
   },
   hooks: {

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb/config';
+import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { logFn } from '@ngx-odm/rxdb/utils';
 import {
   CollectionsOfDatabase,
@@ -69,7 +69,7 @@ export class NgxRxdbService {
    * @param colConfigs
    */
   async initCollections(
-    colConfigs: Record<string, NgxRxdbCollectionConfig>
+    colConfigs: Record<string, RxCollectionCreatorExtended>
   ): Promise<CollectionsOfDatabase> {
     try {
       const colCreators = await prepareCollections(colConfigs);
@@ -79,7 +79,7 @@ export class NgxRxdbService {
     }
   }
 
-  async initCollection(colConfig: NgxRxdbCollectionConfig): Promise<RxCollection> {
+  async initCollection(colConfig: RxCollectionCreatorExtended): Promise<RxCollection> {
     const { name, options } = colConfig;
     let col = this.collections[name];
     if (isRxCollection(col)) {

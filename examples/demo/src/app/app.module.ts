@@ -31,7 +31,7 @@ const routes: Routes = [
         multiInstance: true,
         ignoreDuplicate: false,
         options: {
-          storageType: 'dexie' as const,
+          storageType: 'dexie',
           dumpPath: 'assets/data/db.dump.json',
           replication: {
             // TODO

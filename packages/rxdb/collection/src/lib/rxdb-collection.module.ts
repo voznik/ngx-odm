@@ -18,7 +18,7 @@ export class NgxRxdbFeatureModule {
   constructor(
     @Inject(NgxRxdbCollectionService) private collectionService: NgxRxdbCollection<any>
   ) {
-    from(collectionService.info()).subscribe!(info => {
+    from(collectionService.info()).subscribe(info => {
       console.debug('collectionService:info', info);
     });
   }

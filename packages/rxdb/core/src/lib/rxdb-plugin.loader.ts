@@ -6,9 +6,8 @@ import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
 import { RxDBLocalDocumentsPlugin } from 'rxdb/plugins/local-documents';
 import { RxDBMigrationPlugin } from 'rxdb/plugins/migration';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
+// import { replicateRxCollection, RxReplicationState } from 'rxdb/plugins/replication';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
-// import { wrappedValidateIsMyJsonValidStorage } from 'rxdb/plugins/validate-is-my-json-valid'; // TODO
-// import { RxDBReplicationPlugin } from 'rxdb/plugins/replication';
 import { RxDBPreparePlugin } from './rxdb-prepare.plugin';
 
 const log = logFn('PluginLoader');
