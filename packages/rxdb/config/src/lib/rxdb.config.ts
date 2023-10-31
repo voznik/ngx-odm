@@ -75,4 +75,5 @@ export function getRxDatabaseCreator(config: NgxRxdbConfig): RxDatabaseCreator {
   };
   return dbConfig;
 }
+
 export const DEFAULT_BACKOFF_FN = (delay: number) => (delay === 0 ? 2000 : delay * 3);

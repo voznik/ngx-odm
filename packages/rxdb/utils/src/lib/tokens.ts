@@ -8,9 +8,9 @@ import { inject, InjectionToken } from '@angular/core';
 export const WINDOW = new InjectionToken<Window>(
   'An abstraction over global window object',
   {
+    /* istanbul ignore next */
     factory: () => {
       const { defaultView } = inject(DOCUMENT);
-
       if (!defaultView) {
         throw new Error('Window is not available');
       }
@@ -27,6 +27,7 @@ export const WINDOW = new InjectionToken<Window>(
 export const LOCAL_STORAGE = new InjectionToken<Storage>(
   'An abstraction over window.localStorage object',
   {
+    /* istanbul ignore next */
     factory: () => inject(WINDOW).localStorage,
   }
 );

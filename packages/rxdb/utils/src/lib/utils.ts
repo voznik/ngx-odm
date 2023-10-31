@@ -201,14 +201,19 @@ export function noop(): void {
   return void 0;
 }
 
-/** @internal */
-export function isTestMode(): boolean {
-  try {
-    return coerceBooleanProperty(process?.env?.TEST);
-  } catch (error) {
-    return coerceBooleanProperty((window as any).process?.env?.TEST);
-  }
+/** https://github.com/angular/components/blob/main/src/cdk/platform/features/test-environment.ts */
+/* eslint-disable */
+export function isTestEnvironment(): boolean {
+  return (
+    // @ts-ignore
+    (typeof __karma__ !== 'undefined' && !!__karma__) ||
+    (typeof jasmine !== 'undefined' && !!jasmine) ||
+    (typeof jest !== 'undefined' && !!jest) ||
+    // @ts-ignore
+    (typeof Mocha !== 'undefined' && !!Mocha)
+  );
 }
+/* eslint-enable */
 
 export function logFn(title?: string, bgColor = '#8d2089') {
   if (isDevMode() && localStorage['debug']?.includes('ngx-rxdb')) {

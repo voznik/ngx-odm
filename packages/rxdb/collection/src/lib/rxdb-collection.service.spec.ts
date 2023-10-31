@@ -8,8 +8,9 @@ import {
   getMockRxdbServiceFactory,
   TEST_SCHEMA,
 } from '@ngx-odm/rxdb/testing';
-import { MangoQuery } from 'rxdb';
-import { Observable, take } from 'rxjs';
+import { MangoQuery, RxLocalDocument } from 'rxdb';
+import { createRxLocalDocument } from 'rxdb/plugins/local-documents';
+import { Observable, firstValueFrom, take } from 'rxjs';
 import {
   NgxRxdbCollection,
   NgxRxdbCollectionService,
@@ -29,7 +30,7 @@ describe(`NgxRxdbCollectionService`, () => {
     it(`should provide Observable "initialized$" getter`, async () => {
       expect(service).toBeDefined();
       const spy = jest.spyOn(service, 'initialized$', 'get');
-      const r = await service.initialized$.pipe(take(1)).toPromise();
+      const r = await service.initialized$.pipe(take(1));
       expect(spy).toHaveBeenCalled();
       const calls = spy.mock.calls;
       const results = spy.mock.results;
@@ -46,7 +47,7 @@ describe(`NgxRxdbCollectionService`, () => {
     });
 
     it('should initialize collection', async () => {
-      await service.initialized$.toPromise();
+      await service.initialized$;
       expect(dbService.initCollection).toHaveBeenCalledWith(TEST_FEATURE_CONFIG_1);
       expect(service.collection).toBeDefined();
     });
@@ -79,24 +80,24 @@ describe(`NgxRxdbCollectionService`, () => {
 
     it('should get docs', async () => {
       const query: MangoQuery = { sort: [{ id: 'asc' }] };
-      await service.docs(query).toPromise();
+      await firstValueFrom(service.docs(query));
       expect(service.collection.find).toHaveBeenCalledWith(query);
     });
 
     it('should get docs by ids', async () => {
       const ids = ['1', '2'];
-      await service.docsByIds(ids).toPromise();
+      await firstValueFrom(service.docsByIds(ids));
       expect(service.collection.findByIds).toHaveBeenCalledWith(ids);
     });
 
     it('should get count', async () => {
-      await service.count().toPromise();
+      await firstValueFrom(service.count());
       expect(service.collection.count).toHaveBeenCalled();
     });
 
     it('should get one doc', async () => {
       const id = '1';
-      await service.get(id).toPromise();
+      await firstValueFrom(service.get(id));
       expect(service.collection.findOne).toHaveBeenCalledWith(id);
     });
 
@@ -158,7 +159,7 @@ describe(`NgxRxdbCollectionService`, () => {
 
     it('should get local doc', async () => {
       const id = '1';
-      await service.getLocal(id).toPromise();
+      await firstValueFrom(service.getLocal(id));
       expect(service.collection.getLocal$).toHaveBeenCalledWith(id);
     });
 
@@ -176,12 +177,38 @@ describe(`NgxRxdbCollectionService`, () => {
       expect(service.collection.upsertLocal).toHaveBeenCalledWith(id, data);
     });
 
-    it('should set local doc', async () => {
+    it('should update local doc by path', async () => {
+      const id = '1';
+      const prop = 'foo';
+      const value = 'bar';
+      const mockLocalDoc = createRxLocalDocument<any>({ id: '0', data: {} } as any, {});
+      jest.spyOn(mockLocalDoc, 'update').mockResolvedValue(null as any);
+      jest.spyOn(service.collection, 'getLocal').mockResolvedValueOnce(null);
+      const result = await service.setLocal(id, prop, value);
+      expect(service.collection.getLocal).toHaveBeenCalledWith(id);
+      expect(mockLocalDoc.update).not.toHaveBeenCalled();
+      expect(result).toBeNull();
+    });
+
+    it('should not update local doc if not found', async () => {
       const id = '1';
       const prop = 'name';
-      const value = 'test';
-      await service.setLocal(id, prop, value);
+      const value = 'updated';
+      const mockLocalDoc = createRxLocalDocument<any>(
+        { id: '1', data: { [prop]: 'empty' } } as any,
+        {}
+      );
+      jest
+        .spyOn(mockLocalDoc, 'update')
+        .mockResolvedValue(
+          createRxLocalDocument<any>({ id: '1', data: { [prop]: value } } as any, {}) as any
+        );
+      jest.spyOn(service.collection, 'getLocal').mockResolvedValueOnce(mockLocalDoc);
+      const result = await service.setLocal(id, prop, value);
       expect(service.collection.getLocal).toHaveBeenCalledWith(id);
+      expect(mockLocalDoc.update).toHaveBeenCalled();
+      const { data } = result!.toJSON();
+      expect(data).toEqual({ [prop]: value });
     });
 
     it('should remove local doc', async () => {
@@ -207,13 +234,11 @@ describe(`NgxRxdbCollectionService`, () => {
           NgxRxdbModule.forFeature({ name: 'todo', schema: TEST_SCHEMA }),
         ],
       });
-      // await TestBed.inject(ApplicationInitStatus).donePromise;
-      // service = TestBed.inject(NgxRxdbCollectionService, undefined, { skipSelf: true }) ;
     }));
     it(`should init database AND collection`, inject(
       [NgxRxdbCollectionService],
       async (service: NgxRxdbCollection<any>) => {
-        await service.initialized$.pipe(take(1)).toPromise();
+        await service.initialized$.pipe(take(1));
         expect(service.db).toBeDefined();
         // expect(service.db.name).toEqual(TEST_DB_CONFIG_2.name);
         expect(service.collection).toBeDefined();

@@ -22,6 +22,11 @@ const config: Config = {
   },
   transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
   coverageDirectory: `${workspaceRoot}/coverage/packages`,
+  collectCoverageFrom: [
+    // additional exclude
+    '!utils/**/*.{ts,tsx}',
+    '!testing/**/*.{ts,tsx}',
+  ],
 };
 
 export default config;

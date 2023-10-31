@@ -1,5 +1,5 @@
 import { isDevMode } from '@angular/core';
-import { logFn } from '@ngx-odm/rxdb/utils';
+import { isTestEnvironment, logFn } from '@ngx-odm/rxdb/utils';
 import { addRxPlugin } from 'rxdb';
 import { RxDBJsonDumpPlugin } from 'rxdb/plugins/json-dump';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
@@ -29,7 +29,7 @@ export async function loadRxDBPlugins(): Promise<void> {
     addRxPlugin(RxDBPreparePlugin);
 
     /** * to reduce the build-size, we use some plugins in dev-mode only */
-    if (isDevMode()) {
+    if (isDevMode() && !isTestEnvironment()) {
       log('load dev plugins');
       // https://rxdb.info/dev-mode.html
       const { RxDBDevModePlugin } = await import('rxdb/plugins/dev-mode');

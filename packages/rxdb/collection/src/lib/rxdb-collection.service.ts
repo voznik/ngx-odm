@@ -57,7 +57,7 @@ export type NgxRxdbCollection<T extends {}> = {
   ): Observable<K extends never ? RxLocalDocument<{}> : unknown>;
   insertLocal(id: string, data: unknown): Promise<RxLocalDocument<{}>>;
   upsertLocal(id: string, data: unknown): Promise<RxLocalDocument<{}>>;
-  setLocal(id: string, prop: string, value: unknown): Promise<boolean>;
+  setLocal(id: string, prop: string, value: unknown): Promise<RxLocalDocument<{}> | null>;
   removeLocal(id: string): Promise<boolean>;
 };
 
@@ -147,7 +147,7 @@ export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollec
   docs(query?: MangoQuery<T>): Observable<T[]> {
     return this.initialized$.pipe(
       switchMap(() => this.collection.find(query).$),
-      map(docs => docs.map(d => d.toMutableJSON())),
+      map((docs = []) => docs.map(d => d.toMutableJSON())),
       debug('docs')
     );
   }
@@ -245,14 +245,18 @@ export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollec
     return this.collection.upsertLocal(id, data);
   }
 
-  async setLocal(id: string, prop: string, value: unknown): Promise<boolean> {
+  async setLocal(
+    id: string,
+    prop: string,
+    value: any
+  ): Promise<RxLocalDocument<{}> | null> {
     await this.ensureCollection();
-    const localDoc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
+    const localDoc: RxLocalDocument<any> | null = await this.collection.getLocal(id);
     if (!localDoc || localDoc[prop] === value) {
-      return false;
+      return null;
     }
-    localDoc.set(prop, value);
-    return await localDoc.save();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return localDoc.update({ [prop]: value }) as Promise<any>;
   }
 
   async removeLocal(id: string): Promise<any> {
