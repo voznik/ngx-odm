@@ -14,6 +14,6 @@ import { NgxRxdbCollection, NgxRxdbCollectionService } from './rxdb-collection.s
 })
 export class NgxRxdbFeatureModule {
   constructor(
-    @Inject(NgxRxdbCollectionService) private collectionService: NgxRxdbCollection<any>
+    @Inject(NgxRxdbCollectionService) private collectionService: NgxRxdbCollection
   ) {}
 }

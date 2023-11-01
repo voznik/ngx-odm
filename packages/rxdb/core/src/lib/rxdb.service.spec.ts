@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { ApplicationInitStatus } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NgxRxdbModule } from '@ngx-odm/rxdb';
-import { TEST_DB_CONFIG_1, TEST_DB_CONFIG_2, TEST_SCHEMA } from '@ngx-odm/rxdb/testing';
+import { TEST_DB_CONFIG_1, TEST_SCHEMA } from '@ngx-odm/rxdb/testing';
 import { NgxRxdbService } from './rxdb.service';
 
 describe('NgxRxdbService', () => {

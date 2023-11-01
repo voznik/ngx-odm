@@ -3,7 +3,9 @@
   "compilerOptions": {
     "outDir": "../dist/out-tsc",
     "lib": ["dom", "es2020"],
-    "types": ["node"]
+    "types": ["node"],
+    "declaration": true,
+    "declarationMap": true
   },
   "exclude": [
     "**/*.spec.ts",

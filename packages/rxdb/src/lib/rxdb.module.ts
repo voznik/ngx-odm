@@ -20,7 +20,6 @@ import {
 } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import type { RxDatabaseCreator } from 'rxdb';
-import { from } from 'rxjs';
 
 /**
  * run at APP_INITIALIZER cycle
@@ -153,6 +152,12 @@ export class NgxRxdbModule {
       throw new Error(
         `${RXDB_CONFIG.toString()} is already provided. Make sure you call the 'forRoot' method of the NgxRxdbModule in the AppModule only.`
       );
+    }
+
+    if (trueNgxRxdbConfig && !ngxRxdbConfig) {
+      appInitStatus.donePromise.then(() => {
+        console.log(ngxRxdbService.db.startupErrors);
+      });
     }
   }
 }

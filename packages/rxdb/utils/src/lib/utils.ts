@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any */
 import { isDevMode } from '@angular/core';
 import { Observable, OperatorFunction, tap } from 'rxjs';
 
@@ -248,6 +248,7 @@ export function debug<T>(tag = 'Event'): OperatorFunction<T, T> {
         next(value: T) {
           log(value);
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         error(e: any) {
           error(e.message);
         },

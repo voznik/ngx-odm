@@ -8,7 +8,7 @@ import {
   getMockRxdbServiceFactory,
   TEST_SCHEMA,
 } from '@ngx-odm/rxdb/testing';
-import { MangoQuery, RxLocalDocument } from 'rxdb';
+import { MangoQuery } from 'rxdb';
 import { createRxLocalDocument } from 'rxdb/plugins/local-documents';
 import { Observable, firstValueFrom, take } from 'rxjs';
 import {
@@ -20,7 +20,7 @@ import {
 describe(`NgxRxdbCollectionService`, () => {
   describe(`test methods using mock NgxRxdbService`, () => {
     let dbService: NgxRxdbService;
-    let service: NgxRxdbCollection<any>;
+    let service: NgxRxdbCollection;
 
     beforeEach(() => {
       dbService = getMockRxdbServiceFactory();
@@ -30,7 +30,7 @@ describe(`NgxRxdbCollectionService`, () => {
     it(`should provide Observable "initialized$" getter`, async () => {
       expect(service).toBeDefined();
       const spy = jest.spyOn(service, 'initialized$', 'get');
-      const r = await service.initialized$.pipe(take(1));
+      await firstValueFrom(service.initialized$);
       expect(spy).toHaveBeenCalled();
       const calls = spy.mock.calls;
       const results = spy.mock.results;
@@ -47,7 +47,7 @@ describe(`NgxRxdbCollectionService`, () => {
     });
 
     it('should initialize collection', async () => {
-      await service.initialized$;
+      await firstValueFrom(service.initialized$);
       expect(dbService.initCollection).toHaveBeenCalledWith(TEST_FEATURE_CONFIG_1);
       expect(service.collection).toBeDefined();
     });
@@ -219,8 +219,6 @@ describe(`NgxRxdbCollectionService`, () => {
   });
 
   describe(`test dn init by feature module config`, () => {
-    // let service: NgxRxdbCollection<any>;
-
     beforeEach(waitForAsync(() => {
       TestBed.configureTestingModule({
         providers: [
@@ -235,9 +233,10 @@ describe(`NgxRxdbCollectionService`, () => {
         ],
       });
     }));
+
     it(`should init database AND collection`, inject(
       [NgxRxdbCollectionService],
-      async (service: NgxRxdbCollection<any>) => {
+      async (service: NgxRxdbCollection) => {
         await service.initialized$.pipe(take(1));
         expect(service.db).toBeDefined();
         // expect(service.db.name).toEqual(TEST_DB_CONFIG_2.name);

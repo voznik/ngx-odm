@@ -126,7 +126,7 @@ const prepareDbDump = async (
 };
 
 /**
- * imports pouchdb dump from remote file to the database if provided
+ * imports db dump from remote file to the database if provided
  * must be used only after db init
  */
 const afterCreateRxDatabase = async ({

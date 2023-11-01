@@ -1,10 +1,13 @@
 {
   "extends": "./tsconfig.lib.json",
   "compilerOptions": {
+    "declarationMap": false,
     "sourceMap": false,
     "inlineSources": false,
+    "inlineSourceMap": false,
     "stripInternal": true,
-    "removeComments": true
+    "removeComments": true,
+    "listEmittedFiles": true
   },
   "angularCompilerOptions": {
     "compilationMode": "partial"
