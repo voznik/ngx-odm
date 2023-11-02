@@ -1,8 +1,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
+import { compare } from 'compare-versions';
+import type { Table as DexieTable } from 'dexie';
 import type {
   CollectionsOfDatabase,
+  InternalStoreDocType,
   RxCollection,
   RxCollectionCreator,
   RxDatabase,
@@ -11,8 +14,13 @@ import type {
   RxDumpDatabaseAny,
   RxJsonSchema,
   RxPlugin,
+  RxStorage,
   RxStorageInfoResult,
+  RxStorageInstance,
 } from 'rxdb';
+
+const RXDB_STORAGE_TOKEN_ID = 'storage-token|storageToken';
+const IMPORTED_FLAG = '_ngx_rxdb_imported';
 
 /**
  * @see https://stackoverflow.com/a/47180009/3443137
@@ -125,6 +133,48 @@ const prepareDbDump = async (
 };
 
 /**
+ * this is a hack to solve RSDB error `DM5: 'Cannot open database state with newer RxDB version. You have to migrate your database state first. See see https://rxdb.info/migration-storage.html'`
+ *
+ * Error is produced by rxdb & described at https://github.com/pubkey/rxdb/blob/master/src/plugins/dev-mode/error-messages.ts#L131
+ *
+ * Correct url to docs - https://rxdb.info/storage-migration.html
+ *
+ * the problem is that rxdb won't start because special field is missing in internal storage document data
+ * AND ... pay attention to the sentence: `NOTICE: The storage migration plugin is part of RxDB premium. It is not part of the default RxDB module.`
+ *
+ * f@@@ck... why `Opening an older RxDB database state with a new major version should throw an error`
+ * @param storage
+ * @param storageInstance
+ * @param rxdbVersion
+ */
+const migrateStorage = async (
+  storage: RxStorage<any, any>,
+  storageInstance: RxStorageInstance<any, any, any>,
+  rxdbVersion: string
+) => {
+  let storageData: InternalStoreDocType['data'] = {};
+  if (storage.name !== 'dexie') {
+    return;
+  }
+  const dexieTable: DexieTable = (await storageInstance.internals)?.dexieTable;
+  storageData = (await dexieTable.get(RXDB_STORAGE_TOKEN_ID))?.data;
+  if (!storageData?.rxdbVersion || compare(rxdbVersion, storageData.rxdbVersion, '>')) {
+    try {
+      await dexieTable.update(RXDB_STORAGE_TOKEN_ID, {
+        data: {
+          ...storageData,
+          rxdbVersion,
+        },
+      });
+      NgxRxdbUtils.logger.log('prepare-plugin: migrated internal storage to', rxdbVersion);
+    } catch (error) {
+      throw new Error('prepare-plugin: unable to migrate internal storage');
+    }
+  }
+  return;
+};
+
+/**
  * imports db dump from remote file to the database if provided
  * must be used only after db init
  */
@@ -136,9 +186,14 @@ const afterCreateRxDatabase = async ({
   creator: RxDatabaseCreator<any, any>;
 }) => {
   NgxRxdbUtils.logger.log('prepare-plugin: hook:createRxDatabase:after');
+
+  const { storage, internalStore: storageInstance, rxdbVersion } = db;
+  await migrateStorage(storage, storageInstance, rxdbVersion); // TODO: remove or improve this hack
+
   if (!creator.options?.dumpPath || db._imported) {
     return;
   }
+
   try {
     const dump = await prepareDbDump(creator.options.dumpPath, db.collections);
     await db.importJSON(dump);
@@ -167,8 +222,18 @@ const afterCreateRxCollection = async ({
   const { totalCount: count } = await col.storageInstance.info().catch(e => {
     return { totalCount: 0 } as RxStorageInfoResult;
   });
-  if (!initialDocs.length || count || imported) {
+  if (!initialDocs.length) {
     return;
+  }
+  if (count || imported) {
+    if (!creator.options?.recreate) {
+      return;
+    } else {
+      NgxRxdbUtils.logger.log(
+        `prepare-plugin: collection "${col.name}" already has ${count} docs (including _deleted), but recreate option is set`
+      );
+      // await col.remove();
+    }
   }
   const schemaHash = await col.schema.hash;
   const dump: RxDumpCollectionAny<any> = {
@@ -197,11 +262,17 @@ export const RxDBPreparePlugin: RxPlugin = {
       Object.defineProperty(proto, '_imported', {
         enumerable: false,
         get(): number | null {
-          const imported = localStorage.getItem('_imported');
+          if (this.storage.name !== 'dexie') {
+            return null;
+          }
+          const imported = localStorage.getItem(IMPORTED_FLAG);
           return imported ? parseInt(imported) : null;
         },
         set(value) {
-          localStorage.setItem('_imported', value);
+          if (this.storage.name !== 'dexie') {
+            return;
+          }
+          localStorage.setItem(IMPORTED_FLAG, value);
         },
       });
     },

@@ -50,7 +50,9 @@ export class NgxRxdbService {
       this.dbInstance = await createRxDatabase(config).catch(e => {
         throw new Error(e.message ?? e);
       });
-      NgxRxdbUtils.logger.log(`created database ${this.db.name}`);
+      NgxRxdbUtils.logger.log(
+        `created database "${this.db.name}" with config "${JSON.stringify(config)}"`
+      );
 
       // optional: can create collections from root config
       if (config?.options?.schemas) {

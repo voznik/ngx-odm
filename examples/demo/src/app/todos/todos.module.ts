@@ -27,7 +27,8 @@ import { TodosRoutingModule } from './todos-routing.module';
       schema: undefined, // to load schema from remote url pass `undefined` here
       options: {
         schemaUrl: 'assets/data/todo.schema.json', // load schema from remote url
-        initialDocs: TODOS_INITIAL_STATE.items, // populate collection with initial data
+        initialDocs: TODOS_INITIAL_STATE.items, // populate collection with initial data,
+        recreate: undefined,
       },
     }),
   ],
@@ -45,6 +46,9 @@ export class TodosModule {
     await lastValueFrom(this.collectionService.initialized$);
     const info = await this.collectionService.info();
     NgxRxdbUtils.logger.log('collection info:', { info });
+    if (this.collectionService.db.storage.name !== 'dexie') {
+      return;
+    }
     const replicationState = replicateCouchDB({
       replicationIdentifier: 'demo-couchdb-replication',
       retryTime: 15000,

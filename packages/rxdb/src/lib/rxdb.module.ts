@@ -163,7 +163,7 @@ export class NgxRxdbModule {
           NgxRxdbUtils.logger.log(ngxRxdbService.db.startupErrors);
         }
         NgxRxdbUtils.logger.log(
-          `database "${ngxRxdbService.db.name}" ready, rxdb version is "${ngxRxdbService.db['rxdbVersion']}"`
+          `database "${ngxRxdbService.db.name}" ready, rxdb version is "${ngxRxdbService.db['rxdbVersion']}", storage is "${ngxRxdbService.db.storage.name}"`
         );
       });
     }

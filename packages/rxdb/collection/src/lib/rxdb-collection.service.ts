@@ -332,6 +332,7 @@ export class NgxRxdbCollection<T = {}> {
           Opening an older RxDB database state with a new major version should throw an error`
         );
         await dbService.db.destroy();
+        throw new Error(e);
       } else {
         this._init$.complete();
         throw new Error(e.message ?? e);

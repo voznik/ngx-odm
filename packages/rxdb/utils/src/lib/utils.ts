@@ -193,6 +193,10 @@ export namespace NgxRxdbUtils {
     return void 0;
   }
 
+  export function isDevModeForced(): boolean {
+    return localStorage['debug']?.includes(`@ngx-odm/rxdb`);
+  }
+
   /** https://github.com/angular/components/blob/main/src/cdk/platform/features/test-environment.ts */
   /* eslint-disable */
   export function isTestEnvironment(): boolean {
@@ -212,7 +216,7 @@ export namespace NgxRxdbUtils {
   export const logger = {
     log: (function () {
       const bgColor = '#8d2089';
-      if (isDevMode() || localStorage['debug']?.includes(`@ngx-odm/rxdb`)) {
+      if (isDevMode() || isDevModeForced()) {
         // eslint-disable-next-line no-console
         return console.log.bind(
           window.console,

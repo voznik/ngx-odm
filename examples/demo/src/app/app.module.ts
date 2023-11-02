@@ -31,7 +31,7 @@ const routes: Routes = [
         multiInstance: true,
         ignoreDuplicate: false,
         options: {
-          storageType: 'dexie',
+          storageType: localStorage['_ngx_rxdb_storage'] ?? 'dexie',
           dumpPath: 'assets/data/db.dump.json',
         },
       })
