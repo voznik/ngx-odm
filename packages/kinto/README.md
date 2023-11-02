@@ -1,9 +1,0 @@
-# ngx-kinto
-
-This library was generated with [Nx](https://nx.dev).
-
-## Running unit tests
-
-Run `nx test ngx-kinto` to execute the unit tests.
-
-https://github.com/serenysoft/rxdb-orion

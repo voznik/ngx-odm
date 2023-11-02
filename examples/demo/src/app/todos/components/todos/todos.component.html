@@ -1,11 +1,10 @@
 <!-- https://angular.io/guide/template-typecheck#disabling-type-checking-using-any -->
 <section
   class="todoapp"
-  *ngxLet="{
-    todos: todos$ | asyncNoZone,
-    count: count$ | async,
-    remainig: remainig$ | async,
-    filter: filter$ | async
+  *ngrxLet="{
+    todos: todos$,
+    count: count$,
+    filter: filter$
   } as $"
 >
   <header class="header">
@@ -15,7 +14,7 @@
       placeholder="What needs to be done?"
       autofocus=""
       [(ngModel)]="newTodo"
-      (keyup)="newTodoChange($event.target.value)"
+      (keyup)="newTodoChange($any($event.target).value)"
       (keyup.enter)="!isAddTodoDisabled && addTodo()"
       (keyup.escape)="newTodoClear()"
     />
@@ -30,9 +29,9 @@
       [checked]="(filter$ | async) === 'ALL'"
       (click)="filterTodos('')"
     /> -->
-    <ul class="todo-list">
+    <ul [@listAnimation]="$.todos?.length" class="todo-list">
       <li
-        *ngFor="let todo of $.todos"
+        *ngFor="let todo of $.todos | byStatus: $.filter; trackBy: trackByFn"
         [class.completed]="todo.completed"
         [class.editing]="isEditing === todo.id"
       >
@@ -59,10 +58,14 @@
       </li>
     </ul>
   </main>
-  <footer class="footer" [hidden]="$.count === 0">
-    <ng-container *ngIf="showRemainig($.remainig)">
-      <span class="todo-count" [ngPlural]="$.remainig">
-        <ng-template ngPluralCase="other">{{ $.remainig }} items left</ng-template>
+  <footer
+    class="footer"
+    [hidden]="$.count === 0"
+    *ngrxLet="($.todos | byStatus: 'ACTIVE')?.length; let remainig"
+  >
+    <ng-container *ngIf="showRemainig(remainig)">
+      <span class="todo-count" [ngPlural]="remainig">
+        <ng-template ngPluralCase="other">{{ remainig }} items left</ng-template>
         <ng-template ngPluralCase="=1">one item left</ng-template>
         <ng-template ngPluralCase="=0">no items left</ng-template>
       </span>
@@ -98,11 +101,11 @@
     </ul>
     <button
       class="clear-completed"
-      [disabled]="$.todos?.length - $.remainig < $.todos?.length"
+      [disabled]="$.todos?.length - remainig < $.todos?.length"
       (click)="removeCompletedTodos()"
       style="z-index: 3"
     >
-      Clear completed ({{ $.todos?.length - $.remainig }})
+      Clear completed ({{ $.todos?.length - remainig }})
     </button>
   </footer>
 </section>

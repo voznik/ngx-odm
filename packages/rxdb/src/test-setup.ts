@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 (globalThis as any).ngJest = {
   testEnvironmentOptions: {
     errorOnUnknownElements: true,
     errorOnUnknownProperties: true,
   },
 };
+(globalThis as any).structuredClone = (val: any) => JSON.parse(JSON.stringify(val));
 import 'setimmediate';
 import 'jest-preset-angular/setup-jest';
 

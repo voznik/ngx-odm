@@ -1,37 +1,32 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { ApplicationInitStatus } from '@angular/core';
 import { TestBed, inject, waitForAsync } from '@angular/core/testing';
 import { NgxRxdbModule } from '@ngx-odm/rxdb';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import {
   TEST_FEATURE_CONFIG_1,
   TEST_DB_CONFIG_2,
-  MockNgxRxdbService,
+  getMockRxdbServiceFactory,
+  TEST_SCHEMA,
 } from '@ngx-odm/rxdb/testing';
-import { addRxPlugin } from 'rxdb/plugins/core';
-import { Observable, take } from 'rxjs';
-import {
-  NgxRxdbCollection,
-  NgxRxdbCollectionService,
-  NgxRxdbCollectionServiceImpl,
-} from './rxdb-collection.service';
-
-addRxPlugin(require('pouchdb-adapter-memory'));
+import { MangoQuery } from 'rxdb';
+import { createRxLocalDocument } from 'rxdb/plugins/local-documents';
+import { Observable, firstValueFrom, take } from 'rxjs';
+import { NgxRxdbCollection, NgxRxdbCollectionService } from './rxdb-collection.service';
 
 describe(`NgxRxdbCollectionService`, () => {
   describe(`test methods using mock NgxRxdbService`, () => {
     let dbService: NgxRxdbService;
-    let service: NgxRxdbCollection<any>;
+    let service: NgxRxdbCollection;
 
     beforeEach(() => {
-      dbService = new MockNgxRxdbService();
-      service = new NgxRxdbCollectionServiceImpl(dbService, TEST_FEATURE_CONFIG_1);
+      dbService = getMockRxdbServiceFactory();
+      service = new NgxRxdbCollection(dbService, TEST_FEATURE_CONFIG_1);
     });
 
     it(`should provide Observable "initialized$" getter`, async () => {
       expect(service).toBeDefined();
       const spy = jest.spyOn(service, 'initialized$', 'get');
-      const r = await service.initialized$.pipe(take(1)).toPromise();
+      await firstValueFrom(service.initialized$);
       expect(spy).toHaveBeenCalled();
       const calls = spy.mock.calls;
       const results = spy.mock.results;
@@ -47,115 +42,213 @@ describe(`NgxRxdbCollectionService`, () => {
       });
     });
 
-    it(`should perform collection sync`, async () => {
-      const spy = jest.spyOn(dbService, 'syncCollection');
-      // await service.initialized$.pipe(take(1)).toPromise();
-      service.sync();
-      expect(spy).toHaveBeenCalled();
+    it('should initialize collection', async () => {
+      await firstValueFrom(service.initialized$);
+      expect(dbService.initCollection).toHaveBeenCalledWith(TEST_FEATURE_CONFIG_1);
+      expect(service.collection).toBeDefined();
     });
 
-    it(`should return collection docs `, () => {
-      service.docs({ selector: { id: '0' } }).subscribe(result => {
-        expect(result).toBeDefined();
+    it('should destroy collection', async () => {
+      await service.destroy();
+      expect(service.collection.destroy).toHaveBeenCalled();
+    });
+
+    it('should clear collection', async () => {
+      await service.clear();
+      expect(service.collection.remove).toHaveBeenCalled();
+    });
+
+    it('should get collection info', async () => {
+      const storageInfo = await service.info();
+      expect(service.collection.storageInstance!.info).toHaveBeenCalled();
+      expect(storageInfo).toMatchObject({ totalCount: expect.any(Number) });
+    });
+
+    it('should import docs into collection', async () => {
+      const docs = [{ id: '1' }, { id: '2' }];
+      await service.import(docs);
+      expect(service.collection.importJSON).toHaveBeenCalledWith({
+        name: 'test',
+        schemaHash: undefined,
+        docs,
       });
     });
 
-    it(`should return docs using 'pouch.allDocs'`, () => {
-      service.allDocs({ include_docs: true }).subscribe(results => {
-        expect(results).toBeDefined();
-        expect(results.length).toEqual(1);
-        expect(results[0]).toMatchObject({ id: '0' });
-      });
+    it('should export collection', async () => {
+      await service.export();
+      expect(service.collection.exportJSON).toHaveBeenCalled();
     });
 
-    it(`should return docs by array of ids`, () => {
-      service.docsByIds(['0']).subscribe(results => {
-        expect(results).toBeDefined();
-        expect(results.length).toEqual(1);
-        expect(results[0]).toMatchObject({ id: '0' });
-      });
+    it('should get docs', async () => {
+      const query: MangoQuery = { sort: [{ id: 'asc' }] };
+      await firstValueFrom(service.docs(query));
+      expect(service.collection.find).toHaveBeenCalledWith(query);
     });
 
-    it(`should get 1 doc by id `, () => {
-      service.get('0').subscribe(result => {
-        expect(result).toBeDefined();
-        expect(result).toMatchObject({ id: '0' });
-      });
+    it('should get docs by ids', async () => {
+      const ids = ['1', '2'];
+      await firstValueFrom(service.docsByIds(ids));
+      expect(service.collection.findByIds).toHaveBeenCalledWith(ids);
     });
 
-    it(`should insert 1 doc by id `, () => {
-      service.insert({ id: '1' })!.subscribe!(result => {
-        expect(result).toBeDefined();
-      });
+    it('should get count', async () => {
+      await firstValueFrom(service.count());
+      expect(service.collection.count).toHaveBeenCalled();
     });
 
-    it(`should upsert 1 doc by id `, () => {
-      service.upsert({ id: '1' }).subscribe!(result => {
-        expect(result).toBeDefined();
-      });
+    it('should get one doc', async () => {
+      const id = '1';
+      await firstValueFrom(service.get(id));
+      expect(service.collection.findOne).toHaveBeenCalledWith(id);
     });
 
-    it(`should insert many docs bulk `, () => {
-      service.insertBulk([{ id: '1' }, { id: '2' }]).subscribe!(result => {
-        expect(result).toBeDefined();
-      });
+    it('should insert doc', async () => {
+      const data = { id: '1' };
+      await service.insert(data);
+      expect(service.collection.insert).toHaveBeenCalledWith(data);
     });
 
-    it(`should update data of 1 doc by id `, () => {
-      service.set('0', { x: 'y' }).subscribe!(result => {
-        expect(result).toBeDefined();
-      });
+    it('should bulk insert docs', async () => {
+      const data = [{ id: '1' }, { id: '2' }];
+      await service.insertBulk(data);
+      expect(service.collection.bulkInsert).toHaveBeenCalledWith(data);
     });
 
-    it(`should update docs in collection by query `, () => {
-      service.updateBulk({ selector: { x: 'y' } }, { y: 'x' }).subscribe!(result => {
-        expect(result).toBeDefined();
-      });
+    it('should upsert doc', async () => {
+      const data = { id: '1' };
+      await service.upsert(data);
+      expect(service.collection.upsert).toHaveBeenCalledWith(data);
     });
 
-    it(`should remove 1 doc by id `, () => {
-      service.remove('0').subscribe!(result => {
-        expect(result).toBeDefined();
-      });
+    it('should set doc', async () => {
+      const id = '1';
+      const data = { name: 'test' };
+      await service.set(id, data);
+      expect(service.collection.findOne).toHaveBeenCalledWith(id);
     });
 
-    it(`should remove docs in collection by query `, () => {
-      service.removeBulk({ selector: { x: 'y' } }).subscribe!(result => {
-        expect(result).toBeDefined();
-      });
+    it('should update docs', async () => {
+      const query: MangoQuery = {
+        selector: {
+          id: {
+            $eq: '1',
+          },
+        },
+      };
+      const data = { name: 'test' };
+      await service.updateBulk(query, data);
+      expect(service.collection.find).toHaveBeenCalledWith(query);
+    });
+
+    it('should remove doc', async () => {
+      const id = '1';
+      await service.remove(id);
+      expect(service.collection.findOne).toHaveBeenCalledWith(id);
+    });
+
+    it('should remove docs by query', async () => {
+      jest.spyOn(service.collection, 'find').mockReturnValueOnce({
+        remove: jest.fn().mockResolvedValue(new Map()),
+      } as any);
+      const query: MangoQuery = {
+        selector: {
+          id: {
+            $eq: '1',
+          },
+        },
+      };
+      await service.removeBulk(query);
+      expect(service.collection.find).toHaveBeenCalledWith(query);
+    });
+
+    it('should remove docs by ids', async () => {
+      await service.removeBulk(['1', '2']);
+      expect(service.collection.bulkRemove).toHaveBeenCalledWith(['1', '2']);
+    });
+
+    it('should get local doc', async () => {
+      const id = '1';
+      await firstValueFrom(service.getLocal(id));
+      expect(service.collection.getLocal$).toHaveBeenCalledWith(id);
+    });
+
+    it('should insert local doc', async () => {
+      const id = '1';
+      const data = { name: 'test' };
+      await service.insertLocal(id, data);
+      expect(service.collection.insertLocal).toHaveBeenCalledWith(id, data);
+    });
+
+    it('should upsert local doc', async () => {
+      const id = '1';
+      const data = { name: 'test' };
+      await service.upsertLocal(id, data);
+      expect(service.collection.upsertLocal).toHaveBeenCalledWith(id, data);
+    });
+
+    it('should update local doc by path', async () => {
+      const id = '1';
+      const prop = 'foo';
+      const value = 'bar';
+      const mockLocalDoc = createRxLocalDocument<any>({ id: '0', data: {} } as any, {});
+      jest.spyOn(mockLocalDoc, 'update').mockResolvedValue(null as any);
+      jest.spyOn(service.collection, 'getLocal').mockResolvedValueOnce(null);
+      const result = await service.setLocal(id, prop, value);
+      expect(service.collection.getLocal).toHaveBeenCalledWith(id);
+      expect(mockLocalDoc.update).not.toHaveBeenCalled();
+      expect(result).toBeNull();
+    });
+
+    it('should not update local doc if not found', async () => {
+      const id = '1';
+      const prop = 'name';
+      const value = 'updated';
+      const mockLocalDoc = createRxLocalDocument<any>(
+        { id: '1', data: { [prop]: 'empty' } } as any,
+        {}
+      );
+      jest
+        .spyOn(mockLocalDoc, 'update')
+        .mockResolvedValue(
+          createRxLocalDocument<any>({ id: '1', data: { [prop]: value } } as any, {}) as any
+        );
+      jest.spyOn(service.collection, 'getLocal').mockResolvedValueOnce(mockLocalDoc);
+      const result = await service.setLocal(id, prop, value);
+      expect(service.collection.getLocal).toHaveBeenCalledWith(id);
+      expect(mockLocalDoc.update).toHaveBeenCalled();
+      const { data } = result!.toJSON();
+      expect(data).toEqual({ [prop]: value });
+    });
+
+    it('should remove local doc', async () => {
+      const id = '1';
+      await service.removeLocal(id);
+      expect(service.collection.getLocal).toHaveBeenCalledWith(id);
     });
   });
 
   describe(`test dn init by feature module config`, () => {
-    // let service: NgxRxdbCollection<any>;
-
     beforeEach(waitForAsync(() => {
       TestBed.configureTestingModule({
         providers: [
           {
             provide: NgxRxdbService,
-            useClass: MockNgxRxdbService,
+            useFactory: getMockRxdbServiceFactory,
           },
         ],
         imports: [
           NgxRxdbModule.forRoot(TEST_DB_CONFIG_2),
-          NgxRxdbModule.forFeature({ name: 'todo' }),
+          NgxRxdbModule.forFeature({ name: 'todo', schema: TEST_SCHEMA }),
         ],
       });
-      // await TestBed.inject(ApplicationInitStatus).donePromise;
-      // service = TestBed.inject(NgxRxdbCollectionService, undefined, { skipSelf: true }) ;
     }));
+
     it(`should init database AND collection`, inject(
       [NgxRxdbCollectionService],
-      async (service: NgxRxdbCollection<any>) => {
-        await service.initialized$.pipe(take(1)).toPromise();
+      async (service: NgxRxdbCollection) => {
+        await firstValueFrom(service.initialized$);
         expect(service.db).toBeDefined();
-        // expect(service.db.name).toEqual(TEST_DB_CONFIG_2.name);
         expect(service.collection).toBeDefined();
-        // const col = service.db.collections['todo'];
-        // expect(col).toBeDefined();
-        // expect(col.statics).toBeDefined();
-        // expect(col.statics.countAllDocuments).toBeInstanceOf(Function);
       }
     ));
   });

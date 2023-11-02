@@ -3,7 +3,11 @@
   "compilerOptions": {
     "declarationMap": false,
     "sourceMap": false,
-    "inlineSources": false
+    "inlineSources": false,
+    "inlineSourceMap": false,
+    "stripInternal": true,
+    "removeComments": true,
+    "listEmittedFiles": true
   },
   "angularCompilerOptions": {
     "compilationMode": "partial"

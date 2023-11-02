@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /// <reference types="jest" />
 
 /** See https://github.com/angular/angular/issues/25837 */

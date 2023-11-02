@@ -5,14 +5,11 @@ import { RXDB_CONFIG } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import {
   setupNavigationWarnStub,
-  MockNgxRxdbService,
+  getMockRxdbServiceFactory,
   TEST_DB_CONFIG_1,
   TEST_FEATURE_CONFIG_1,
 } from '@ngx-odm/rxdb/testing';
-import { addRxPlugin } from 'rxdb/plugins/core';
 import { NgxRxdbModule } from './rxdb.module';
-
-addRxPlugin(require('pouchdb-adapter-memory'));
 
 describe('NgxRxdbModule', () => {
   beforeAll(() => {
@@ -31,11 +28,11 @@ describe('NgxRxdbModule', () => {
 
     it(`should not provide 'RXDB_CONFIG' token & 'NgxRxdbService'`, () => {
       expect(() => TestBed.inject(RXDB_CONFIG)).toThrowError(
-        /InjectionToken NgxRxdbConfig is not provided. Make sure you call the 'forRoot'/
+        /InjectionToken RxDatabaseCreator is not provided. Make sure you call the 'forRoot'/
       );
       expect(() => TestBed.inject(NgxRxdbService)).toThrowError(
         // /No provider for/
-        /InjectionToken NgxRxdbConfig is not provided. Make sure you call the 'forRoot'/
+        /InjectionToken RxDatabaseCreator is not provided. Make sure you call the 'forRoot'/
       );
     });
   });
@@ -60,7 +57,7 @@ describe('NgxRxdbModule', () => {
     beforeEach(() => {
       TestBed.configureTestingModule({
         imports: [NgxRxdbModule.forRoot(TEST_DB_CONFIG_1)],
-        providers: [{ provide: NgxRxdbService, useClass: MockNgxRxdbService }],
+        providers: [{ provide: NgxRxdbService, useFactory: getMockRxdbServiceFactory }],
       });
     });
 
@@ -84,7 +81,7 @@ describe('NgxRxdbModule', () => {
           NgxRxdbModule.forRoot(TEST_DB_CONFIG_1),
           NgxRxdbModule.forFeature(TEST_FEATURE_CONFIG_1),
         ],
-        providers: [{ provide: NgxRxdbService, useClass: MockNgxRxdbService }],
+        providers: [{ provide: NgxRxdbService, useFactory: getMockRxdbServiceFactory }],
       });
       dbService = TestBed.inject(NgxRxdbService);
       dbInitSpy = jest.spyOn(dbService, 'initDb');

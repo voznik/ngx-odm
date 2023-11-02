@@ -12,7 +12,7 @@ export interface TodosState {
   filter: TodosFilter;
 }
 
-export const initialState: TodosState = {
+export const TODOS_INITIAL_STATE: TodosState = {
   items: [
     {
       id: 'ac3ef2c6-c98b-43e1-9047-71d68b1f92f4',

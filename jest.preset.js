@@ -13,12 +13,6 @@ const config = {
     ['lcov', { file: 'rxdb-coverage.lcov' }],
     ['json-summary', { file: 'rxdb-coverage-summary.json' }],
   ],
-  collectCoverageFrom: [
-    '**/*.{ts,tsx}',
-    '!**/*.{stories,worker}.ts',
-    '!**/index.ts',
-    '!**/node_modules/**',
-  ],
   bail: true,
   verbose: true,
   // resetModules: true,

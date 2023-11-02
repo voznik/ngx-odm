@@ -6,9 +6,8 @@
     "entryFile": "src/index.ts"
   },
   "allowedNonPeerDependencies": [
-    "pouchdb-adapter-http",
-    "pouchdb-adapter-idb",
-    "pouchdb-adapter-memory",
+    "dexie",
     "rxdb"
-  ]
+  ],
+  "deleteDestPath": true
 }

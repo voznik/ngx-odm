@@ -5,26 +5,23 @@ import { Title } from '@angular/platform-browser';
 import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
 import { MangoQuery } from 'rxdb/dist/types/types';
 import { Observable } from 'rxjs';
-import { distinctUntilChanged, startWith, switchMap, map, tap } from 'rxjs/operators';
+import { distinctUntilChanged, startWith, switchMap, tap } from 'rxjs/operators';
 import { v4 as uuid } from 'uuid';
 import { Todo, TodosFilter } from '../models';
 
 @Injectable()
 export class TodosService {
-  filter$ = this.collectionService
+  filter$: Observable<TodosFilter> = this.collectionService
     .getLocal('local', 'filterValue')
-    .pipe(startWith('ALL'), distinctUntilChanged());
+    .pipe(startWith('ALL'), distinctUntilChanged()) as Observable<TodosFilter>;
 
   count$ = this.collectionService.count();
 
-  remaining$: Observable<number> = this.collectionService.docs().pipe(
-    map(docs => {
+  todos$: Observable<Todo[]> = this.collectionService.docs().pipe(
+    tap(docs => {
       const total = docs.length;
       const remaining = docs.filter(doc => !doc.completed).length;
-
       this.title.setTitle(`(${total - remaining}/${total}) Todos done`);
-
-      return remaining;
     })
   );
 
@@ -33,11 +30,6 @@ export class TodosService {
     private location: Location,
     private title: Title
   ) {}
-
-  async getCount() {
-    const count = await this.collectionService.collection?.['countAllDocuments']?.();
-    return count;
-  }
 
   select(completedOnly = false): Observable<Todo[]> {
     const queryObj = this.buildQueryObject(completedOnly);
@@ -100,12 +92,8 @@ export class TodosService {
 
   private buildQueryObject(completedOnly: boolean): MangoQuery<Todo> {
     const queryObj: MangoQuery<Todo> = {
-      selector: {
-        createdAt: {
-          $gt: null,
-        },
-      },
-      sort: [{ createdAt: 'desc' } as any],
+      selector: {},
+      sort: [{ createdAt: 'desc' }],
     };
     if (completedOnly) {
       Object.assign(queryObj.selector, {

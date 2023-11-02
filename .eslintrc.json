@@ -13,7 +13,7 @@
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "tsconfig.json",
+    "project": "tsconfig.base.json",
     "sourceType": "module"
   },
   "plugins": [
@@ -45,7 +45,7 @@
         "jsdoc/require-returns-type": 0,
         "jsdoc/require-returns-description": 0,
         "jsdoc/require-jsdoc": [
-          1,
+          0,
           {
             "contexts": [
               "TSEnumDeclaration",

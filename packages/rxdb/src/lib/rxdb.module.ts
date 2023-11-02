@@ -7,6 +7,7 @@ import {
   Optional,
   Self,
   SkipSelf,
+  Injector,
 } from '@angular/core';
 import {
   NgxRxdbFeatureModule,
@@ -14,13 +15,13 @@ import {
   collectionServiceFactory,
 } from '@ngx-odm/rxdb/collection';
 import {
-  NgxRxdbCollectionConfig,
-  NgxRxdbConfig,
+  RxCollectionCreatorExtended,
   RXDB_CONFIG,
   RXDB_CONFIG_COLLECTION,
 } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
-import { from } from 'rxjs';
+import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
+import type { RxDatabaseCreator } from 'rxdb';
 
 /**
  * run at APP_INITIALIZER cycle
@@ -29,7 +30,7 @@ import { from } from 'rxjs';
  */
 export function dbInitializerFactory(
   dbService: NgxRxdbService,
-  dbConfig: NgxRxdbConfig
+  dbConfig: RxDatabaseCreator
 ): () => Promise<void> {
   return async () => {
     await dbService.initDb(dbConfig);
@@ -94,7 +95,7 @@ export class NgxRxdbModule {
    * @param collectionConfig The configuration for the RxDB collection.
    */
   static forFeature(
-    collectionConfig: NgxRxdbCollectionConfig
+    collectionConfig: RxCollectionCreatorExtended
   ): ModuleWithProviders<NgxRxdbFeatureModule> {
     return {
       ngModule: NgxRxdbFeatureModule,
@@ -113,7 +114,7 @@ export class NgxRxdbModule {
    * Configures and initializes RxDB with the given configuration, during the `APP_INITIALIZER` cycle.
    * @param config The configuration options for NgxRxdbModule.
    */
-  static forRoot(config: NgxRxdbConfig): ModuleWithProviders<NgxRxdbModule> {
+  static forRoot(config: RxDatabaseCreator): ModuleWithProviders<NgxRxdbModule> {
     return {
       ngModule: NgxRxdbModule,
       providers: [
@@ -135,13 +136,13 @@ export class NgxRxdbModule {
    * running {@link https://v7.angular.io/api/core/APP_INITIALIZER|APP_INITIALIZER}s.
    * @param ngxRxdbConfig - The configuration of the `NgxRxdbModule`
    * @param trueNgxRxdbConfig
-   * @param ngxRxdbService
+   * @param injector
    */
   public constructor(
     appInitStatus: ApplicationInitStatus,
-    @Optional() @SkipSelf() @Inject(RXDB_CONFIG) ngxRxdbConfig: NgxRxdbConfig,
-    @Optional() @Self() @Inject(RXDB_CONFIG) trueNgxRxdbConfig: NgxRxdbConfig,
-    @Optional() @SkipSelf() @Self() ngxRxdbService: NgxRxdbService
+    @Optional() @SkipSelf() @Inject(RXDB_CONFIG) ngxRxdbConfig: RxDatabaseCreator,
+    @Optional() @Self() @Inject(RXDB_CONFIG) trueNgxRxdbConfig: RxDatabaseCreator,
+    injector: Injector
   ) {
     if (!trueNgxRxdbConfig && !ngxRxdbConfig) {
       throw new Error(
@@ -155,10 +156,15 @@ export class NgxRxdbModule {
       );
     }
 
-    // TODO: initialize the service only when this is a Root module ('forRoot' was called)
     if (trueNgxRxdbConfig && !ngxRxdbConfig) {
-      from(appInitStatus.donePromise).subscribe(() => {
-        // doSmth
+      appInitStatus.donePromise.then(() => {
+        const ngxRxdbService = injector.get(NgxRxdbService);
+        if (ngxRxdbService.db.startupErrors.length) {
+          NgxRxdbUtils.logger.log(ngxRxdbService.db.startupErrors);
+        }
+        NgxRxdbUtils.logger.log(
+          `database "${ngxRxdbService.db.name}" ready, rxdb version is "${ngxRxdbService.db['rxdbVersion']}", storage is "${ngxRxdbService.db.storage.name}"`
+        );
       });
     }
   }

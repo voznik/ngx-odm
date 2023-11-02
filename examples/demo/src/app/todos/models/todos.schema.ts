@@ -1,6 +1,6 @@
-import { NgxRxdbCollectionConfig } from '@ngx-odm/rxdb/config';
-import { RxCollection } from 'rxdb';
-import { initialState } from './todos.model';
+import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
+import type { RxCollection } from 'rxdb';
+import { TODOS_INITIAL_STATE } from './todos.model';
 
 export async function percentageCompletedFn() {
   const allDocs = await (this as RxCollection).find().exec();
@@ -10,12 +10,13 @@ const collectionMethods = {
   percentageCompleted: percentageCompletedFn,
 };
 
-export const TODOS_COLLECTION_CONFIG: NgxRxdbCollectionConfig = {
+export const TODOS_COLLECTION_CONFIG: RxCollectionCreatorExtended = {
   name: 'todo',
-  // schema: todoSchema,
+  localDocuments: true,
   statics: collectionMethods,
+  schema: null,
   options: {
     schemaUrl: 'assets/data/todo.schema.json',
-    initialDocs: initialState.items,
+    initialDocs: TODOS_INITIAL_STATE.items,
   },
 };
