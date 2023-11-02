@@ -212,7 +212,7 @@ export namespace NgxRxdbUtils {
   export const logger = {
     log: (function () {
       const bgColor = '#8d2089';
-      if (isDevMode() && localStorage['debug']?.includes('ngx-rxdb')) {
+      if (isDevMode() || localStorage['debug']?.includes(`@ngx-odm/rxdb`)) {
         // eslint-disable-next-line no-console
         return console.log.bind(
           window.console,

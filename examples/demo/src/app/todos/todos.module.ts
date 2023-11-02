@@ -22,6 +22,7 @@ import { TodosRoutingModule } from './todos-routing.module';
     TodosRoutingModule,
     NgxRxdbModule.forFeature({
       name: 'todo',
+      autoMigrate: true,
       localDocuments: true,
       schema: undefined, // to load schema from remote url pass `undefined` here
       options: {

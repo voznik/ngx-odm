@@ -25,6 +25,7 @@
     "typeRoots": ["node_modules/@types"],
     "types": ["node"],
     "paths": {
+      "@package": ["packages/rxdb/package.json"],
       "@ngx-odm/rxdb": ["dist/packages/rxdb", "packages/rxdb/src/index.ts"],
       "@ngx-odm/rxdb/collection": [
         "dist/packages/rxdb/collection",

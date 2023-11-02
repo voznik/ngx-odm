@@ -65,17 +65,7 @@ export class NgxRxdbCollection<T = {}> {
     protected readonly dbService: NgxRxdbService,
     protected readonly config: RxCollectionCreatorExtended
   ) {
-    dbService
-      .initCollection(this.config)
-      .then((collection: RxCollection) => {
-        this._collection = collection as RxCollection<T>;
-        this._init$.next(true);
-        this._init$.complete();
-      })
-      .catch(e => {
-        this._init$.complete();
-        throw new Error(e.message ?? e);
-      });
+    this.init(dbService, config);
   }
 
   /**
@@ -326,6 +316,27 @@ export class NgxRxdbCollection<T = {}> {
     await this.ensureCollection();
     const localDoc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
     return await localDoc?.remove();
+  }
+
+  private async init(dbService: NgxRxdbService, config: RxCollectionCreatorExtended) {
+    try {
+      this._collection = await dbService.initCollection(config);
+      this._init$.next(true);
+      this._init$.complete();
+    } catch (e) {
+      // @see rx-database-internal-store.ts:isDatabaseStateVersionCompatibleWithDatabaseCode
+      // @see test/unit/data-migration.test.ts#L16
+      if (e.message.includes('DM5')) {
+        NgxRxdbUtils.logger.log(
+          `Database version conflict.
+          Opening an older RxDB database state with a new major version should throw an error`
+        );
+        await dbService.db.destroy();
+      } else {
+        this._init$.complete();
+        throw new Error(e.message ?? e);
+      }
+    }
   }
 
   private async ensureCollection(): Promise<boolean> {

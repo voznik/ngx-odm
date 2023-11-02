@@ -246,14 +246,9 @@ describe(`NgxRxdbCollectionService`, () => {
     it(`should init database AND collection`, inject(
       [NgxRxdbCollectionService],
       async (service: NgxRxdbCollection) => {
-        await service.initialized$.pipe(take(1));
+        await firstValueFrom(service.initialized$);
         expect(service.db).toBeDefined();
-        // expect(service.db.name).toEqual(TEST_DB_CONFIG_2.name);
         expect(service.collection).toBeDefined();
-        // const col = service.db.collections['todo'];
-        // expect(col).toBeDefined();
-        // expect(col.statics).toBeDefined();
-        // expect(col.statics.countAllDocuments).toBeInstanceOf(Function);
       }
     ));
   });
