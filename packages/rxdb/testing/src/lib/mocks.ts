@@ -80,7 +80,7 @@ export const getMocktRxCollection = () => {
     name: 'test',
     schema: {},
     storageInstance: {
-      internals: Promise.resolve({}),
+      info: jest.fn().mockResolvedValue({ totalCount: 0 }),
     },
     destroy: jest.fn().mockResolvedValue(null),
     importJSON: jest.fn().mockResolvedValue(null),
@@ -104,6 +104,18 @@ export const getMocktRxCollection = () => {
     insert: jest.fn().mockResolvedValue(null),
     insert$: EMPTY,
     bulkInsert: jest.fn().mockResolvedValue(
+      of({
+        success: [],
+        error: [],
+      })
+    ),
+    bulkUpsert: jest.fn().mockResolvedValue(
+      of({
+        success: [],
+        error: [],
+      })
+    ),
+    bulkRemove: jest.fn().mockResolvedValue(
       of({
         success: [],
         error: [],

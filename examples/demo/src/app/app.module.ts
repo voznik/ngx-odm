@@ -33,9 +33,6 @@ const routes: Routes = [
         options: {
           storageType: 'dexie',
           dumpPath: 'assets/data/db.dump.json',
-          replication: {
-            // TODO
-          },
         },
       })
     ),

@@ -1,16 +1,12 @@
 import { isDevMode } from '@angular/core';
-import { isTestEnvironment, logFn } from '@ngx-odm/rxdb/utils';
+import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import { addRxPlugin } from 'rxdb';
 import { RxDBJsonDumpPlugin } from 'rxdb/plugins/json-dump';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
 import { RxDBLocalDocumentsPlugin } from 'rxdb/plugins/local-documents';
 import { RxDBMigrationPlugin } from 'rxdb/plugins/migration';
-import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
-// import { replicateRxCollection, RxReplicationState } from 'rxdb/plugins/replication';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { RxDBPreparePlugin } from './rxdb-prepare.plugin';
-
-const log = logFn('PluginLoader');
 
 /**
  * Loads all the necessary RxDB plugins for the application to work.
@@ -22,19 +18,18 @@ export async function loadRxDBPlugins(): Promise<void> {
     // plugins
     addRxPlugin(RxDBLocalDocumentsPlugin);
     addRxPlugin(RxDBLeaderElectionPlugin);
-    addRxPlugin(RxDBQueryBuilderPlugin);
     addRxPlugin(RxDBJsonDumpPlugin);
     addRxPlugin(RxDBMigrationPlugin);
     addRxPlugin(RxDBUpdatePlugin);
     addRxPlugin(RxDBPreparePlugin);
 
     /** * to reduce the build-size, we use some plugins in dev-mode only */
-    if (isDevMode() && !isTestEnvironment()) {
-      log('load dev plugins');
+    if (isDevMode() && !NgxRxdbUtils.isTestEnvironment()) {
       // https://rxdb.info/dev-mode.html
       const { RxDBDevModePlugin } = await import('rxdb/plugins/dev-mode');
       addRxPlugin(RxDBDevModePlugin);
     }
+    NgxRxdbUtils.logger.log('rxdb plugins loaded');
   } catch (error) {
     throw new Error(error.message ?? error);
   }

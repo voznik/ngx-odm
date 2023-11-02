@@ -7,6 +7,7 @@ import {
   Optional,
   Self,
   SkipSelf,
+  Injector,
 } from '@angular/core';
 import {
   NgxRxdbFeatureModule,
@@ -19,6 +20,7 @@ import {
   RXDB_CONFIG_COLLECTION,
 } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
+import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import type { RxDatabaseCreator } from 'rxdb';
 
 /**
@@ -134,13 +136,13 @@ export class NgxRxdbModule {
    * running {@link https://v7.angular.io/api/core/APP_INITIALIZER|APP_INITIALIZER}s.
    * @param ngxRxdbConfig - The configuration of the `NgxRxdbModule`
    * @param trueNgxRxdbConfig
-   * @param ngxRxdbService
+   * @param injector
    */
   public constructor(
     appInitStatus: ApplicationInitStatus,
     @Optional() @SkipSelf() @Inject(RXDB_CONFIG) ngxRxdbConfig: RxDatabaseCreator,
     @Optional() @Self() @Inject(RXDB_CONFIG) trueNgxRxdbConfig: RxDatabaseCreator,
-    @Optional() @SkipSelf() @Self() ngxRxdbService: NgxRxdbService
+    injector: Injector
   ) {
     if (!trueNgxRxdbConfig && !ngxRxdbConfig) {
       throw new Error(
@@ -156,7 +158,13 @@ export class NgxRxdbModule {
 
     if (trueNgxRxdbConfig && !ngxRxdbConfig) {
       appInitStatus.donePromise.then(() => {
-        console.log(ngxRxdbService.db.startupErrors);
+        const ngxRxdbService = injector.get(NgxRxdbService);
+        if (ngxRxdbService.db.startupErrors.length) {
+          NgxRxdbUtils.logger.log(ngxRxdbService.db.startupErrors);
+        }
+        NgxRxdbUtils.logger.log(
+          `database "${ngxRxdbService.db.name}" ready, rxdb version is "${ngxRxdbService.db['rxdbVersion']}"`
+        );
       });
     }
   }

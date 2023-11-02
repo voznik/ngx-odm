@@ -23,9 +23,12 @@ const config: Config = {
   transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
   coverageDirectory: `${workspaceRoot}/coverage/packages`,
   collectCoverageFrom: [
-    // additional exclude
+    '**/*.{ts,tsx}',
+    '!**/**/index.ts',
+    '!**/node_modules/**',
     '!utils/**/*.{ts,tsx}',
     '!testing/**/*.{ts,tsx}',
+    '!jest.config.ts',
   ],
 };
 

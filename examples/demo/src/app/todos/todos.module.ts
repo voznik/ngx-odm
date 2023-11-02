@@ -5,6 +5,7 @@ import { LetDirective } from '@ngrx/component';
 import { NgxRxdbModule } from '@ngx-odm/rxdb';
 import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
 import { getFetchWithAuthorizationBasic } from '@ngx-odm/rxdb/core';
+import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import { replicateCouchDB } from 'rxdb/plugins/replication-couchdb';
 import { lastValueFrom } from 'rxjs';
 import { TodosComponent } from './components/todos/todos.component';
@@ -41,7 +42,10 @@ export class TodosModule {
 
   async onCollectionInit() {
     await lastValueFrom(this.collectionService.initialized$);
+    const info = await this.collectionService.info();
+    NgxRxdbUtils.logger.log('collection info:', { info });
     const replicationState = replicateCouchDB({
+      replicationIdentifier: 'demo-couchdb-replication',
       retryTime: 15000,
       collection: this.collectionService.collection,
       url: 'http://localhost:5984/demo/',
@@ -63,10 +67,12 @@ export class TodosModule {
     });
 
     replicationState.error$.subscribe(err => {
-      console.error('replication error:');
-      console.dir(err);
-      if (err.message.includes('unauthorized')) {
+      if (err.message.includes('unauthorized') || err.message.includes('Failed to fetch')) {
         replicationState.cancel();
+        NgxRxdbUtils.logger.log('replicationState has error, cancel replication');
+        NgxRxdbUtils.logger.log(err.message);
+      } else {
+        console.error(err);
       }
     });
   }

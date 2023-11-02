@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
-import { logFn } from '@ngx-odm/rxdb/utils';
+import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import {
   CollectionsOfDatabase,
   RxCollection,
@@ -11,8 +11,6 @@ import {
 } from 'rxdb';
 import { loadRxDBPlugins } from './rxdb-plugin.loader';
 import { prepareCollections } from './rxdb-prepare.plugin';
-
-const log = logFn('NgxRxdbService');
 
 /**
  * Service for managing a RxDB database instance.
@@ -35,9 +33,9 @@ export class NgxRxdbService {
       await this.db.remove();
       await this.db.destroy();
       (this.dbInstance as unknown) = null;
-      log(`database destroy`);
+      NgxRxdbUtils.logger.log(`database destroy`);
     } catch {
-      log(`database destroy error`);
+      NgxRxdbUtils.logger.log(`database destroy error`);
     }
   }
 
@@ -52,12 +50,14 @@ export class NgxRxdbService {
       this.dbInstance = await createRxDatabase(config).catch(e => {
         throw new Error(e.message ?? e);
       });
-      log(`created database ${this.db.name}`);
+      NgxRxdbUtils.logger.log(`created database ${this.db.name}`);
 
       // optional: can create collections from root config
       if (config?.options?.schemas) {
         const bulk = await this.initCollections(config.options.schemas);
-        log(`created ${Object.keys(bulk).length} collections bulk: ${Object.keys(bulk)}`);
+        NgxRxdbUtils.logger.log(
+          `created ${Object.keys(bulk).length} collections bulk: ${Object.keys(bulk)}`
+        );
       }
     } catch (error) {
       throw new Error(error.message);
@@ -87,7 +87,7 @@ export class NgxRxdbService {
       if (options?.recreate) {
         await col.remove();
       }
-      log('collection', col.name, 'exists, skip create');
+      NgxRxdbUtils.logger.log('collection', col.name, 'exists, skip create');
       return col;
     }
 
@@ -97,7 +97,7 @@ export class NgxRxdbService {
       });
       const res = await this.db.addCollections(colCreator);
       col = res[name];
-      log(`created collection "${name}"`);
+      NgxRxdbUtils.logger.log(`created collection "${name}"`);
 
       return col;
     } catch (error) {

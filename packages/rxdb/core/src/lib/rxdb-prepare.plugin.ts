@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
-import { logFn } from '@ngx-odm/rxdb/utils';
+import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import type {
   CollectionsOfDatabase,
   RxCollection,
@@ -11,14 +11,13 @@ import type {
   RxDumpDatabaseAny,
   RxJsonSchema,
   RxPlugin,
+  RxStorageInfoResult,
 } from 'rxdb';
-
-const log = logFn('RxDBFetchSchemaPlugin');
 
 /**
  * @see https://stackoverflow.com/a/47180009/3443137
  */
-export const getDefaultFetch = () => {
+const getDefaultFetch = () => {
   if (typeof window === 'object' && 'fetch' in window) {
     return window.fetch.bind(window);
   } else {
@@ -136,7 +135,7 @@ const afterCreateRxDatabase = async ({
   database: RxDatabase;
   creator: RxDatabaseCreator<any, any>;
 }) => {
-  log('hook:createRxDatabase:after', db, creator);
+  NgxRxdbUtils.logger.log('prepare-plugin: hook:createRxDatabase:after');
   if (!creator.options?.dumpPath || db._imported) {
     return;
   }
@@ -144,9 +143,9 @@ const afterCreateRxDatabase = async ({
     const dump = await prepareDbDump(creator.options.dumpPath, db.collections);
     await db.importJSON(dump);
     (db as any)._imported = Date.now();
-    log(`imported dump for db "${db.name}"`);
+    NgxRxdbUtils.logger.log(`prepare-plugin: imported dump for db "${db.name}"`);
   } catch (error) {
-    log('imported dump error', error);
+    NgxRxdbUtils.logger.log('prepare-plugin: imported dump error', error);
     // impoted but possible conflicts - mark as imported
     (db as any)._imported = Date.now();
   }
@@ -162,37 +161,34 @@ const afterCreateRxCollection = async ({
   collection: RxCollection;
   creator: RxCollectionCreator;
 }) => {
-  const internals = await col.storageInstance.internals;
-  log('hook:createRxCollection:after', creator, internals);
+  NgxRxdbUtils.logger.log('prepare-plugin: hook:createRxCollection:after');
   const initialDocs = creator.options?.initialDocs || [];
-  let count = 0;
   const imported = (col.database as any)._imported;
-  count = await col
-    .count()
-    .exec()
-    .catch(e => {
-      log('count error, return 0', e);
-      return 0;
-    });
+  const { totalCount: count } = await col.storageInstance.info().catch(e => {
+    return { totalCount: 0 } as RxStorageInfoResult;
+  });
   if (!initialDocs.length || count || imported) {
     return;
   }
+  const schemaHash = await col.schema.hash;
   const dump: RxDumpCollectionAny<any> = {
     name: col.name,
-    schemaHash: col.schema.hash,
+    schemaHash,
     docs: initialDocs,
   };
   try {
     await col.importJSON(dump);
     (col.database as any)._imported = Date.now();
-    log(`imported ${initialDocs.length} docs for collection "${col.name}"`);
+    NgxRxdbUtils.logger.log(
+      `prepare-plugin: imported ${initialDocs.length} docs for collection "${col.name}"`
+    );
   } catch (error) {
-    log('imported dump error', error);
+    NgxRxdbUtils.logger.log('prepare-plugin: imported dump error', error);
   }
 };
 
 export const RxDBPreparePlugin: RxPlugin = {
-  name: 'fetch-schema',
+  name: 'prepare-plugin',
   rxdb: true,
   prototypes: {
     RxDatabase: (proto: RxDatabase) => {

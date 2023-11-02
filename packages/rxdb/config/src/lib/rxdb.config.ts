@@ -36,9 +36,6 @@ interface NgxRxdbConfigOptions {
   storageType: 'dexie' | 'memory';
   storageOptions?: {};
   dumpPath?: string;
-  replication?: {
-    //
-  };
 }
 
 type RxDatabaseCreatorPartialStorage = SetOptional<RxDatabaseCreator, 'storage'>;

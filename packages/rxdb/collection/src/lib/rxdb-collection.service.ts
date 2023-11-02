@@ -2,7 +2,7 @@
 import { InjectionToken } from '@angular/core';
 import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
-import { debug } from '@ngx-odm/rxdb/utils';
+import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import type {
   MangoQuery,
   RxCollection,
@@ -11,6 +11,7 @@ import type {
   RxDumpCollection,
   RxDumpCollectionAny,
   RxLocalDocument,
+  RxStorageInfoResult,
   RxStorageWriteError,
 } from 'rxdb';
 import {
@@ -24,49 +25,7 @@ import {
 } from 'rxjs';
 
 /**
- * Service for interacting with a RxDB collection.
- */
-export type NgxRxdbCollection<T = {}> = {
-  readonly db: Readonly<RxDatabase>;
-  readonly collection: RxCollection<T>;
-  initialized$: Observable<unknown>;
-
-  destroy(): void;
-  info(): Promise<{}>;
-  import(docs: T[]): void;
-  export(): Promise<RxDumpCollection<T>>;
-
-  docs(query?: MangoQuery<T>): Observable<T[]>;
-  docsByIds(ids: string[]): Observable<T[]>;
-  count(): Observable<number>;
-
-  get(id: string): Observable<T | null>;
-  insert(data: T): Promise<RxDocument<T>>;
-  insertBulk(
-    data: T[]
-  ): Promise<{ success: RxDocument<T>[]; error: RxStorageWriteError<T>[] }>;
-  upsert(data: Partial<T>): Promise<RxDocument<T>>;
-  updateBulk(query: MangoQuery<T>, data: Partial<T>): Promise<RxDocument<T, {}>[]>;
-  set(id: string, data: Partial<T>): Promise<RxDocument<T> | null>;
-  remove(id: string): Promise<RxDocument<T> | null>;
-  removeBulk(query: MangoQuery<T>): Promise<RxDocument<T>[]>;
-
-  getLocal<I extends string, K extends string>(
-    id: I,
-    key?: K
-  ): Observable<K extends never ? RxLocalDocument<unknown> : unknown>;
-  insertLocal(id: string, data: unknown): Promise<RxLocalDocument<unknown>>;
-  upsertLocal(id: string, data: unknown): Promise<RxLocalDocument<unknown>>;
-  setLocal(
-    id: string,
-    prop: string,
-    value: unknown
-  ): Promise<RxLocalDocument<unknown> | null>;
-  removeLocal(id: string): Promise<unknown>;
-};
-
-/**
- * Injection token for Service for interacting with a RxDB collection.
+ * Injection token for Service for interacting with a RxDB {@link RxCollection}.
  * This token is used to inject an instance of NgxRxdbCollection into a component or service.
  */
 export const NgxRxdbCollectionService = new InjectionToken<NgxRxdbCollection>(
@@ -75,18 +34,18 @@ export const NgxRxdbCollectionService = new InjectionToken<NgxRxdbCollection>(
 
 /**
  * Factory function that returns a new instance of NgxRxdbCollection
- * with the provided NgxRxdbService and NgxRxdbCollectionConfig.
+ * with the provided NgxRxdbService and RxCollectionCreator.
  * @param config - The configuration object for the collection to be created automatically.
  */
 export function collectionServiceFactory(config: RxCollectionCreatorExtended) {
   return (dbService: NgxRxdbService): NgxRxdbCollection =>
-    new NgxRxdbCollectionServiceImpl(dbService, config);
+    new NgxRxdbCollection(dbService, config);
 }
 
 /**
- * Service for interacting with a RxDB collection.
+ * Service for interacting with a RxDB {@link RxCollection}.
  */
-export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollection<T> {
+export class NgxRxdbCollection<T = {}> {
   private _collection!: RxCollection<T>;
   private _init$ = new ReplaySubject<boolean>();
 
@@ -119,74 +78,119 @@ export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollec
       });
   }
 
+  /**
+   * Destroys the collection's object instance. This is to free up memory and stop all observers and replications.
+   */
   destroy(): void {
     this.collection?.destroy();
   }
 
-  async info(): Promise<{}> {
+  /**
+   * Returns some info about the db storage. Used in various places. This method is expected to not really care about performance, so do not use it in hot paths.
+   */
+  async info(): Promise<RxStorageInfoResult> {
     await this.ensureCollection();
-    const meta = (await this.collection.storageInstance.internals) || {};
-    return meta;
+    const storageInfo = (await this.collection.storageInstance.info()) || {
+      totalCount: 0,
+    };
+    return storageInfo;
   }
 
   /**
-   * import array of docs into collection
+   * Imports the json dump into your collection
    * @param docs
    */
   async import(docs: T[]): Promise<void> {
     await this.ensureCollection();
+    const schemaHash = await this.collection.schema.hash;
     const dump: RxDumpCollectionAny<T> = {
       name: this.collection.name,
-      schemaHash: this.collection.schema.hash,
+      schemaHash,
       docs,
     };
     this.collection.importJSON(dump);
   }
 
+  /**
+   * Creates a json export from every document in the collection.
+   */
   async export(): Promise<RxDumpCollection<T>> {
     await this.ensureCollection();
     return this.collection.exportJSON();
   }
 
+  /**
+   * Finds documents in your collection
+   * Calling this will return an rxjs-Observable which streams every change to data of this collection.
+   * @param query
+   */
   docs(query?: MangoQuery<T>): Observable<T[]> {
     return this.initialized$.pipe(
       switchMap(() => this.collection.find(query).$),
       map((docs = []) => docs.map(d => d.toMutableJSON())),
-      debug('docs')
+      NgxRxdbUtils.debug('docs')
     );
   }
 
+  /**
+   * Finds many documents by their id (primary value).
+   * This has a way better performance than running multiple findOne() or a find() with a big $or selector.
+   *
+   * Calling this will return an rxjs-Observable which streams every change to data of this collection.
+   * Documents that do not exist or are deleted, will be skipped
+   * @param ids
+   */
   docsByIds(ids: string[]): Observable<T[]> {
     return this.initialized$.pipe(
       switchMap(() => this.collection.findByIds(ids).$),
       map(result => [...result.values()].map(d => d.toMutableJSON())),
-      debug('docsByIds')
+      NgxRxdbUtils.debug('docsByIds')
     );
   }
 
-  count(): Observable<number> {
+  /**
+   * When you only need the amount of documents that match a query, but you do not need the document data itself, you can use a count query for better performance.
+   * The performance difference compared to a normal query differs depending on which RxStorage implementation is used.
+   * @param query
+   */
+  count(query?: MangoQuery<T>): Observable<number> {
     return this.initialized$.pipe(
       switchMap(() =>
         merge$(this.collection.insert$, this.collection.remove$).pipe(startWith(null))
       ),
-      switchMap(() => this.collection.count().exec()),
-      debug('count')
+      switchMap(() => this.collection.count(query).exec()),
+      NgxRxdbUtils.debug('count')
     );
   }
 
+  /**
+   * This does basically what find() does, but it returns only a single document.
+   * You can pass a primary value to find a single document more easily.
+   * @param id
+   */
   get(id: string): Observable<T | null> {
     return this.initialized$.pipe(
       switchMap(() => this.collection.findOne(id).$),
       map(doc => (doc ? doc.toMutableJSON() : null)),
-      debug('get one')
+      NgxRxdbUtils.debug('get one')
     );
   }
 
+  /**
+   * Inserts new document into the database.
+   * The collection will validate the schema and automatically encrypt any encrypted fields
+   * @param data
+   */
   async insert(data: T): Promise<RxDocument<T>> {
     await this.ensureCollection();
     return this.collection.insert(data);
   }
 
+  /**
+   * When you have to insert many documents at once, use bulk insert.
+   * This is much faster than calling .insert() multiple times.
+   * @param data
+   */
   async insertBulk(
     data: T[]
   ): Promise<{ success: RxDocument<T>[]; error: RxStorageWriteError<T>[] }> {
@@ -194,29 +198,84 @@ export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollec
     return this.collection.bulkInsert(data);
   }
 
+  /**
+   * Inserts the document if it does not exist within the collection, otherwise it will overwrite it. Returns the new or overwritten RxDocument.
+   * @param data
+   */
   async upsert(data: Partial<T>): Promise<RxDocument<T>> {
     await this.ensureCollection();
     return this.collection.upsert(data);
   }
 
+  /**
+   * Same as upsert() but runs over multiple documents.
+   * Improves performance compared to running many upsert() calls.
+   * @param data
+   */
+  async upsertBulk(
+    data: Partial<T>[]
+  ): Promise<{ success: RxDocument<T>[]; error: RxStorageWriteError<T>[] }> {
+    await this.ensureCollection();
+    return this.collection.bulkUpsert(data);
+  }
+
+  /**
+   * Updates the document in the database by finding one with the matching id.
+   * @param id
+   * @param data
+   */
   async set(id: string, data: Partial<T>): Promise<RxDocument<T> | null> {
     await this.ensureCollection();
     return this.collection.findOne(id).update({ $set: data });
   }
 
+  /**
+   * Updates many documents with same data by query
+   * @param query
+   * @param data
+   */
   async updateBulk(query: MangoQuery<T>, data: Partial<T>): Promise<RxDocument<T, {}>[]> {
     await this.ensureCollection();
     return this.collection.find(query).update({ $set: data });
   }
 
+  /**
+   * Removes the document from the database by finding one with the matching id.
+   * @param id
+   */
   async remove(id: string): Promise<RxDocument<T> | null> {
     await this.ensureCollection();
     return this.collection.findOne(id).remove();
   }
 
-  async removeBulk(query: MangoQuery<T>): Promise<RxDocument<T>[]> {
+  /**
+   * Removes many documents at once
+   * @param params
+   */
+  async removeBulk(
+    params: string[] | MangoQuery<T>
+  ): Promise<{ success: RxDocument<T>[]; error: RxStorageWriteError<T>[] }> {
     await this.ensureCollection();
-    return this.collection.find(query).remove();
+    if (Array.isArray(params)) {
+      return this.collection.bulkRemove(params);
+    }
+    const result = await this.collection
+      .find(params)
+      .remove()
+      .catch(() => new Map());
+    return {
+      success: [...result.values()],
+      error: [],
+    };
+  }
+
+  /**
+   * Removes all known data of the collection and its previous versions.
+   * This removes the documents, the schemas, and older schemaVersions
+   */
+  async clear(): Promise<void> {
+    await this.ensureCollection();
+    return this.collection.remove();
   }
 
   // ---------------------------------------------------------------------------
@@ -235,7 +294,7 @@ export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollec
         }
         return key ? doc.get(key) : doc;
       }),
-      debug('get local')
+      NgxRxdbUtils.debug('get local')
     );
   }
 
@@ -269,10 +328,10 @@ export class NgxRxdbCollectionServiceImpl<T extends {}> implements NgxRxdbCollec
     return await localDoc?.remove();
   }
 
-  async ensureCollection(): Promise<boolean> {
+  private async ensureCollection(): Promise<boolean> {
     if (!this.collection) {
       await lastValueFrom(this.initialized$);
     }
-    return !!this.collection;
+    return true;
   }
 }

@@ -11,11 +11,7 @@ import {
 import { MangoQuery } from 'rxdb';
 import { createRxLocalDocument } from 'rxdb/plugins/local-documents';
 import { Observable, firstValueFrom, take } from 'rxjs';
-import {
-  NgxRxdbCollection,
-  NgxRxdbCollectionService,
-  NgxRxdbCollectionServiceImpl,
-} from './rxdb-collection.service';
+import { NgxRxdbCollection, NgxRxdbCollectionService } from './rxdb-collection.service';
 
 describe(`NgxRxdbCollectionService`, () => {
   describe(`test methods using mock NgxRxdbService`, () => {
@@ -24,7 +20,7 @@ describe(`NgxRxdbCollectionService`, () => {
 
     beforeEach(() => {
       dbService = getMockRxdbServiceFactory();
-      service = new NgxRxdbCollectionServiceImpl(dbService, TEST_FEATURE_CONFIG_1);
+      service = new NgxRxdbCollection(dbService, TEST_FEATURE_CONFIG_1);
     });
 
     it(`should provide Observable "initialized$" getter`, async () => {
@@ -52,15 +48,20 @@ describe(`NgxRxdbCollectionService`, () => {
       expect(service.collection).toBeDefined();
     });
 
-    it('should destroy collection', () => {
-      service.destroy();
+    it('should destroy collection', async () => {
+      await service.destroy();
       expect(service.collection.destroy).toHaveBeenCalled();
     });
 
+    it('should clear collection', async () => {
+      await service.clear();
+      expect(service.collection.remove).toHaveBeenCalled();
+    });
+
     it('should get collection info', async () => {
-      const meta = await service.info();
-      expect(service.collection.storageInstance!.internals).toBeInstanceOf(Promise);
-      expect(meta).toEqual({});
+      const storageInfo = await service.info();
+      expect(service.collection.storageInstance!.info).toHaveBeenCalled();
+      expect(storageInfo).toMatchObject({ totalCount: expect.any(Number) });
     });
 
     it('should import docs into collection', async () => {
@@ -145,7 +146,10 @@ describe(`NgxRxdbCollectionService`, () => {
       expect(service.collection.findOne).toHaveBeenCalledWith(id);
     });
 
-    it('should remove docs', async () => {
+    it('should remove docs by query', async () => {
+      jest.spyOn(service.collection, 'find').mockReturnValueOnce({
+        remove: jest.fn().mockResolvedValue(new Map()),
+      } as any);
       const query: MangoQuery = {
         selector: {
           id: {
@@ -155,6 +159,11 @@ describe(`NgxRxdbCollectionService`, () => {
       };
       await service.removeBulk(query);
       expect(service.collection.find).toHaveBeenCalledWith(query);
+    });
+
+    it('should remove docs by ids', async () => {
+      await service.removeBulk(['1', '2']);
+      expect(service.collection.bulkRemove).toHaveBeenCalledWith(['1', '2']);
     });
 
     it('should get local doc', async () => {
