@@ -1,4 +1,5 @@
 import { isDevMode } from '@angular/core';
+import { RxKintoDBReplicationState } from '@ngx-odm/rxdb/replication-kinto';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import { addRxPlugin } from 'rxdb';
 import { RxDBJsonDumpPlugin } from 'rxdb/plugins/json-dump';

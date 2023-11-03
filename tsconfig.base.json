@@ -25,7 +25,6 @@
     "typeRoots": ["node_modules/@types"],
     "types": ["node"],
     "paths": {
-      "@package": ["packages/rxdb/package.json"],
       "@ngx-odm/rxdb": ["dist/packages/rxdb", "packages/rxdb/src/index.ts"],
       "@ngx-odm/rxdb/collection": [
         "dist/packages/rxdb/collection",
@@ -36,11 +35,13 @@
         "packages/rxdb/config/src/index.ts"
       ],
       "@ngx-odm/rxdb/core": ["dist/packages/rxdb/core", "packages/rxdb/core/src/index.ts"],
+      "@ngx-odm/rxdb/replication-kinto": ["packages/rxdb/replication-kinto/src/index.ts"],
       "@ngx-odm/rxdb/testing": ["packages/rxdb/testing/src/index.ts"],
       "@ngx-odm/rxdb/utils": [
         "dist/packages/rxdb/utils",
         "packages/rxdb/utils/src/index.ts"
-      ]
+      ],
+      "@package": ["packages/rxdb/package.json"]
     }
   },
   "exclude": ["node_modules", "tmp"]
