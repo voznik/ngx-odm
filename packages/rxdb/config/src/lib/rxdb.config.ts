@@ -11,6 +11,7 @@ export interface RxCollectionCreatorOptions {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialDocs?: Record<string, any>[];
   recreate?: boolean;
+  replication?: boolean;
 }
 
 export interface RxCollectionCreatorExtended extends RxCollectionCreator {

@@ -55,6 +55,7 @@ export class TodosService {
       title,
       completed: false,
       createdAt: Date.now(),
+      last_modified: undefined,
     };
     this.collectionService.insert(payload);
   }

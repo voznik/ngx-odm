@@ -5,6 +5,7 @@
 export const environment = {
   production: false,
   baseUrl: '/api/v1',
+  kintoServer: '/kinto/v1',
   couchDbRemote: process.env.COUCHDB_SERVER,
   couchDbSyncLive: Boolean(process.env.COUCHDB_SYNC_LIVE),
   couchDbSyncHeartbeat: Boolean(process.env.COUCHDB_SYNC_HEARTBEAT),

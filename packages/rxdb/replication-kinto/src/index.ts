@@ -1,54 +1,51 @@
-/**
- * This plugin can be used to sync collections with a remote KintoDB endpoint.
- */
-import { awaitRetry } from '@ngx-odm/rxdb/utils';
-import { addRxPlugin, newRxError, WithDeleted } from 'rxdb';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
+import { KintoClient } from 'kinto';
+import type { AggregateResponse } from 'kinto/lib/http';
+import type { FetchFunction } from 'kinto/lib/types';
 import type {
-  RxCollection,
+  DocumentsWithCheckpoint,
   ReplicationPullOptions,
   ReplicationPushOptions,
-  RxReplicationWriteToMasterRow,
-  RxReplicationPullStreamItem,
-  RxConflictHandler,
+  RxCollection,
 } from 'rxdb';
+import { addRxPlugin } from 'rxdb';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
 import { RxReplicationState, startReplicationOnLeaderShip } from 'rxdb/plugins/replication';
 import {
-  ensureNotFalsy,
-  errorToPlainJson,
-  flatClone,
-  getFromMapOrThrow,
-  now,
-  promiseWait,
-} from 'rxdb/plugins/utils';
-import { Subject } from 'rxjs';
+  EMPTY,
+  Observable,
+  Subject,
+  delayWhen,
+  first,
+  from,
+  interval,
+  map,
+  retryWhen,
+  skip,
+  startWith,
+  switchMap,
+  takeUntil,
+  tap,
+  timer,
+} from 'rxjs';
+import { DEFAULT_REPLICATION_OPTIONS } from './helpers';
 import {
-  kintoDBDocToRxDocData,
-  mergeUrlQueryParams,
-  kintoSwapPrimaryToId,
-  getDefaultFetch,
-} from './helpers';
+  KintoCheckpointType,
+  KintoListParams,
+  KintoListResponse,
+  KintoReplicationOptions,
+} from './types';
 
-type KintoDBCheckpointType = any;
-type FetchMethodType = any;
-type SyncOptionsKintoDB<T> = any;
-type KintodbChangesResult = any;
-type KintoBulkDocResultRow = any;
-type KintoAllDocsResponse = any;
-
-export class RxKintoDBReplicationState<RxDocType> extends RxReplicationState<
+class RxKintoDBReplicationState<RxDocType> extends RxReplicationState<
   RxDocType,
-  KintoDBCheckpointType
+  KintoCheckpointType
 > {
   constructor(
-    public readonly url: string,
-    public fetch: FetchMethodType,
+    public readonly kintoSyncOptions: KintoReplicationOptions['kintoSyncOptions'],
     public override readonly replicationIdentifier: string,
     public override readonly collection: RxCollection<RxDocType>,
-    public override readonly pull?: ReplicationPullOptions<
-      RxDocType,
-      KintoDBCheckpointType
-    >,
+    public override readonly pull?: ReplicationPullOptions<RxDocType, KintoCheckpointType>,
     public override readonly push?: ReplicationPushOptions<RxDocType>,
     public override readonly live: boolean = true,
     public override retryTime: number = 1000 * 5,
@@ -57,7 +54,7 @@ export class RxKintoDBReplicationState<RxDocType> extends RxReplicationState<
     super(
       replicationIdentifier,
       collection,
-      '_deleted',
+      'deleted',
       pull,
       push,
       live,
@@ -67,283 +64,225 @@ export class RxKintoDBReplicationState<RxDocType> extends RxReplicationState<
   }
 }
 
-export function replicateKintoDB<RxDocType>(options: SyncOptionsKintoDB<RxDocType>) {
-  const collection = options.collection;
-  const conflictHandler: RxConflictHandler<any> = collection.conflictHandler;
+/**
+ * The basic idea is to keep a local database up to date with the Kinto server:
+ * - Remote changes are downloaded and applied on the local data.
+ * - Local changes are uploaded using HTTP headers to control concurrency and overwrites.
+ *
+ * In short:
+ * 1. Poll for remote changes using ?_since=<timestamp>
+ * 2. Apply changes locally
+ * 3. Send local creations
+ * 4. Use concurrency control to send local updates and deletes
+ *
+ * Polling for remote changes
+ *
+ * Kinto supports range queries for timestamps. Combining them with the sort parameter allows to fetch changes in a particular order.
+ *
+ * Depending on the context (latest first, readonly, etc.), there are several strategies to poll the server for changes.
+ * @param options
+ */
+export function replicateKintoDB<RxDocType>(options: KintoReplicationOptions) {
+  const {
+    replicationIdentifier,
+    kintoSyncOptions,
+    fetch: fetchFunc,
+    pull,
+    push,
+    collection,
+    retryTime: retry,
+    live,
+    autoStart,
+    waitForLeadership,
+    deletedField,
+  } = Object.assign(DEFAULT_REPLICATION_OPTIONS, options);
   addRxPlugin(RxDBLeaderElectionPlugin);
-  const primaryPath = options.collection.schema.primaryPath;
-
-  if (!options.url.endsWith('/')) {
-    throw newRxError('RC_COUCHDB_1', {
-      args: {
-        collection: options.collection.name,
-        url: options.url,
-      },
-    });
+  /* eslint-disable prefer-const, @typescript-eslint/no-non-null-assertion */
+  let {
+    remote,
+    bucket,
+    collection: collectionName,
+    headers,
+    exclude,
+    expectedTimestamp,
+    timeout,
+    heartbeat,
+    strategy,
+  } = kintoSyncOptions;
+  // Optionally ignore some records when pulling for changes.
+  let filters: KintoListParams['filters'] = {};
+  if (exclude) {
+    const exclude_id = exclude
+      .slice(0, 50)
+      .map(r => r.id)
+      .join(',');
+    filters = { exclude_id };
+  }
+  if (expectedTimestamp) {
+    filters = {
+      ...filters,
+      _expected: expectedTimestamp,
+    };
   }
 
-  options = flatClone(options);
-  if (!options.url.endsWith('/')) {
-    options.url = options.url + '/';
-  }
-  options.waitForLeadership =
-    typeof options.waitForLeadership === 'undefined' ? true : options.waitForLeadership;
-  const pullStream$: Subject<
-    RxReplicationPullStreamItem<RxDocType, KintoDBCheckpointType>
-  > = new Subject();
-  let replicationPrimitivesPull:
-    | ReplicationPullOptions<RxDocType, KintoDBCheckpointType>
+  const client = new KintoClient(remote!, {
+    timeout,
+    headers,
+    retry,
+    fetchFunc: fetchFunc as unknown as FetchFunction,
+  });
+
+  const kintoCollection = client.bucket(bucket!).collection(collectionName!);
+  /* eslint-enable prefer-const, @typescript-eslint/no-non-null-assertion */
+
+  const pullStream$: Subject<DocumentsWithCheckpoint<RxDocType, KintoCheckpointType>> =
+    new Subject();
+
+  let _pullImplementation:
+    | ReplicationPullOptions<RxDocType, KintoCheckpointType>
     | undefined;
-  if (options.pull) {
-    replicationPrimitivesPull = {
-      async handler(
-        lastPulledCheckpoint: KintoDBCheckpointType | undefined,
-        batchSize: number
-      ) {
-        /**
-         * @see https://docs.kintodb.org/en/3.2.2-docs/api/database/changes.html
-         */
-        const url =
-          options.url +
-          '_changes?' +
-          mergeUrlQueryParams({
-            style: 'all_docs',
-            feed: 'normal',
-            include_docs: true,
-            since: lastPulledCheckpoint ? lastPulledCheckpoint.sequence : 0,
-            heartbeat:
-              options.pull && options.pull.heartbeat ? options.pull.heartbeat : 60000,
-            limit: batchSize,
-            seq_interval: batchSize,
-          });
+  let _pushImplementation: ReplicationPushOptions<RxDocType> | undefined;
+  let _pullHandlerResult$: Observable<DocumentsWithCheckpoint<any, KintoCheckpointType>> =
+    EMPTY;
 
-        const response = await replicationState.fetch(url);
-        const jsonResponse: KintodbChangesResult = await response.json();
-        if (!jsonResponse.results) {
-          throw newRxError('RC_COUCHDB_2', {
-            args: { jsonResponse },
-          });
-        }
-        const documents: WithDeleted<RxDocType>[] = jsonResponse.results.map((row: any) =>
-          kintoDBDocToRxDocData(collection.schema.primaryPath, ensureNotFalsy(row.doc))
+  if (pull) {
+    _pullImplementation = {
+      async handler(lastPulledCheckpoint, batchSize) {
+        let since = lastPulledCheckpoint?.last_modified || undefined;
+
+        // Create an Observable that emits every POLLING_INTERVAL milliseconds if live is true, otherwise emits once
+        _pullHandlerResult$ = interval(heartbeat).pipe(
+          startWith(0),
+          switchMap(() =>
+            kintoCollection.listRecords({
+              since,
+              headers,
+              retry,
+              pages: Infinity,
+              filters,
+            })
+          ),
+          map(({ data: documents, last_modified }: KintoListResponse<any>) => {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            since = last_modified!;
+            return {
+              documents,
+              checkpoint: { last_modified },
+            };
+          })
+          // catchError(err => {
+          //   NgxRxdbUtils.logger.log(err);
+          //   return throwError(err);
+          // })
         );
-        return {
-          documents,
-          checkpoint: {
-            sequence: jsonResponse.last_seq,
-          },
-        };
+
+        return _pullHandlerResult$.pipe(first()).toPromise() as Promise<any>;
       },
-      batchSize: ensureNotFalsy(options.pull).batchSize,
-      modifier: ensureNotFalsy(options.pull).modifier,
+      batchSize: pull?.batchSize,
+      modifier: pull?.modifier,
       stream$: pullStream$.asObservable(),
     };
   }
 
-  let replicationPrimitivesPush: ReplicationPushOptions<RxDocType> | undefined;
-  if (options.push) {
-    replicationPrimitivesPush = {
-      async handler(rows: RxReplicationWriteToMasterRow<RxDocType>[]) {
-        const conflicts: WithDeleted<RxDocType>[] = [];
-        const pushRowsById = new Map<string, RxReplicationWriteToMasterRow<RxDocType>>();
-        rows.forEach(row => {
-          const id = (row.newDocumentState as any)[primaryPath];
-          pushRowsById.set(id, row);
+  if (push) {
+    _pushImplementation = {
+      async handler(changes) {
+        const safe = !strategy || strategy !== undefined;
+        const toDelete = new Map<string, any>();
+        const toSync = new Map<string, any>();
+        changes.forEach(({ newDocumentState: doc }: any) => {
+          if (doc._deleted) {
+            toDelete.set(doc.id, doc);
+          } else {
+            // Clean local fields (like _deleted) before sending to server.
+            delete (doc as any)._deleted;
+            toSync.set(doc.id, doc);
+          }
         });
 
-        /**
-         * First get the current master state from the remote
-         * to check for conflicts
-         */
-        const docsByIdResponse = await replicationState.fetch(
-          options.url + '_all_docs?' + mergeUrlQueryParams({}),
-          {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-            },
-            body: JSON.stringify({
-              keys: rows.map(row => (row.newDocumentState as any)[primaryPath]),
-              include_docs: true,
-              deleted: 'ok',
-            }),
-          }
-        );
-        const docsByIdRows: KintoAllDocsResponse = await docsByIdResponse.json();
-        const nonConflictRows: typeof rows = [];
-        const remoteRevById = new Map<string, string>();
-        await Promise.all(
-          docsByIdRows.rows.map(async (row: any) => {
-            if (!row.doc) {
-              nonConflictRows.push(getFromMapOrThrow(pushRowsById, row.key));
-              return;
-            }
-            const realMasterState: WithDeleted<RxDocType> = kintoDBDocToRxDocData(
-              primaryPath,
-              row.doc
-            );
-            const pushRow = getFromMapOrThrow(pushRowsById, row.id);
-            const conflictHandlerResult = await conflictHandler(
-              {
-                realMasterState,
-                newDocumentState: pushRow.assumedMasterState,
-              },
-              'kintodb-push-1'
-            );
-            if (conflictHandlerResult.isEqual) {
-              remoteRevById.set(row.id, row.doc._rev);
-              nonConflictRows.push(pushRow);
-            } else {
-              conflicts.push(realMasterState);
-            }
-          })
-        );
-
-        /**
-         * @see https://docs.kintodb.org/en/3.2.2-docs/api/database/bulk-api.html#db-bulk-docs
-         */
-        const url = options.url + '_bulk_docs?' + mergeUrlQueryParams({});
-        const body = {
-          docs: nonConflictRows.map(row => {
-            const docId = (row.newDocumentState as any)[primaryPath];
-            const sendDoc = flatClone(row.newDocumentState);
-            if (remoteRevById.has(docId)) {
-              (sendDoc as any)._rev = getFromMapOrThrow(remoteRevById, docId);
-            }
-            return kintoSwapPrimaryToId(collection.schema.primaryPath, sendDoc);
-          }),
-        };
-
-        const response = await replicationState.fetch(url, {
-          method: 'POST',
-          headers: {
-            'content-type': 'application/json',
+        // Perform a batch request with every changes.
+        const { conflicts, errors, published } = (await kintoCollection.batch(
+          batch => {
+            toDelete.forEach(({ last_modified, ...r }: any) => {
+              // never published locally deleted records should not be pusblished
+              if (last_modified) {
+                batch.deleteRecord(r, {
+                  last_modified,
+                });
+              }
+            });
+            toSync.forEach(({ last_modified, ...r }: any) => {
+              if (!last_modified) {
+                batch.createRecord(r);
+              } else {
+                batch.updateRecord(r, {
+                  last_modified,
+                });
+              }
+            });
           },
-          body: JSON.stringify(body),
-        });
-        const responseJson: KintoBulkDocResultRow[] = await response.json();
-
-        // get conflicting writes
-        const conflictAgainIds: string[] = [];
-        responseJson.forEach(writeResultRow => {
-          const isConflict = writeResultRow.error === 'conflict';
-          if (!writeResultRow.ok && !isConflict) {
-            throw newRxError('SNH', { args: { writeResultRow } });
+          {
+            headers,
+            retry,
+            safe,
+            aggregate: true,
           }
-          if (isConflict) {
-            conflictAgainIds.push(writeResultRow.id);
-          }
-        });
+        )) as AggregateResponse;
 
-        if (conflictAgainIds.length === 0) {
-          return conflicts;
+        if (errors.length) {
+          NgxRxdbUtils.logger.log(errors);
         }
 
-        const getConflictDocsUrl =
-          options.url +
-          '_all_docs?' +
-          mergeUrlQueryParams({
-            include_docs: true,
-            keys: JSON.stringify(conflictAgainIds),
-          });
-        const conflictResponse = await replicationState.fetch(getConflictDocsUrl);
-        const conflictResponseJson: KintoAllDocsResponse = await conflictResponse.json();
-        conflictResponseJson.rows.forEach((conflictAgainRow: any) => {
-          conflicts.push(
-            kintoDBDocToRxDocData(collection.schema.primaryPath, conflictAgainRow.doc)
-          );
-        });
-
-        return conflicts;
+        if (published.length) {
+          // Update local documents with the new published state.
+          const toUpdate: any[] = published
+            .filter(({ data }: any) => !toDelete.has(data.id))
+            .map(({ data }) => data);
+          return toUpdate;
+        }
+        return conflicts.map(c => c.remote);
       },
-      batchSize: options.push.batchSize,
-      modifier: options.push.modifier,
+      batchSize: push?.batchSize,
+      modifier: push?.modifier,
     };
   }
 
-  const replicationState = new RxKintoDBReplicationState<RxDocType>(
-    options.url,
-    options.fetch ? options.fetch : getDefaultFetch(),
-    options.replicationIdentifier,
-    collection,
-    replicationPrimitivesPull,
-    replicationPrimitivesPush,
-    options.live,
-    options.retryTime,
-    options.autoStart
+  const replication = new RxKintoDBReplicationState<RxDocType>(
+    kintoSyncOptions,
+    replicationIdentifier,
+    collection as RxCollection,
+    _pullImplementation,
+    _pushImplementation,
+    live,
+    retry,
+    autoStart
   );
 
   /**
-   * Use long polling to get live changes for the pull.stream$
+   * Use (kind-of long) polling to get live changes for the pull.stream$
+   * await initial pull replication triggered
    */
-  if (options.live && options.pull) {
-    const startBefore = replicationState.start.bind(replicationState);
-    replicationState.start = () => {
-      let since: string | number = 'now';
-      const batchSize =
-        options.pull && options.pull.batchSize ? options.pull.batchSize : 20;
-
-      (async () => {
-        let lastRequestStartTime = now();
-        while (!replicationState.isStopped()) {
-          const url =
-            options.url +
-            '_changes?' +
-            mergeUrlQueryParams({
-              style: 'all_docs',
-              feed: 'longpoll',
-              since,
-              include_docs: true,
-              heartbeat:
-                options.pull && options.pull.heartbeat ? options.pull.heartbeat : 60000,
-              limit: batchSize,
-              seq_interval: batchSize,
-            });
-
-          let jsonResponse: KintodbChangesResult;
-          try {
-            lastRequestStartTime = now();
-            jsonResponse = await (await replicationState.fetch(url)).json();
-          } catch (err: any) {
-            replicationState.subjects.error.next(
-              newRxError('RC_STREAM', {
-                args: { url },
-                error: errorToPlainJson(err),
-              })
-            );
-
-            if (lastRequestStartTime < now() - replicationState.retryTime) {
-              /**
-               * Last request start was long ago,
-               * so we directly retry.
-               * This mostly happens on timeouts
-               * which are normal behavior for long polling requests.
-               */
-              await promiseWait(0);
-            } else {
-              // await next tick here otherwise we could go in to a 100% CPU blocking cycle.
-              await awaitRetry(collection, replicationState.retryTime);
-            }
-            continue;
-          }
-          const documents: WithDeleted<RxDocType>[] = jsonResponse.results.map((row: any) =>
-            kintoDBDocToRxDocData(collection.schema.primaryPath, ensureNotFalsy(row.doc))
-          );
-          since = jsonResponse.last_seq;
-
-          pullStream$.next({
-            documents,
-            checkpoint: {
-              sequence: jsonResponse.last_seq,
-            },
-          });
-        }
-      })();
-      return startBefore();
-    };
+  if (live && pull) {
+    from(replication.awaitInitialReplication())
+      .pipe(
+        switchMap(() => _pullHandlerResult$),
+        skip(1),
+        NgxRxdbUtils.debug('replication long-poll'),
+        tap(pullStream$),
+        retryWhen(errors =>
+          errors.pipe(
+            NgxRxdbUtils.debug('replication long-poll error'),
+            delayWhen(() => timer(retry))
+          )
+        ),
+        takeUntil(replication.canceled$)
+      )
+      .subscribe();
   }
 
-  startReplicationOnLeaderShip(options.waitForLeadership, replicationState);
+  startReplicationOnLeaderShip(true, replication);
 
-  return replicationState;
+  return replication;
 }
+
+export * from './types';

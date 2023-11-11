@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
@@ -18,6 +19,8 @@ import type {
   RxStorageInfoResult,
   RxStorageInstance,
 } from 'rxdb';
+import { getAllCollectionDocuments } from 'rxdb';
+import { flatClone as clone } from 'rxdb/plugins/utils';
 
 const RXDB_STORAGE_TOKEN_ID = 'storage-token|storageToken';
 const IMPORTED_FLAG = '_ngx_rxdb_imported';
@@ -42,7 +45,7 @@ const getDefaultFetch = () => {
 export function getFetchWithAuthorizationBasic(username: string, password: string) {
   const fetch = getDefaultFetch();
   const ret = (url: string, options: Record<string, any>) => {
-    options = Object.assign({}, options) as any;
+    options = clone(options);
     if (!options.headers) {
       options.headers = {};
     }
@@ -92,7 +95,7 @@ export const prepareCollections = async (
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         config.schema = (await fetchSchema(config.options.schemaUrl))!;
       }
-      colCreators[config.name] = structuredClone(config) as RxCollectionCreator;
+      colCreators[config.name] = clone(config);
     }
     return colCreators;
   } catch (error) {
@@ -216,7 +219,8 @@ const afterCreateRxCollection = async ({
   collection: RxCollection;
   creator: RxCollectionCreator;
 }) => {
-  NgxRxdbUtils.logger.log('prepare-plugin: hook:createRxCollection:after');
+  const meta = await (col as any).getMetadata();
+  NgxRxdbUtils.logger.log('prepare-plugin: hook:createRxCollection:after', meta);
   const initialDocs = creator.options?.initialDocs || [];
   const imported = (col.database as any)._imported;
   const { totalCount: count } = await col.storageInstance.info().catch(e => {
@@ -226,7 +230,7 @@ const afterCreateRxCollection = async ({
     return;
   }
   if (count || imported) {
-    if (!creator.options?.recreate) {
+    if (!creator.options?.recreate || creator.options?.replication) {
       return;
     } else {
       NgxRxdbUtils.logger.log(
@@ -275,6 +279,28 @@ export const RxDBPreparePlugin: RxPlugin = {
           localStorage.setItem(IMPORTED_FLAG, value);
         },
       });
+    },
+    RxCollection: (proto: RxCollection) => {
+      (proto as any).getMetadata = async function (): Promise<{}> {
+        const allCollectionMetaDocs = await getAllCollectionDocuments(
+          this.database.storage.statics,
+          this.database.internalStore
+        );
+        const { id, data, _meta, _rev } =
+          allCollectionMetaDocs.filter(metaDoc => metaDoc.data.name === this.name)?.at(0) ||
+          {};
+        return {
+          id,
+          name: data?.name,
+          ..._meta,
+          lastModified: Math.floor(_meta!.lwt) || null,
+          rev: _rev || null,
+        };
+      };
+      (proto as any).saveMetadata = async function (metadata: {}) {
+        // TODO:
+        return Promise.resolve();
+      };
     },
   },
   hooks: {

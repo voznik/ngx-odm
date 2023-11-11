@@ -57,7 +57,9 @@
           "browserTarget": "demo:build:production"
         },
         "development": {
-          "browserTarget": "demo:build:development"
+          "browserTarget": "demo:build:development",
+          "proxyConfig": "examples/demo/proxy.conf.js",
+          "verbose": true
         }
       },
       "defaultConfiguration": "development"

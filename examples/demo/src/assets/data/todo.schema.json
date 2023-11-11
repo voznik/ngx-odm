@@ -5,7 +5,7 @@
   "title": "Todo",
   "description": "Todo Schema",
   "required": ["id", "title", "createdAt"],
-  "version": 0,
+  "version": 1,
   "properties": {
     "id": {
       "type": "string",
@@ -24,6 +24,13 @@
     "createdAt": {
       "type": "number",
       "title": "Date Created",
+      "multipleOf": 1,
+      "minimum": 1697722545,
+      "maximum": 1918647345
+    },
+    "last_modified": {
+      "type": "number",
+      "title": "Date Updated",
       "multipleOf": 1,
       "minimum": 1697722545,
       "maximum": 1918647345
