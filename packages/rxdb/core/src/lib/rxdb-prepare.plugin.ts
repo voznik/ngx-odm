@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
-import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
+import { NgxRxdbUtils, getDefaultFetch } from '@ngx-odm/rxdb/utils';
 import { compare } from 'compare-versions';
 import type { Table as DexieTable } from 'dexie';
 import type {
@@ -20,41 +19,9 @@ import type {
   RxStorageInstance,
 } from 'rxdb';
 import { getAllCollectionDocuments } from 'rxdb';
-import { flatClone as clone } from 'rxdb/plugins/utils';
 
 const RXDB_STORAGE_TOKEN_ID = 'storage-token|storageToken';
 const IMPORTED_FLAG = '_ngx_rxdb_imported';
-
-/**
- * @see https://stackoverflow.com/a/47180009/3443137
- */
-const getDefaultFetch = () => {
-  if (typeof window === 'object' && 'fetch' in window) {
-    return window.fetch.bind(window);
-  } else {
-    return fetch;
-  }
-};
-
-/**
- * Returns a fetch handler that contains the username and password
- * in the Authorization header
- * @param username
- * @param password
- */
-export function getFetchWithAuthorizationBasic(username: string, password: string) {
-  const fetch = getDefaultFetch();
-  const ret = (url: string, options: Record<string, any>) => {
-    options = clone(options);
-    if (!options.headers) {
-      options.headers = {};
-    }
-    const encoded = btoa(username.trim() + ':' + password.trim());
-    options.headers['Authorization'] = 'Basic ' + encoded;
-    return fetch(url, options);
-  };
-  return ret;
-}
 
 export const fetchSchema = async (
   schemaUrl: string
@@ -95,7 +62,7 @@ export const prepareCollections = async (
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         config.schema = (await fetchSchema(config.options.schemaUrl))!;
       }
-      colCreators[config.name] = clone(config);
+      colCreators[config.name] = config;
     }
     return colCreators;
   } catch (error) {
@@ -281,7 +248,7 @@ export const RxDBPreparePlugin: RxPlugin = {
       });
     },
     RxCollection: (proto: RxCollection) => {
-      (proto as any).getMetadata = async function (): Promise<{}> {
+      (proto as any).getMetadata = async function (): Promise<any> {
         const allCollectionMetaDocs = await getAllCollectionDocuments(
           this.database.storage.statics,
           this.database.internalStore
@@ -297,7 +264,7 @@ export const RxDBPreparePlugin: RxPlugin = {
           rev: _rev || null,
         };
       };
-      (proto as any).saveMetadata = async function (metadata: {}) {
+      (proto as any).saveMetadata = async function (metadata: any) {
         // TODO:
         return Promise.resolve();
       };

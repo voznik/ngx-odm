@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { Collection, CollectionSyncOptions } from 'kinto';
-import type { PaginationResult, PaginatedParams } from 'kinto/lib/http/base';
 import type {
   ReplicationOptions,
   ReplicationPullOptions,
@@ -9,7 +7,7 @@ import type {
 import { Merge, SetRequired } from 'type-fest';
 
 /**
- * Synchronization strategies extracted from {@link Collection.sync}
+ * Synchronization strategies extracted from Kinto
  *
  * Strategy only applies to outgoing conflicts. Incoming conflicts will still be reported in the conflicts array. See [resolving conflicts section](https://kintojs.readthedocs.io/en/latest/api/#resolving-conflicts-manually)
  *
@@ -32,15 +30,26 @@ export enum KintoReplicationStrategy {
    */
   MANUAL = 'MANUAL',
 }
-export type KintoCollectionSyncOptions = CollectionSyncOptions & {
+
+export type KintoCollectionSyncOptions = {
+  headers?: Record<string, string>;
+  retry?: number;
+  ignoreBackoff?: boolean;
+  bucket?: string | null;
+  collection?: string | null;
+  remote?: string | null;
+  expectedTimestamp?: string | null;
   exclude?: any[];
   strategy: KintoReplicationStrategy;
   timeout?: number;
   heartbeat?: number;
 };
 export type KintoCheckpointType = { last_modified: string | null | undefined };
-export type KintoListParams = PaginatedParams;
-export type KintoListResponse<T = any> = SetRequired<Partial<PaginationResult<T>>, 'data'>;
+export type KintoListParams = KintoPaginatedParams;
+export type KintoListResponse<T = any> = SetRequired<
+  Partial<KintoPaginationResult<T>>,
+  'data'
+>;
 
 export type KintoReplicationOptions<RxDocType = any> = Merge<
   ReplicationOptions<RxDocType, any>,
@@ -56,3 +65,69 @@ export type KintoReplicationOptions<RxDocType = any> = Merge<
     push?: Omit<ReplicationPushOptions<RxDocType>, 'handler'>;
   }
 >;
+
+export interface KintoRequest {
+  method?: string;
+  path: string;
+  headers: Record<string, unknown>;
+  body?: any;
+}
+
+interface KintoConflictRecord {
+  last_modified: number;
+  id: string;
+}
+interface KintoConflictResponse {
+  existing: KintoConflictRecord;
+}
+interface KintoResponseBody {
+  data?: unknown;
+  details?: KintoConflictResponse;
+  code?: number;
+  errno?: number;
+  error?: string;
+  message?: string;
+  info?: string;
+}
+interface KintoErrorResponse {
+  path: string;
+  sent: KintoRequest;
+  error: KintoResponseBody;
+}
+export interface KintoAggregateResponse {
+  errors: KintoErrorResponse[];
+  published: KintoResponseBody[];
+  conflicts: any[];
+  skipped: any[];
+}
+export interface KintoBatchResponse {
+  status: number;
+  path: string;
+  body: KintoResponseBody;
+  headers: {
+    [key: string]: string;
+  };
+}
+export interface KintoOperationResponse<T = any> {
+  status: number;
+  path: string;
+  body: {
+    data: T;
+  };
+  headers: Record<string, string>;
+}
+export interface KintoPaginatedParams {
+  sort?: string;
+  filters?: Record<string, string | number>;
+  limit?: number;
+  pages?: number;
+  since?: string;
+  fields?: string[];
+}
+export interface KintoPaginationResult<T> {
+  last_modified: string | null;
+  data: T[];
+  next?: (nextPage?: string | null) => Promise<KintoPaginationResult<T>>;
+  hasNextPage?: boolean;
+  totalRecords?: number;
+}

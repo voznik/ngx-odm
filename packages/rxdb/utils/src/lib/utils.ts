@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any */
 import { isDevMode } from '@angular/core';
-import type { RxCollection } from 'rxdb';
+import { flatClone as clone } from 'rxdb/plugins/utils';
 import { Observable, OperatorFunction, tap } from 'rxjs';
 
 /** @internal */
@@ -259,31 +259,32 @@ export namespace NgxRxdbUtils {
 }
 
 /**
- * Like normal promiseWait()
- * but will skip the wait time if the online-state changes.
- * @param collection
- * @param retryTime
+ * @see https://stackoverflow.com/a/47180009/3443137
  */
-export function awaitRetry(collection: RxCollection, retryTime: number) {
-  if (
-    typeof window === 'undefined' ||
-    typeof window !== 'object' ||
-    typeof window.addEventListener === 'undefined' ||
-    navigator.onLine
-  ) {
-    return collection.promiseWait(retryTime);
+export const getDefaultFetch = () => {
+  if (typeof window === 'object' && 'fetch' in window) {
+    return window.fetch.bind(window);
+  } else {
+    return fetch;
   }
+};
 
-  let listener: any;
-  const onlineAgain = new Promise<void>(res => {
-    listener = () => {
-      window.removeEventListener('online', listener);
-      res();
-    };
-    window.addEventListener('online', listener);
-  });
-
-  return Promise.race([onlineAgain, collection.promiseWait(retryTime)]).then(() => {
-    window.removeEventListener('online', listener);
-  });
+/**
+ * Returns a fetch handler that contains the username and password
+ * in the Authorization header
+ * @param username
+ * @param password
+ */
+export function getFetchWithAuthorizationBasic(username: string, password: string) {
+  const fetch = getDefaultFetch();
+  const ret = (url: string, options: Record<string, any>) => {
+    options = clone(options);
+    if (!options.headers) {
+      options.headers = {};
+    }
+    const encoded = btoa(username.trim() + ':' + password.trim());
+    options.headers['Authorization'] = 'Basic ' + encoded;
+    return fetch(url, options);
+  };
+  return ret;
 }

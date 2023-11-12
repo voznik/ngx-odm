@@ -1,8 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import { KintoClient } from 'kinto';
-import type { AggregateResponse } from 'kinto/lib/http';
-import type { FetchFunction } from 'kinto/lib/types';
 import type {
   DocumentsWithCheckpoint,
   ReplicationPullOptions,
@@ -26,43 +23,18 @@ import {
   startWith,
   switchMap,
   takeUntil,
-  tap,
   timer,
 } from 'rxjs';
-import { DEFAULT_REPLICATION_OPTIONS } from './helpers';
+import { DEFAULT_REPLICATION_OPTIONS, kintoCollectionFactory } from './helpers';
 import {
+  KintoAggregateResponse,
   KintoCheckpointType,
-  KintoListParams,
   KintoListResponse,
   KintoReplicationOptions,
 } from './types';
 
-class RxKintoDBReplicationState<RxDocType> extends RxReplicationState<
-  RxDocType,
-  KintoCheckpointType
-> {
-  constructor(
-    public readonly kintoSyncOptions: KintoReplicationOptions['kintoSyncOptions'],
-    public override readonly replicationIdentifier: string,
-    public override readonly collection: RxCollection<RxDocType>,
-    public override readonly pull?: ReplicationPullOptions<RxDocType, KintoCheckpointType>,
-    public override readonly push?: ReplicationPushOptions<RxDocType>,
-    public override readonly live: boolean = true,
-    public override retryTime: number = 1000 * 5,
-    public override autoStart: boolean = true
-  ) {
-    super(
-      replicationIdentifier,
-      collection,
-      'deleted',
-      pull,
-      push,
-      live,
-      retryTime,
-      autoStart
-    );
-  }
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyObject = Record<string, any>;
 
 /**
  * The basic idea is to keep a local database up to date with the Kinto server:
@@ -82,11 +54,14 @@ class RxKintoDBReplicationState<RxDocType> extends RxReplicationState<
  * Depending on the context (latest first, readonly, etc.), there are several strategies to poll the server for changes.
  * @param options
  */
-export function replicateKintoDB<RxDocType>(options: KintoReplicationOptions) {
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-constraint
+export function replicateKintoDB<RxDocType extends AnyObject>(
+  options: KintoReplicationOptions
+) {
   const {
     replicationIdentifier,
     kintoSyncOptions,
-    fetch: fetchFunc,
+    fetch,
     pull,
     push,
     collection,
@@ -94,46 +69,10 @@ export function replicateKintoDB<RxDocType>(options: KintoReplicationOptions) {
     live,
     autoStart,
     waitForLeadership,
-    deletedField,
   } = Object.assign(DEFAULT_REPLICATION_OPTIONS, options);
   addRxPlugin(RxDBLeaderElectionPlugin);
-  /* eslint-disable prefer-const, @typescript-eslint/no-non-null-assertion */
-  let {
-    remote,
-    bucket,
-    collection: collectionName,
-    headers,
-    exclude,
-    expectedTimestamp,
-    timeout,
-    heartbeat,
-    strategy,
-  } = kintoSyncOptions;
-  // Optionally ignore some records when pulling for changes.
-  let filters: KintoListParams['filters'] = {};
-  if (exclude) {
-    const exclude_id = exclude
-      .slice(0, 50)
-      .map(r => r.id)
-      .join(',');
-    filters = { exclude_id };
-  }
-  if (expectedTimestamp) {
-    filters = {
-      ...filters,
-      _expected: expectedTimestamp,
-    };
-  }
 
-  const client = new KintoClient(remote!, {
-    timeout,
-    headers,
-    retry,
-    fetchFunc: fetchFunc as unknown as FetchFunction,
-  });
-
-  const kintoCollection = client.bucket(bucket!).collection(collectionName!);
-  /* eslint-enable prefer-const, @typescript-eslint/no-non-null-assertion */
+  const kintoCollection = kintoCollectionFactory(kintoSyncOptions, fetch);
 
   const pullStream$: Subject<DocumentsWithCheckpoint<RxDocType, KintoCheckpointType>> =
     new Subject();
@@ -142,24 +81,22 @@ export function replicateKintoDB<RxDocType>(options: KintoReplicationOptions) {
     | ReplicationPullOptions<RxDocType, KintoCheckpointType>
     | undefined;
   let _pushImplementation: ReplicationPushOptions<RxDocType> | undefined;
-  let _pullHandlerResult$: Observable<DocumentsWithCheckpoint<any, KintoCheckpointType>> =
-    EMPTY;
+  let _pullHandlerResult$: Observable<
+    DocumentsWithCheckpoint<RxDocType, KintoCheckpointType>
+  > = EMPTY;
 
   if (pull) {
     _pullImplementation = {
       async handler(lastPulledCheckpoint, batchSize) {
         let since = lastPulledCheckpoint?.last_modified || undefined;
-
-        // Create an Observable that emits every POLLING_INTERVAL milliseconds if live is true, otherwise emits once
-        _pullHandlerResult$ = interval(heartbeat).pipe(
+        //  Assign function to poll for remote changes.
+        _pullHandlerResult$ = interval(options.kintoSyncOptions.heartbeat).pipe(
           startWith(0),
           switchMap(() =>
             kintoCollection.listRecords({
+              sort: '-last_modified',
               since,
-              headers,
-              retry,
-              pages: Infinity,
-              filters,
+              pages: Infinity, // TODO: use batchSize
             })
           ),
           map(({ data: documents, last_modified }: KintoListResponse<any>) => {
@@ -170,6 +107,7 @@ export function replicateKintoDB<RxDocType>(options: KintoReplicationOptions) {
               checkpoint: { last_modified },
             };
           })
+          // TODO:
           // catchError(err => {
           //   NgxRxdbUtils.logger.log(err);
           //   return throwError(err);
@@ -187,58 +125,32 @@ export function replicateKintoDB<RxDocType>(options: KintoReplicationOptions) {
   if (push) {
     _pushImplementation = {
       async handler(changes) {
-        const safe = !strategy || strategy !== undefined;
-        const toDelete = new Map<string, any>();
-        const toSync = new Map<string, any>();
-        changes.forEach(({ newDocumentState: doc }: any) => {
-          if (doc._deleted) {
-            toDelete.set(doc.id, doc);
+        const toDelete: RxDocType[] = [];
+        const toUpdate: RxDocType[] = [];
+        const toCreate: RxDocType[] = [];
+        changes.forEach(({ newDocumentState: doc }) => {
+          if (doc.deleted) {
+            toDelete.push(doc);
+          } else if (doc.last_modified) {
+            toUpdate.push(doc);
           } else {
-            // Clean local fields (like _deleted) before sending to server.
-            delete (doc as any)._deleted;
-            toSync.set(doc.id, doc);
+            toCreate.push(doc);
           }
         });
 
         // Perform a batch request with every changes.
-        const { conflicts, errors, published } = (await kintoCollection.batch(
-          batch => {
-            toDelete.forEach(({ last_modified, ...r }: any) => {
-              // never published locally deleted records should not be pusblished
-              if (last_modified) {
-                batch.deleteRecord(r, {
-                  last_modified,
-                });
-              }
-            });
-            toSync.forEach(({ last_modified, ...r }: any) => {
-              if (!last_modified) {
-                batch.createRecord(r);
-              } else {
-                batch.updateRecord(r, {
-                  last_modified,
-                });
-              }
-            });
-          },
-          {
-            headers,
-            retry,
-            safe,
-            aggregate: true,
-          }
-        )) as AggregateResponse;
+        const { conflicts, errors, published } = (await kintoCollection.batch({
+          toCreate,
+          toUpdate,
+          toDelete,
+        })) as KintoAggregateResponse;
 
         if (errors.length) {
           NgxRxdbUtils.logger.log(errors);
-        }
-
-        if (published.length) {
+        } else if (published.length) {
           // Update local documents with the new published state.
-          const toUpdate: any[] = published
-            .filter(({ data }: any) => !toDelete.has(data.id))
-            .map(({ data }) => data);
-          return toUpdate;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return published.filter(({ data }: any) => !data.deleted).map(({ data }) => data);
         }
         return conflicts.map(c => c.remote);
       },
@@ -247,10 +159,10 @@ export function replicateKintoDB<RxDocType>(options: KintoReplicationOptions) {
     };
   }
 
-  const replication = new RxKintoDBReplicationState<RxDocType>(
-    kintoSyncOptions,
+  const replication = new RxReplicationState<RxDocType, KintoCheckpointType>(
     replicationIdentifier,
     collection as RxCollection,
+    'deleted',
     _pullImplementation,
     _pushImplementation,
     live,
@@ -268,7 +180,6 @@ export function replicateKintoDB<RxDocType>(options: KintoReplicationOptions) {
         switchMap(() => _pullHandlerResult$),
         skip(1),
         NgxRxdbUtils.debug('replication long-poll'),
-        tap(pullStream$),
         retryWhen(errors =>
           errors.pipe(
             NgxRxdbUtils.debug('replication long-poll error'),
@@ -277,7 +188,7 @@ export function replicateKintoDB<RxDocType>(options: KintoReplicationOptions) {
         ),
         takeUntil(replication.canceled$)
       )
-      .subscribe();
+      .subscribe(pullStream$);
   }
 
   startReplicationOnLeaderShip(true, replication);
@@ -285,4 +196,5 @@ export function replicateKintoDB<RxDocType>(options: KintoReplicationOptions) {
   return replication;
 }
 
+export * from './helpers';
 export * from './types';

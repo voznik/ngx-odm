@@ -95,6 +95,7 @@ export class TodosModule {
         strategy: KintoReplicationStrategy.CLIENT_WINS,
         heartbeat: 60000,
         headers: {
+          'Content-Type': 'application/json',
           Authorization: 'Basic ' + btoa('admin:adminadmin'),
         },
       },
