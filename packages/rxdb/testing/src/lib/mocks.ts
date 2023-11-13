@@ -82,6 +82,12 @@ export const getMocktRxCollection = () => {
     storageInstance: {
       info: jest.fn().mockResolvedValue({ totalCount: 0 }),
     },
+    getMetadata: jest.fn().mockResolvedValue({
+      rev: 1,
+      lwt: 1699880452315.01,
+      last_modified: 1699880452315,
+      name: 'test',
+    }),
     destroy: jest.fn().mockResolvedValue(null),
     importJSON: jest.fn().mockResolvedValue(null),
     exportJSON: jest.fn().mockResolvedValue(null),

@@ -11,7 +11,7 @@
       "type": "string",
       "title": "Id",
       "pattern": "^(.*)$",
-      "maxLength": 32
+      "maxLength": 36
     },
     "title": {
       "type": "string",
@@ -24,16 +24,12 @@
     "createdAt": {
       "type": "number",
       "title": "Date Created",
-      "multipleOf": 1,
-      "minimum": 1697722545,
-      "maximum": 1918647345
+      "format": "date-time"
     },
     "last_modified": {
       "type": "number",
-      "title": "Date Updated",
-      "multipleOf": 1,
-      "minimum": 1697722545,
-      "maximum": 1918647345
+      "title": "Last Modified",
+      "multipleOf": 1
     }
   },
   "__indexes": ["createdAt"],

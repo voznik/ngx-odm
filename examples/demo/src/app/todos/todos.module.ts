@@ -10,7 +10,7 @@ import {
   replicateKintoDB,
 } from '@ngx-odm/rxdb/replication-kinto';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import { lastValueFrom } from 'rxjs';
+import { fromEvent, lastValueFrom, takeWhile } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { TodosComponent } from './components/todos/todos.component';
 import { TodosPipe } from './components/todos/todos.pipe';
@@ -59,9 +59,7 @@ export class TodosModule {
     await lastValueFrom(this.collectionService.initialized$);
     const info = await this.collectionService.info();
     NgxRxdbUtils.logger.log('collection info:', { info });
-    if (this.collectionService.db.storage.name !== 'dexie') {
-      return;
-    }
+
     /* const replicationState = replicateCouchDB({
       replicationIdentifier: 'demo-couchdb-replication',
       retryTime: 15000,
@@ -101,16 +99,27 @@ export class TodosModule {
       },
       live: true,
       pull: {
+        batchSize: 60,
         modifier: d => d,
-        heartbeat: 60000,
       },
       push: {
         modifier: d => d,
       },
     });
 
+    // Re-sync replication when back online
+    fromEvent(window, 'online')
+      .pipe(takeWhile(() => !replicationState.isStopped()))
+      .subscribe(() => {
+        NgxRxdbUtils.logger.log('online');
+        replicationState.reSync();
+      });
+
     replicationState.error$.subscribe(err => {
-      if (err.message.includes('unauthorized') || err.message.includes('Failed to fetch')) {
+      if (
+        err.message.includes('unauthorized')
+        // || err.message.includes('Failed to fetch')
+      ) {
         replicationState.cancel();
         NgxRxdbUtils.logger.log('replicationState has error, cancel replication');
         NgxRxdbUtils.logger.log(err.message);

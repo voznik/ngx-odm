@@ -72,7 +72,12 @@ export interface KintoRequest {
   headers: Record<string, unknown>;
   body?: any;
 }
-
+export interface KintInfoResponse {
+  data: {
+    last_modified: number;
+  };
+  permissions: any;
+}
 interface KintoConflictRecord {
   last_modified: number;
   id: string;
@@ -99,6 +104,7 @@ export interface KintoAggregateResponse {
   published: KintoResponseBody[];
   conflicts: any[];
   skipped: any[];
+  last_modified: number | undefined;
 }
 export interface KintoBatchResponse {
   status: number;

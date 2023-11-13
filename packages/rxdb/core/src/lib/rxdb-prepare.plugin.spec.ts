@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/no-non-null-assertion */
 import { getMocktRxCollection } from '@ngx-odm/rxdb/testing';
 import { RxCollection, RxCollectionCreator, RxPlugin, RxQuery } from 'rxdb';
 import { RxDBPreparePlugin } from './rxdb-prepare.plugin';
@@ -37,6 +36,7 @@ describe('RxDBPreparePlugin', () => {
     });
 
     it('should import initial docs if collection is empty and initialDocs is not empty', async () => {
+      creator.options.recreate = true;
       creator.options.initialDocs = [{ foo: 'bar' }];
       await plugin.hooks!.createRxCollection!.after!({ collection, creator });
       expect(collection.importJSON).toHaveBeenCalledWith({
@@ -60,15 +60,6 @@ describe('RxDBPreparePlugin', () => {
       expect(
         async () => await plugin.hooks!.createRxCollection!.after!({ collection, creator })
       ).not.toThrow();
-    });
-
-    it('should set _imported property to current time after successful import', async () => {
-      creator.options.initialDocs = [{ foo: 'bar' }];
-      jest.spyOn(collection, 'importJSON').mockResolvedValue(undefined);
-
-      await plugin.hooks!.createRxCollection!.after!({ collection, creator });
-
-      expect((collection.database as any)._imported).toBeGreaterThan(0);
     });
   });
 });

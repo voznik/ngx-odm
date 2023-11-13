@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any */
 import { isDevMode } from '@angular/core';
 import { flatClone as clone } from 'rxdb/plugins/utils';
-import { Observable, OperatorFunction, tap } from 'rxjs';
+import { Observable, OperatorFunction, retry, tap, timer } from 'rxjs';
 
 /** @internal */
 type Cast<I, O> = Exclude<I, O> extends never ? I : O;
@@ -255,6 +255,25 @@ export namespace NgxRxdbUtils {
         })
       );
     };
+  }
+
+  /**
+   * Simple rxjs exponential backoff retry operator
+   * @param count
+   * @param retryTime
+   */
+  export function retryWithBackoff<T>(count = 3, retryTime = 10000) {
+    return (obs$: Observable<T>) =>
+      obs$.pipe(
+        retry({
+          count,
+          delay: (_, retryIndex) => {
+            const d = Math.pow(2, retryIndex - 1) * retryTime;
+            NgxRxdbUtils.logger.log('replication:kinto:longpoll:retry', retryIndex, d);
+            return timer(d);
+          },
+        })
+      );
   }
 }
 

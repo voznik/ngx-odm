@@ -189,14 +189,13 @@ const afterCreateRxCollection = async ({
   const meta = await (col as any).getMetadata();
   NgxRxdbUtils.logger.log('prepare-plugin: hook:createRxCollection:after', meta);
   const initialDocs = creator.options?.initialDocs || [];
-  const imported = (col.database as any)._imported;
   const { totalCount: count } = await col.storageInstance.info().catch(e => {
     return { totalCount: 0 } as RxStorageInfoResult;
   });
   if (!initialDocs.length) {
     return;
   }
-  if (count || imported) {
+  if (count || meta.rev >= 1) {
     if (!creator.options?.recreate || creator.options?.replication) {
       return;
     } else {
@@ -259,14 +258,9 @@ export const RxDBPreparePlugin: RxPlugin = {
         return {
           id,
           name: data?.name,
-          ..._meta,
-          lastModified: Math.floor(_meta!.lwt) || null,
-          rev: _rev || null,
+          last_modified: Math.floor(_meta!.lwt) || null,
+          rev: Number(_rev?.at(0)),
         };
-      };
-      (proto as any).saveMetadata = async function (metadata: any) {
-        // TODO:
-        return Promise.resolve();
       };
     },
   },

@@ -2,11 +2,11 @@
 import { NgxRxdbUtils, getDefaultFetch } from '@ngx-odm/rxdb/utils';
 import { deepEqual, type RxConflictHandlerInput, type RxConflictHandlerOutput } from 'rxdb';
 import {
+  KintInfoResponse,
   KintoAggregateResponse,
   KintoBatchResponse,
   KintoCollectionSyncOptions,
   KintoListParams,
-  KintoOperationResponse,
   KintoPaginatedParams,
   KintoPaginationResult,
   KintoReplicationStrategy,
@@ -46,6 +46,13 @@ export function conflictHandlerKinto({
     isEqual: false,
     documentData: remote,
   });
+}
+
+export function assignLastModified(doc: any, last_modified: number, force = false) {
+  if (!doc.last_modified || force) {
+    doc.last_modified = last_modified;
+  }
+  return doc;
 }
 
 /**
@@ -121,14 +128,19 @@ export function aggregate(
   if (responses.length !== requests.length) {
     throw new Error('Responses length should match requests one.');
   }
+  let last_modified: number | undefined;
   const results: KintoAggregateResponse = {
     errors: [],
     published: [],
     conflicts: [],
     skipped: [],
+    last_modified,
   };
   return responses.reduce((acc, response, index) => {
-    const { status } = response;
+    const { status, headers } = response;
+    const etag = headers?.['ETag'];
+    // ETag header values are quoted (because of * and W/"foo").
+    acc.last_modified = etag ? +etag.replace(/"/g, '') : undefined;
     const request = requests[index];
     if (status >= 200 && status < 400) {
       acc.published.push(response.body);
@@ -160,6 +172,16 @@ export function aggregate(
   }, results);
 }
 
+export function mergeAggregatedResponse(
+  obj: KintoAggregateResponse,
+  next: KintoAggregateResponse
+): KintoAggregateResponse {
+  for (const key in next) {
+    obj[key] = next[key];
+  }
+  return obj;
+}
+
 export function kintoCollectionFactory(
   {
     remote,
@@ -173,6 +195,7 @@ export function kintoCollectionFactory(
   }: KintoCollectionSyncOptions,
   fetch = getDefaultFetch()
 ) {
+  const collectionUrl = `buckets/${bucket}/collections/${collectionName}`;
   // Optionally ignore some records when pulling for changes.
   let filters: KintoListParams['filters'];
   if (exclude) {
@@ -188,12 +211,22 @@ export function kintoCollectionFactory(
       _expected: expectedTimestamp,
     };
   }
-  const collectionUrl = `buckets/${bucket}/collections/${collectionName}/records`;
   return {
+    async info(): Promise<KintInfoResponse> {
+      const response = await fetch(`${remote}/${collectionUrl}`, { headers });
+      return response.json();
+    },
     async listRecords(options: KintoPaginatedParams): Promise<KintoPaginationResult<any>> {
       const { ...query } = options;
-      const url = addEndpointOptions(`${remote}/${collectionUrl}`, { query });
+      if (filters) {
+        query.filters = filters;
+      }
+      if (!query.sort) {
+        query.sort = '-last_modified';
+      }
+      const url = addEndpointOptions(`${remote}/${collectionUrl}/records`, { query });
       const response = await fetch(url, { headers });
+      const nextPage = response.headers.get('Next-Page');
       const etag = response.headers.get('ETag');
       // ETag header values are quoted (because of * and W/"foo").
       const last_modified = etag ? etag.replace(/"/g, '') : etag;
@@ -201,42 +234,45 @@ export function kintoCollectionFactory(
       NgxRxdbUtils.logger.log('replication:kinto:since', response.status, last_modified);
       return {
         data,
+        hasNextPage: !!nextPage,
         last_modified,
       };
     },
-    async batch({
-      toCreate = [],
-      toUpdate = [],
-      toDelete = [],
-    }: {
-      toDelete: any[];
-      toCreate: any[];
-      toUpdate: any[];
-    }): Promise<KintoOperationResponse<any>[] | KintoAggregateResponse> {
+    async batch(changes: any[]): Promise<KintoAggregateResponse> {
       const safe = !strategy || strategy !== undefined;
+      const toDelete: any[] = [];
+      const toUpdate: any[] = [];
+      const toCreate: any[] = [];
+      changes.forEach(doc => {
+        if (doc.deleted) {
+          toDelete.push(doc);
+        } else if (doc.last_modified) {
+          toUpdate.push(doc);
+        } else {
+          toCreate.push(doc);
+        }
+      });
       const body = {
         defaults: { headers },
         requests: [
           // CREATE
           ...toCreate.map(({ last_modified, ...data }) => ({
             method: 'PUT',
-            path: `/${collectionUrl}/${data.id}`,
+            path: `/${collectionUrl}/records/${data.id}`,
             headers: { 'If-None-Match': '*' },
             body: { data },
           })),
           // UPDATE
           ...toUpdate.map(({ last_modified, ...data }) => ({
-            method: 'PUT',
-            path: `/${collectionUrl}/${data.id}`,
+            method: 'PATCH',
+            path: `/${collectionUrl}/records/${data.id}`,
             headers: { 'If-Match': `"${last_modified}"` },
             body: { data },
           })),
           // DELETE
           ...toDelete.map(({ id, last_modified, ...data }) => ({
-            method: 'PUT',
-            path: `/${collectionUrl}/${id}`,
-            headers: { 'If-Match': `"${last_modified}"` },
-            body: { data: { id, deleted: true } },
+            method: 'DELETE',
+            path: `/${collectionUrl}/records/${id}`,
           })),
         ],
       };
