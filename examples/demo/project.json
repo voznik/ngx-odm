@@ -8,14 +8,21 @@
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:browser",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/demo",
         "index": "examples/demo/src/index.html",
         "main": "examples/demo/src/main.ts",
-        "polyfills": ["zone.js"],
+        "polyfills": [
+          "zone.js"
+        ],
         "tsConfig": "examples/demo/tsconfig.app.json",
-        "assets": ["examples/demo/src/favicon.ico", "examples/demo/src/assets"],
+        "assets": [
+          "examples/demo/src/favicon.ico",
+          "examples/demo/src/assets"
+        ],
         "styles": [
           "node_modules/todomvc-common/base.css",
           "node_modules/todomvc-app-css/index.css"
@@ -24,6 +31,12 @@
       },
       "configurations": {
         "production": {
+          "fileReplacements": [
+            {
+              "replace": "examples/demo/src/environments/environment.ts",
+              "with": "examples/demo/src/environments/environment.prod.ts"
+            }
+          ],
           "budgets": [
             {
               "type": "initial",
@@ -72,14 +85,21 @@
     },
     "lint": {
       "executor": "@nx/linter:eslint",
-      "outputs": ["{options.outputFile}"],
+      "outputs": [
+        "{options.outputFile}"
+      ],
       "options": {
-        "lintFilePatterns": ["examples/demo/**/*.ts", "examples/demo/**/*.html"]
+        "lintFilePatterns": [
+          "examples/demo/**/*.ts",
+          "examples/demo/**/*.html"
+        ]
       }
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
       "options": {
         "jestConfig": "examples/demo/jest.config.ts",
         "passWithNoTests": true

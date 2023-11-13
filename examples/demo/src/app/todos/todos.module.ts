@@ -98,8 +98,8 @@ export class TodosModule {
       collection: this.collectionService.collection,
       kintoSyncOptions: {
         remote: environment.kintoServer,
-        bucket: 'todo',
-        collection: 'todos',
+        bucket: environment.bucket,
+        collection: environment.collection,
         strategy: KintoReplicationStrategy.CLIENT_WINS,
         heartbeat: 60000,
         headers: {
