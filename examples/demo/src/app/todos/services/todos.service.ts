@@ -3,9 +3,16 @@ import { Location } from '@angular/common';
 import { Inject, Injectable } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
-import { MangoQuery } from 'rxdb/dist/types/types';
-import { Observable } from 'rxjs';
-import { distinctUntilChanged, startWith, switchMap, tap } from 'rxjs/operators';
+import type { MangoQuery, RxDatabaseCreator } from 'rxdb';
+import {
+  Observable,
+  of,
+  defaultIfEmpty,
+  distinctUntilChanged,
+  startWith,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { Todo, TodosFilter } from '../models';
 
@@ -13,39 +20,33 @@ import { Todo, TodosFilter } from '../models';
 export class TodosService {
   filter$: Observable<TodosFilter> = this.collectionService
     .getLocal('local', 'filterValue')
-    .pipe(startWith('ALL'), distinctUntilChanged()) as Observable<TodosFilter>;
+    .pipe(
+      startWith('ALL'),
+      distinctUntilChanged(),
+      defaultIfEmpty('ALL')
+    ) as Observable<TodosFilter>;
 
-  count$ = this.collectionService.count();
+  count$ = this.collectionService.count().pipe(defaultIfEmpty(0));
 
-  todos$: Observable<Todo[]> = this.collectionService.docs().pipe(
+  todos$: Observable<Todo[]> = of([]).pipe(
+    switchMap(() => this.collectionService.docs()),
     tap(docs => {
       const total = docs.length;
       const remaining = docs.filter(doc => !doc.completed).length;
       this.title.setTitle(`(${total - remaining}/${total}) Todos done`);
-    })
+    }),
+    defaultIfEmpty([])
   );
+
+  get dbOptions(): Readonly<RxDatabaseCreator> {
+    return this.collectionService.dbOptions;
+  }
 
   constructor(
     @Inject(NgxRxdbCollectionService) private collectionService: NgxRxdbCollection<Todo>,
     private location: Location,
     private title: Title
   ) {}
-
-  select(completedOnly = false): Observable<Todo[]> {
-    const queryObj = this.buildQueryObject(completedOnly);
-    return this.filter$.pipe(
-      switchMap(filterValue => {
-        if (filterValue !== 'ALL') {
-          Object.assign(queryObj.selector, {
-            completed: filterValue === 'COMPLETED',
-          });
-        } else {
-          delete queryObj.selector['completed'];
-        }
-        return this.collectionService.docs(queryObj);
-      })
-    );
-  }
 
   add(title: string): void {
     const id = uuid();
@@ -54,7 +55,7 @@ export class TodosService {
       // _id: id,
       title,
       completed: false,
-      createdAt: Date.now(),
+      createdAt: new Date().toISOString(),
       last_modified: undefined,
     };
     this.collectionService.insert(payload);
@@ -89,18 +90,5 @@ export class TodosService {
     const path = this.location.path().split('?')[0];
     this.location.replaceState(path, `filter=${filterValue}`);
     this.collectionService.upsertLocal('local', { filterValue });
-  }
-
-  private buildQueryObject(completedOnly: boolean): MangoQuery<Todo> {
-    const queryObj: MangoQuery<Todo> = {
-      selector: {},
-      sort: [{ createdAt: 'desc' }],
-    };
-    if (completedOnly) {
-      Object.assign(queryObj.selector, {
-        completed: false,
-      });
-    }
-    return queryObj;
   }
 }

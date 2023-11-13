@@ -123,7 +123,6 @@ export function replicateKintoDB<RxDocType extends AnyObject>(
         const {
           data: { last_modified },
         } = await kintoCollection.info();
-        // await firstValueFrom(replication.subjects.received);
         const outgoing = changes.map(({ newDocumentState: doc }) => doc);
         const results: KintoAggregateResponse = {
           errors: [],

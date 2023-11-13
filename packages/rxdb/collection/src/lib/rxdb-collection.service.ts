@@ -7,6 +7,7 @@ import type {
   MangoQuery,
   RxCollection,
   RxDatabase,
+  RxDatabaseCreator,
   RxDocument,
   RxDumpCollection,
   RxDumpCollectionAny,
@@ -59,6 +60,10 @@ export class NgxRxdbCollection<T = {}> {
 
   get db(): Readonly<RxDatabase> {
     return this.dbService.db as RxDatabase;
+  }
+
+  get dbOptions(): Readonly<RxDatabaseCreator> {
+    return this.dbService.dbOptions;
   }
 
   constructor(
@@ -342,7 +347,11 @@ export class NgxRxdbCollection<T = {}> {
 
   private async ensureCollection(): Promise<boolean> {
     if (!this.collection) {
-      await lastValueFrom(this.initialized$);
+      await lastValueFrom(this.initialized$).catch(() => {
+        throw new Error(
+          `Collection "${this.config.name}" was not initialized. Please check previous RxDB errors.`
+        );
+      });
     }
     return true;
   }

@@ -19,6 +19,8 @@ import type {
   RxStorageInstance,
 } from 'rxdb';
 import { getAllCollectionDocuments } from 'rxdb';
+// TODO: use when stable
+// import { AfterMigrateBatchHandlerInput, migrateStorage, } from 'rxdb/plugins/migration-storage';
 
 const RXDB_STORAGE_TOKEN_ID = 'storage-token|storageToken';
 const IMPORTED_FLAG = '_ngx_rxdb_imported';
@@ -117,7 +119,7 @@ const prepareDbDump = async (
  * @param storageInstance
  * @param rxdbVersion
  */
-const migrateStorage = async (
+const migrateStorageVersion = async (
   storage: RxStorage<any, any>,
   storageInstance: RxStorageInstance<any, any, any>,
   rxdbVersion: string
@@ -158,7 +160,7 @@ const afterCreateRxDatabase = async ({
   NgxRxdbUtils.logger.log('prepare-plugin: hook:createRxDatabase:after');
 
   const { storage, internalStore: storageInstance, rxdbVersion } = db;
-  await migrateStorage(storage, storageInstance, rxdbVersion); // TODO: remove or improve this hack
+  await migrateStorageVersion(storage, storageInstance, rxdbVersion); // TODO: remove or improve this hack
 
   if (!creator.options?.dumpPath || db._imported) {
     return;

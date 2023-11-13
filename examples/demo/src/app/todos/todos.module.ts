@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Inject, NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LetDirective } from '@ngrx/component';
+import { LetDirective, PushPipe } from '@ngrx/component';
 import { NgxRxdbModule } from '@ngx-odm/rxdb';
 import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
 import {
@@ -23,6 +23,7 @@ import { TodosRoutingModule } from './todos-routing.module';
     CommonModule,
     FormsModule,
     LetDirective,
+    PushPipe,
     TodosRoutingModule,
     NgxRxdbModule.forFeature({
       name: 'todo',
@@ -36,11 +37,21 @@ import { TodosRoutingModule } from './todos-routing.module';
       },
       autoMigrate: true,
       migrationStrategies: {
-        // 1 means, this transforms data from version 0 to version 1
         1: function (doc) {
+          if (doc._deleted) {
+            return null;
+          }
           doc.last_modified = new Date(doc.createdAt).getTime(); // string to unix
           return doc;
         },
+        2: function (doc) {
+          if (doc._deleted) {
+            return null;
+          }
+          doc.createdAt = new Date(doc.createdAt).toISOString(); // to string
+          return doc;
+        },
+        3: d => d,
       },
       conflictHandler: conflictHandlerKinto,
     }),
@@ -56,7 +67,7 @@ export class TodosModule {
   }
 
   async onCollectionInit() {
-    await lastValueFrom(this.collectionService.initialized$);
+    await this.collectionService.initialized$.toPromise();
     const info = await this.collectionService.info();
     NgxRxdbUtils.logger.log('collection info:', { info });
 
@@ -84,7 +95,6 @@ export class TodosModule {
 
     const replicationState = replicateKintoDB<Todo>({
       replicationIdentifier: 'demo-kinto-replication:todo',
-      retryTime: 15000,
       collection: this.collectionService.collection,
       kintoSyncOptions: {
         remote: environment.kintoServer,
@@ -97,7 +107,9 @@ export class TodosModule {
           Authorization: 'Basic ' + btoa('admin:adminadmin'),
         },
       },
+      retryTime: 15000,
       live: true,
+      autoStart: true,
       pull: {
         batchSize: 60,
         modifier: d => d,

@@ -18,10 +18,15 @@ import { prepareCollections } from './rxdb-prepare.plugin';
 @Injectable()
 export class NgxRxdbService {
   private dbInstance!: RxDatabase;
+  private options!: RxDatabaseCreator;
 
   get db(): RxDatabase {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return this.dbInstance!;
+  }
+
+  get dbOptions(): RxDatabaseCreator {
+    return this.options;
   }
 
   get collections(): CollectionsOfDatabase {
@@ -50,6 +55,7 @@ export class NgxRxdbService {
       this.dbInstance = await createRxDatabase(config).catch(e => {
         throw new Error(e.message ?? e);
       });
+      this.options = config;
       NgxRxdbUtils.logger.log(
         `created database "${this.db.name}" with config "${JSON.stringify(config)}"`
       );

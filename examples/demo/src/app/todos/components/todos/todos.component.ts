@@ -5,7 +5,7 @@ import {
   Component,
   OnInit,
 } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { Todo, TodosFilter } from '../../models';
 import { TodosService } from '../../services';
 
@@ -32,7 +32,14 @@ const listAnimation = trigger('listAnimation', [
 })
 export class TodosComponent implements OnInit {
   filter$ = this.todosService.filter$;
-  todos$: Observable<Todo[]> = this.todosService.todos$;
+  todos$: Observable<Todo[]> = this.todosService.todos$.pipe(
+    tap(() => {
+      // INFO: for `multiinstance` (multiple tabs) case - need to force change detection
+      if (this.todosService.dbOptions.multiInstance) {
+        this.cdRef.detectChanges();
+      }
+    })
+  );
   count$ = this.todosService.count$;
   newTodo = '';
   isEditing = '';

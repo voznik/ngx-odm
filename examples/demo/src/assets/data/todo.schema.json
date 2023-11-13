@@ -5,13 +5,14 @@
   "title": "Todo",
   "description": "Todo Schema",
   "required": ["id", "title", "createdAt"],
-  "version": 1,
+  "version": 3,
   "properties": {
     "id": {
       "type": "string",
       "title": "Id",
       "pattern": "^(.*)$",
-      "maxLength": 36
+      "maxLength": 36,
+      "readOnly": true
     },
     "title": {
       "type": "string",
@@ -22,13 +23,14 @@
       "title": "Done"
     },
     "createdAt": {
-      "type": "number",
-      "title": "Date Created",
-      "format": "date-time"
+      "type": "string",
+      "title": "Created Date",
+      "format": "date-time",
+      "readOnly": true
     },
     "last_modified": {
       "type": "number",
-      "title": "Last Modified",
+      "title": "Last Modified Date",
       "multipleOf": 1
     }
   },

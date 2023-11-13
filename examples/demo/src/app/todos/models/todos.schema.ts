@@ -1,5 +1,5 @@
 import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
-import type { RxCollection } from 'rxdb';
+import type { MigrationStrategies, RxCollection } from 'rxdb';
 import { TODOS_INITIAL_STATE } from './todos.model';
 
 export async function percentageCompletedFn() {
