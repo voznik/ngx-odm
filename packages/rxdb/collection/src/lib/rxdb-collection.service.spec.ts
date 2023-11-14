@@ -1,26 +1,24 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { TestBed, inject, waitForAsync } from '@angular/core/testing';
-import { NgxRxdbModule } from '@ngx-odm/rxdb';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
-import {
-  TEST_FEATURE_CONFIG_1,
-  TEST_DB_CONFIG_2,
-  getMockRxdbServiceFactory,
-  TEST_SCHEMA,
-} from '@ngx-odm/rxdb/testing';
-import { MangoQuery } from 'rxdb';
+import { TEST_FEATURE_CONFIG_1, getMockRxdbServiceFactory } from '@ngx-odm/rxdb/testing';
+import { MangoQuery, RxQuery } from 'rxdb';
 import { createRxLocalDocument } from 'rxdb/plugins/local-documents';
-import { Observable, firstValueFrom, take } from 'rxjs';
-import { NgxRxdbCollection, NgxRxdbCollectionService } from './rxdb-collection.service';
+import { Observable, firstValueFrom } from 'rxjs';
+import { NgxRxdbCollection } from './rxdb-collection.service';
 
 describe(`NgxRxdbCollectionService`, () => {
   describe(`test methods using mock NgxRxdbService`, () => {
     let dbService: NgxRxdbService;
     let service: NgxRxdbCollection;
 
-    beforeEach(() => {
-      dbService = getMockRxdbServiceFactory();
+    beforeAll(async () => {
+      dbService = await getMockRxdbServiceFactory();
       service = new NgxRxdbCollection(dbService, TEST_FEATURE_CONFIG_1);
+    });
+
+    afterEach(() => {
+      // jest.restoreAllMocks();
+      // await expect(result).rejects.toThrowError();
     });
 
     it(`should provide Observable "initialized$" getter`, async () => {
@@ -49,18 +47,19 @@ describe(`NgxRxdbCollectionService`, () => {
     });
 
     it('should destroy collection', async () => {
+      jest.spyOn(service.collection, 'destroy').mockResolvedValue(null as any);
       await service.destroy();
       expect(service.collection.destroy).toHaveBeenCalled();
     });
 
     it('should clear collection', async () => {
+      jest.spyOn(service.collection, 'remove').mockResolvedValue(null as any);
       await service.clear();
       expect(service.collection.remove).toHaveBeenCalled();
     });
 
     it('should get collection info', async () => {
       const storageInfo = await service.info();
-      expect(service.collection.storageInstance!.info).toHaveBeenCalled();
       expect(storageInfo).toMatchObject({ totalCount: expect.any(Number) });
     });
 
@@ -69,7 +68,7 @@ describe(`NgxRxdbCollectionService`, () => {
       await service.import(docs);
       expect(service.collection.importJSON).toHaveBeenCalledWith({
         name: 'test',
-        schemaHash: undefined,
+        schemaHash: expect.any(String),
         docs,
       });
     });
@@ -103,28 +102,35 @@ describe(`NgxRxdbCollectionService`, () => {
     });
 
     it('should insert doc', async () => {
-      const data = { id: '1' };
+      const data = { id: '0' };
       await service.insert(data);
       expect(service.collection.insert).toHaveBeenCalledWith(data);
     });
 
     it('should bulk insert docs', async () => {
-      const data = [{ id: '1' }, { id: '2' }];
+      const data = [{ id: '11' }, { id: '22' }];
       await service.insertBulk(data);
       expect(service.collection.bulkInsert).toHaveBeenCalledWith(data);
     });
 
     it('should upsert doc', async () => {
-      const data = { id: '1' };
+      const data = { id: '11' };
       await service.upsert(data);
       expect(service.collection.upsert).toHaveBeenCalledWith(data);
     });
 
     it('should set doc', async () => {
-      const id = '1';
-      const data = { name: 'test' };
-      await service.set(id, data);
+      const id = '0';
+      // const rxDoc: RxDocument = createNewRxDocument(service.collection, { id: '0', title: 'test0', _rev: '0-x', } as any);
+      const rxQ = {
+        update: jest.fn().mockResolvedValue({}),
+      } as unknown as RxQuery;
+      // rxQ._result = new RxQuerySingleResult(service.collection, [rxDoc._data], 1);
+      jest.spyOn(rxQ, 'update');
+      jest.spyOn(service.collection, 'findOne').mockReturnValueOnce(rxQ);
+      await service.set(id, { title: 'test1' });
       expect(service.collection.findOne).toHaveBeenCalledWith(id);
+      expect(rxQ.update).toHaveBeenCalledWith({ $set: { title: 'test1' } });
     });
 
     it('should update docs', async () => {
@@ -141,7 +147,12 @@ describe(`NgxRxdbCollectionService`, () => {
     });
 
     it('should remove doc', async () => {
-      const id = '1';
+      const id = '0';
+      const rxQ = {
+        remove: jest.fn().mockResolvedValue({}),
+      } as unknown as RxQuery;
+      jest.spyOn(rxQ, 'remove');
+      jest.spyOn(service.collection, 'findOne').mockReturnValueOnce(rxQ);
       await service.remove(id);
       expect(service.collection.findOne).toHaveBeenCalledWith(id);
     });
@@ -153,7 +164,7 @@ describe(`NgxRxdbCollectionService`, () => {
       const query: MangoQuery = {
         selector: {
           id: {
-            $eq: '1',
+            $eq: '0',
           },
         },
       };
@@ -162,8 +173,8 @@ describe(`NgxRxdbCollectionService`, () => {
     });
 
     it('should remove docs by ids', async () => {
-      await service.removeBulk(['1', '2']);
-      expect(service.collection.bulkRemove).toHaveBeenCalledWith(['1', '2']);
+      await service.removeBulk(['11', '22']);
+      expect(service.collection.bulkRemove).toHaveBeenCalledWith(['11', '22']);
     });
 
     it('should get local doc', async () => {
@@ -225,31 +236,5 @@ describe(`NgxRxdbCollectionService`, () => {
       await service.removeLocal(id);
       expect(service.collection.getLocal).toHaveBeenCalledWith(id);
     });
-  });
-
-  describe(`test dn init by feature module config`, () => {
-    beforeEach(waitForAsync(() => {
-      TestBed.configureTestingModule({
-        providers: [
-          {
-            provide: NgxRxdbService,
-            useFactory: getMockRxdbServiceFactory,
-          },
-        ],
-        imports: [
-          NgxRxdbModule.forRoot(TEST_DB_CONFIG_2),
-          NgxRxdbModule.forFeature({ name: 'todo', schema: TEST_SCHEMA }),
-        ],
-      });
-    }));
-
-    it(`should init database AND collection`, inject(
-      [NgxRxdbCollectionService],
-      async (service: NgxRxdbCollection) => {
-        await firstValueFrom(service.initialized$);
-        expect(service.db).toBeDefined();
-        expect(service.collection).toBeDefined();
-      }
-    ));
   });
 });

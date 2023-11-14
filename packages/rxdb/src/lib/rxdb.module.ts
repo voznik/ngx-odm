@@ -119,7 +119,7 @@ export class NgxRxdbModule {
       ngModule: NgxRxdbModule,
       providers: [
         { provide: RXDB_CONFIG, useValue: config },
-        NgxRxdbService,
+        // NgxRxdbService,
         {
           provide: APP_INITIALIZER,
           useFactory: dbInitializerFactory,

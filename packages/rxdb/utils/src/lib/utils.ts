@@ -217,16 +217,15 @@ export namespace NgxRxdbUtils {
   export const logger = {
     log: (function () {
       const bgColor = '#8d2089';
-      if (isDevMode() || isDevModeForced()) {
-        // eslint-disable-next-line no-console
-        return console.log.bind(
-          window.console,
-          `%c[${new Date().toISOString()}::DEBUG::@ngx-odm/rxdb]`,
-          `background:${bgColor};color:#fff;padding:2px;font-size:normal;`
-        );
-      } else {
+      if (isTestEnvironment() || !isDevMode() || !isDevModeForced()) {
         return noop;
       }
+      // eslint-disable-next-line no-console
+      return console.log.bind(
+        window.console,
+        `%c[${new Date().toISOString()}::DEBUG::@ngx-odm/rxdb]`,
+        `background:${bgColor};color:#fff;padding:2px;font-size:normal;`
+      );
     })(),
   };
 

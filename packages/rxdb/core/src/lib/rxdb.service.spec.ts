@@ -6,7 +6,7 @@ import { NgxRxdbService } from './rxdb.service';
 
 describe('NgxRxdbService', () => {
   let service: NgxRxdbService;
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [NgxRxdbModule.forRoot(TEST_DB_CONFIG_1)],
     });

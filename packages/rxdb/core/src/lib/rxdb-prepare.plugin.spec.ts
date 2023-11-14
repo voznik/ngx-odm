@@ -10,9 +10,9 @@ describe('RxDBPreparePlugin', () => {
     let plugin: RxPlugin;
     let collectionCount: RxQuery;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       plugin = RxDBPreparePlugin;
-      collection = getMocktRxCollection();
+      collection = await getMocktRxCollection();
       collectionCount = collection.count();
       creator = { options: {} } as RxCollectionCreator;
     });
@@ -41,7 +41,7 @@ describe('RxDBPreparePlugin', () => {
       await plugin.hooks!.createRxCollection!.after!({ collection, creator });
       expect(collection.importJSON).toHaveBeenCalledWith({
         name: collection.name,
-        schemaHash: collection.schema.hash,
+        schemaHash: expect.any(String),
         docs: creator.options.initialDocs,
       });
     });

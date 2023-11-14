@@ -15,7 +15,9 @@ import { prepareCollections } from './rxdb-prepare.plugin';
 /**
  * Service for managing a RxDB database instance.
  */
-@Injectable()
+@Injectable({
+  providedIn: 'root',
+})
 export class NgxRxdbService {
   private dbInstance!: RxDatabase;
   private options!: RxDatabaseCreator;
@@ -49,7 +51,7 @@ export class NgxRxdbService {
    * to ensure the database exists before the angular-app starts up
    * @param config
    */
-  async initDb(config: RxDatabaseCreator) {
+  async initDb(config: RxDatabaseCreator): Promise<void> {
     try {
       await loadRxDBPlugins();
       this.dbInstance = await createRxDatabase(config).catch(e => {
