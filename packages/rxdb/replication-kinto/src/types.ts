@@ -40,7 +40,7 @@ export type KintoCollectionSyncOptions = {
   remote?: string | null;
   expectedTimestamp?: string | null;
   exclude?: any[];
-  strategy: KintoReplicationStrategy;
+  strategy?: KintoReplicationStrategy;
   timeout?: number;
   heartbeat?: number;
 };

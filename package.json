@@ -45,7 +45,7 @@
     "build:demo": "nx run demo:build --base-href=/ngx-odm/",
     "build:demo:sourcemaps": "nx run demo:build --configuration=production --sourceMap=true --statsJson",
     "build": "nx run rxdb:build --configuration=production",
-    "test": "nx run rxdb:test --ci --run-in-band --parallel --pass-with-no-tests && npm run test:merge",
+    "test": "nx run rxdb:test --ci --run-in-band --parallel --pass-with-no-tests --collectCoverage && npm run test:merge",
     "test:merge": "./node_modules/.bin/lcov-result-merger 'coverage/packages/*.lcov' coverage/lcov.info",
     "lint": "nx run rxdb:lint",
     "e2e": "ng e2e",

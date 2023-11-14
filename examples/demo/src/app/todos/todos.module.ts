@@ -9,8 +9,10 @@ import {
   conflictHandlerKinto,
   replicateKintoDB,
 } from '@ngx-odm/rxdb/replication-kinto';
-import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import { fromEvent, lastValueFrom, takeWhile } from 'rxjs';
+import { NgxRxdbUtils, getFetchWithAuthorizationBasic } from '@ngx-odm/rxdb/utils';
+import { RxReplicationState } from 'rxdb/plugins/replication';
+import { replicateCouchDB } from 'rxdb/plugins/replication-couchdb';
+import { fromEvent, takeWhile } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { TodosComponent } from './components/todos/todos.component';
 import { TodosPipe } from './components/todos/todos.pipe';
@@ -71,53 +73,63 @@ export class TodosModule {
     const info = await this.collectionService.info();
     NgxRxdbUtils.logger.log('collection info:', { info });
 
-    /* const replicationState = replicateCouchDB({
-      replicationIdentifier: 'demo-couchdb-replication',
-      retryTime: 15000,
-      collection: this.collectionService.collection,
-      url: 'http://localhost:5984/demo/',
-      live: true,
-      fetch: getFetchWithAuthorizationBasic('admin ', 'adminadmin'),
-      pull: {
-        batchSize: 60,
-        modifier: docData => {
-          return docData;
-        },
-        heartbeat: 60000,
-      },
-      push: {
-        batchSize: 60,
-        modifier: docData => {
-          return docData;
-        },
-      },
-    }); */
+    let replicationState: RxReplicationState<Todo, any>;
 
-    const replicationState = replicateKintoDB<Todo>({
-      replicationIdentifier: 'demo-kinto-replication:todo',
-      collection: this.collectionService.collection,
-      kintoSyncOptions: {
-        remote: environment.kintoServer,
-        bucket: environment.bucket,
-        collection: environment.collection,
-        strategy: KintoReplicationStrategy.CLIENT_WINS,
-        heartbeat: 60000,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Basic ' + btoa('admin:adminadmin'),
-        },
-      },
-      retryTime: 15000,
-      live: true,
-      autoStart: true,
-      pull: {
-        batchSize: 60,
-        modifier: d => d,
-      },
-      push: {
-        modifier: d => d,
-      },
-    });
+    switch (localStorage['_ngx_rxdb_replication']) {
+      case 'kinto': {
+        replicationState = replicateKintoDB<Todo>({
+          replicationIdentifier: 'demo-kinto-replication:todo',
+          collection: this.collectionService.collection,
+          kintoSyncOptions: {
+            remote: environment.kintoServer,
+            bucket: environment.bucket,
+            collection: environment.collection,
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Basic ' + btoa('admin:adminadmin'),
+            },
+          },
+          retryTime: 15000,
+          live: true,
+          autoStart: true,
+          pull: {
+            batchSize: 60,
+            modifier: d => d,
+            heartbeat: 60000,
+          },
+          push: {
+            modifier: d => d,
+          },
+        });
+        break;
+      }
+      case 'couchdb': {
+        replicationState = replicateCouchDB<Todo>({
+          replicationIdentifier: 'demo-couchdb-replication',
+          collection: this.collectionService.collection,
+          fetch: getFetchWithAuthorizationBasic('admin ', 'adminadmin'),
+          url: 'http://localhost:5984/demo/',
+          retryTime: 15000,
+          live: true,
+          pull: {
+            batchSize: 60,
+            modifier: d => d,
+            heartbeat: 60000,
+          },
+          push: {
+            modifier: d => d,
+          },
+        });
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+
+    if (!replicationState) {
+      return;
+    }
 
     // Re-sync replication when back online
     fromEvent(window, 'online')
