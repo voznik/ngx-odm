@@ -15,14 +15,17 @@ import type {
   RxStorageInfoResult,
   RxStorageWriteError,
 } from 'rxdb';
+import { RxReplicationState } from 'rxdb/dist/types/plugins/replication';
 import {
   Observable,
   ReplaySubject,
+  fromEvent,
   lastValueFrom,
   map,
-  merge as merge$,
+  merge,
   startWith,
   switchMap,
+  takeWhile,
 } from 'rxjs';
 
 /**
@@ -48,6 +51,7 @@ export function collectionServiceFactory(config: RxCollectionCreatorExtended) {
  */
 export class NgxRxdbCollection<T = {}> {
   private _collection!: RxCollection<T>;
+  private _replicationState!: RxReplicationState<T, any>;
   private _init$ = new ReplaySubject<boolean>();
 
   get initialized$(): Observable<boolean> {
@@ -66,6 +70,10 @@ export class NgxRxdbCollection<T = {}> {
     return this.dbService.dbOptions;
   }
 
+  get replicationState(): RxReplicationState<T, any> {
+    return this._replicationState;
+  }
+
   constructor(
     protected readonly dbService: NgxRxdbService,
     protected readonly config: RxCollectionCreatorExtended
@@ -80,15 +88,57 @@ export class NgxRxdbCollection<T = {}> {
     this.collection?.destroy();
   }
 
+  async sync(): Promise<void> {
+    await this.ensureCollection();
+    if (this._replicationState) {
+      this.replicationState.reSync();
+      return;
+    }
+
+    if (typeof this.config.options?.replicationStateFactory !== 'function') {
+      return;
+    }
+
+    this._replicationState = this.config.options.replicationStateFactory(this.collection);
+
+    if (!this.replicationState.autoStart) {
+      this.replicationState.reSync();
+    }
+
+    // Re-sync replication when back online
+    fromEvent(window, 'online')
+      .pipe(takeWhile(() => !this.replicationState.isStopped()))
+      .subscribe(() => {
+        NgxRxdbUtils.logger.log('online');
+        this.replicationState.reSync();
+      });
+
+    this.replicationState.error$.subscribe(err => {
+      if (
+        err.message.includes('unauthorized')
+        // || err.message.includes('Failed to fetch')
+      ) {
+        this.replicationState.cancel();
+        NgxRxdbUtils.logger.log('replicationState has error, cancel replication');
+        NgxRxdbUtils.logger.log(err.message);
+      } else {
+        console.error(err);
+      }
+    });
+
+    return this.replicationState.startPromise;
+  }
+
   /**
    * Returns some info about the db storage. Used in various places. This method is expected to not really care about performance, so do not use it in hot paths.
    */
   async info(): Promise<RxStorageInfoResult> {
     await this.ensureCollection();
-    const storageInfo = (await this.collection.storageInstance.info()) || {
+    const collectionInfo = (await this.collection.storageInstance.info()) || {
       totalCount: 0,
     };
-    return storageInfo;
+    NgxRxdbUtils.logger.log({ collectionInfo });
+    return collectionInfo;
   }
 
   /**
@@ -151,7 +201,7 @@ export class NgxRxdbCollection<T = {}> {
   count(query?: MangoQuery<T>): Observable<number> {
     return this.initialized$.pipe(
       switchMap(() =>
-        merge$(this.collection.insert$, this.collection.remove$).pipe(startWith(null))
+        merge(this.collection.insert$, this.collection.remove$).pipe(startWith(null))
       ),
       switchMap(() => this.collection.count(query).exec()),
       NgxRxdbUtils.debug('count')
@@ -336,7 +386,7 @@ export class NgxRxdbCollection<T = {}> {
           `Database version conflict.
           Opening an older RxDB database state with a new major version should throw an error`
         );
-        await dbService.db.destroy();
+        // await dbService.db.destroy();
         throw new Error(e);
       } else {
         this._init$.complete();

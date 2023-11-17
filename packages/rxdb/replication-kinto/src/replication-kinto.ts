@@ -148,8 +148,10 @@ export function replicateKintoDB<RxDocType extends AnyObject>(
               delete doc?.last_modified;
               return doc;
             });
-          const r = await kintoCollection.batch(missing);
-          mergeAggregatedResponse(results, r);
+          if (missing.length) {
+            const r = await kintoCollection.batch(missing);
+            mergeAggregatedResponse(results, r);
+          }
         }
         // Perform 3rd batch request if remote documents are missing but with conflict
         if (results.conflicts.length) {
@@ -159,8 +161,10 @@ export function replicateKintoDB<RxDocType extends AnyObject>(
               delete c.local.data.last_modified;
               return c.local.data;
             });
-          const r = await kintoCollection.batch(conflicted);
-          mergeAggregatedResponse(results, r);
+          if (conflicted.length) {
+            const r = await kintoCollection.batch(conflicted);
+            mergeAggregatedResponse(results, r);
+          }
         }
         if (results.published.length) {
           // Update local documents with the new published state.

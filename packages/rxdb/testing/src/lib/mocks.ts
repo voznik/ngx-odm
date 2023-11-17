@@ -71,7 +71,7 @@ export const TEST_DB_CONFIG_2: RxDatabaseCreator = {
   },
 };
 
-export const getMocktRxCollection = async () => {
+export const getMockRxCollection = async () => {
   await loadRxDBPlugins();
   const database = await createRxDatabase(TEST_DB_CONFIG_1);
   const { test: collection } = await database.addCollections({
@@ -86,24 +86,26 @@ export const getMocktRxCollection = async () => {
   return collection;
 };
 
-export const getMockRxdbServiceFactory = async () => {
-  const collection = await getMocktRxCollection();
+export const getMockRxdbService = async () => {
+  const collection = await getMockRxCollection();
   const service = {
     db: null,
     collections: {},
     initDb: jest.fn(),
-    destroyDb: jest.fn().mockResolvedValue({}),
-    initCollection: jest.fn().mockResolvedValue(getMocktRxCollection()),
-    // initCollections = this.initCollection;
-  } as unknown as NgxRxdbService;
+    destroyDb: jest.fn(),
+    initCollection: jest.fn(),
+  };
   jest.spyOn(service, 'initDb').mockImplementation(() => {
     (service as any).db = Object.freeze(collection.database);
     return Promise.resolve();
+  });
+  jest.spyOn(service, 'destroyDb').mockImplementation(() => {
+    service.db = null;
   });
   jest.spyOn(service, 'initCollection').mockImplementation(() => {
     service.collections['test'] = collection;
     return Promise.resolve(collection);
   });
   Object.setPrototypeOf(service, NgxRxdbService.prototype);
-  return service as NgxRxdbService;
+  return service as unknown as NgxRxdbService;
 };

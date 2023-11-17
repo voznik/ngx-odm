@@ -288,20 +288,19 @@ export const getDefaultFetch = () => {
 };
 
 /**
- * Returns a fetch handler that contains the username and password
- * in the Authorization header
- * @param username
- * @param password
+ * Returns a fetch handler that contains (basic auth) headers
+ * @param headers
  */
-export function getFetchWithAuthorizationBasic(username: string, password: string) {
+export function getDefaultFetchWithHeaders(headers: Record<string, string> = {}) {
   const fetch = getDefaultFetch();
   const ret = (url: string, options: Record<string, any>) => {
-    options = clone(options);
-    if (!options.headers) {
-      options.headers = {};
-    }
-    const encoded = btoa(username.trim() + ':' + password.trim());
-    options.headers['Authorization'] = 'Basic ' + encoded;
+    Object.assign(options, {
+      headers: {
+        ...options.headers,
+        'Content-Type': 'application/json',
+        ...headers,
+      },
+    });
     return fetch(url, options);
   };
   return ret;

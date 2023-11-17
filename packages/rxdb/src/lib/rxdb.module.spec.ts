@@ -6,7 +6,7 @@ import { RXDB_CONFIG } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import {
   setupNavigationWarnStub,
-  getMockRxdbServiceFactory,
+  getMockRxdbService,
   TEST_DB_CONFIG_1,
   TEST_FEATURE_CONFIG_1,
 } from '@ngx-odm/rxdb/testing';
@@ -57,7 +57,7 @@ describe('NgxRxdbModule', () => {
   describe(`NgxRxdbModule :: init w/o forFeature`, () => {
     let dbService: NgxRxdbService;
     beforeEach(async () => {
-      dbService = await getMockRxdbServiceFactory();
+      dbService = await getMockRxdbService();
       TestBed.configureTestingModule({
         imports: [NgxRxdbModule.forRoot(TEST_DB_CONFIG_1)],
         providers: [{ provide: NgxRxdbService, useValue: dbService }],
@@ -79,7 +79,7 @@ describe('NgxRxdbModule', () => {
     let dbService: NgxRxdbService;
 
     beforeEach(async () => {
-      dbService = await getMockRxdbServiceFactory();
+      dbService = await getMockRxdbService();
       TestBed.configureTestingModule({
         imports: [
           NgxRxdbModule.forRoot(TEST_DB_CONFIG_1),

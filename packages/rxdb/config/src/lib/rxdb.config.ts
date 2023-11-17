@@ -1,18 +1,19 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { InjectionToken } from '@angular/core';
-import type { RxCollectionCreator, RxDatabaseCreator } from 'rxdb/plugins/core';
+import type { RxCollection, RxCollectionCreator, RxDatabaseCreator } from 'rxdb';
+import { RxReplicationState } from 'rxdb/plugins/replication';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 import { Merge, SetOptional, SetRequired } from 'type-fest';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface RxCollectionCreatorOptions {
-  syncOptions?: {}; // SyncOptionsCouchDB<any> & { queryObj?: MangoQuery<any> };
   schemaUrl?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialDocs?: Record<string, any>[];
   recreate?: boolean;
-  replication?: boolean;
+  replicationStateFactory?: (col: RxCollection) => RxReplicationState<any, any>;
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export interface RxCollectionCreatorExtended extends RxCollectionCreator {
   name: string;

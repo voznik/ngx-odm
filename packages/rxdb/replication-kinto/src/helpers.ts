@@ -15,9 +15,9 @@ import {
 
 export const DEFAULT_KINTO_SYNC_OPTIONS: KintoCollectionSyncOptions = {
   remote: '/',
-  bucket: undefined,
-  collection: undefined,
-  headers: undefined,
+  bucket: 'default',
+  collection: 'default',
+  headers: {},
   exclude: undefined,
   expectedTimestamp: undefined,
   timeout: undefined,
@@ -192,7 +192,7 @@ export function kintoCollectionFactory(
     exclude,
     expectedTimestamp,
     strategy,
-  }: KintoCollectionSyncOptions,
+  }: KintoCollectionSyncOptions = DEFAULT_KINTO_SYNC_OPTIONS,
   fetch = getDefaultFetch()
 ) {
   const collectionUrl = `buckets/${bucket}/collections/${collectionName}`;
@@ -239,6 +239,15 @@ export function kintoCollectionFactory(
       };
     },
     async batch(changes: any[]): Promise<KintoAggregateResponse> {
+      if (!changes.length) {
+        return {
+          published: [],
+          errors: [],
+          conflicts: [],
+          skipped: [],
+          last_modified: undefined,
+        };
+      }
       const safe = !strategy || strategy !== undefined;
       const toDelete: any[] = [];
       const toUpdate: any[] = [];
@@ -255,21 +264,21 @@ export function kintoCollectionFactory(
       const body = {
         defaults: { headers },
         requests: [
-          // CREATE
+          // https://docs.kinto-storage.org/en/stable/api/1.x/records.html#uploading-a-record
           ...toCreate.map(({ last_modified, ...data }) => ({
             method: 'PUT',
             path: `/${collectionUrl}/records/${data.id}`,
             headers: { 'If-None-Match': '*' },
             body: { data },
           })),
-          // UPDATE
+          // https://docs.kinto-storage.org/en/stable/api/1.x/records.html#updating-a-record
           ...toUpdate.map(({ last_modified, ...data }) => ({
             method: 'PATCH',
             path: `/${collectionUrl}/records/${data.id}`,
             headers: { 'If-Match': `"${last_modified}"` },
             body: { data },
           })),
-          // DELETE
+          // https://docs.kinto-storage.org/en/stable/api/1.x/records.html#deleting-a-single-record
           ...toDelete.map(({ id, last_modified, ...data }) => ({
             method: 'DELETE',
             path: `/${collectionUrl}/records/${id}`,

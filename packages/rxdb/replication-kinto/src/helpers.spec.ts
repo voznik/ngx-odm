@@ -189,19 +189,44 @@ describe('helpers', () => {
     });
 
     describe('batch requests', () => {
-      it('should call fetch with the correct URL, headers, and body', async () => {
+      it('should not call for empty changes', async () => {
+        await kintoCollection.batch([]);
+        expect(mockFetch).not.toHaveBeenCalled();
+      });
+
+      it('should call fetch with the correct URL, headers, and body for UPDATEs', async () => {
         mockFetch.mockResolvedValueOnce({
           json: jest.fn().mockResolvedValueOnce({ responses: [], requests: [] }),
         });
 
-        await kintoCollection.batch([]);
+        await kintoCollection.batch([
+          {
+            title: 'test update',
+            id: '06ed7f01-d10c-4ce5-a90b-ba51daa818a4',
+            last_modified: 1700211090879,
+            deleted: false,
+          },
+        ]);
 
         expect(mockFetch).toHaveBeenCalledWith(`${options.remote}/batch`, {
           headers,
           method: 'POST',
           body: JSON.stringify({
             defaults: { headers },
-            requests: [],
+            requests: [
+              {
+                method: 'PATCH',
+                path: `/buckets/${options.bucket}/collections/${options.collection}/records/06ed7f01-d10c-4ce5-a90b-ba51daa818a4`,
+                headers: { 'If-Match': `"${1700211090879}"` },
+                body: {
+                  data: {
+                    title: 'test update',
+                    id: '06ed7f01-d10c-4ce5-a90b-ba51daa818a4',
+                    deleted: false,
+                  },
+                },
+              },
+            ],
           }),
         });
       });

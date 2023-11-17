@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
-import { TEST_FEATURE_CONFIG_1, getMockRxdbServiceFactory } from '@ngx-odm/rxdb/testing';
+import { TEST_FEATURE_CONFIG_1, getMockRxdbService } from '@ngx-odm/rxdb/testing';
 import { MangoQuery, RxQuery } from 'rxdb';
 import { createRxLocalDocument } from 'rxdb/plugins/local-documents';
 import { Observable, firstValueFrom } from 'rxjs';
@@ -12,7 +12,7 @@ describe(`NgxRxdbCollectionService`, () => {
     let service: NgxRxdbCollection;
 
     beforeAll(async () => {
-      dbService = await getMockRxdbServiceFactory();
+      dbService = await getMockRxdbService();
       service = new NgxRxdbCollection(dbService, TEST_FEATURE_CONFIG_1);
     });
 

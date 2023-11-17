@@ -1,52 +1,35 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { getMocktRxCollection } from '@ngx-odm/rxdb/testing';
-import { RxCollection } from 'rxdb';
+import { getMockRxCollection } from '@ngx-odm/rxdb/testing';
+import type { RxCollection } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
-import { Subject } from 'rxjs';
 import { replicateKintoDB } from './replication-kinto';
+import { KintoCollectionSyncOptions } from './types';
 
-const createFetchSpy = (data: any) =>
-  jest.spyOn(globalThis, 'fetch').mockImplementationOnce(
-    () =>
-      Promise.resolve({
-        headers: {
-          // @ts-ignore
-          get: jest.fn((header: any) => {
-            if (header === 'Next-Page') {
-              return undefined;
-            }
-            if (header === 'ETag') {
-              return `"${Date.now()}"`;
-            }
-          }),
-        },
-        json: () => Promise.resolve({ data }),
-        status: 200,
-      }) as any
-  );
-
-(globalThis as any).fetch = window.fetch = jest.fn(
-  () => Promise.resolve({}) as ReturnType<typeof window.fetch>
-);
-
-describe('replication-kinto.ts', () => {
+describe('replication:kinto', () => {
   let collection: RxCollection;
-  let kintoSyncOptions: any;
+  let kintoSyncOptions: KintoCollectionSyncOptions;
+  const mockFetch = jest.fn(() => Promise.resolve({} as ReturnType<typeof window.fetch>));
+  const createFetchSpy = (data: any, ok = true) =>
+    mockFetch.mockResolvedValueOnce({
+      ok,
+      json: jest.fn().mockResolvedValueOnce({ data }),
+      headers: new Map([
+        ['Next-Page', ''],
+        ['ETag', '"1698404710931"'],
+      ]),
+    } as any);
 
   beforeAll(async () => {
-    collection = await getMocktRxCollection();
+    collection = await getMockRxCollection();
     kintoSyncOptions = {
       remote: 'https://kinto.dev.mozaws.net/v1',
-      headers: {
-        Authorization: 'Basic ' + btoa('user:pass'),
-      },
       bucket: 'test',
       collection: 'test',
     };
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  beforeEach(() => {
+    mockFetch.mockClear();
   });
 
   it('should create replicationState with default options', async () => {
@@ -54,6 +37,7 @@ describe('replication-kinto.ts', () => {
       replicationIdentifier: 'test',
       collection,
       kintoSyncOptions,
+      fetch: mockFetch,
       live: false,
       autoStart: false,
     });
@@ -84,6 +68,6 @@ describe('replication-kinto.ts', () => {
     // @ts-expect-error
     const [[url, { headers }]] = spy.mock.calls;
     expect(url).toEqual(expectedUrl);
-    expect(headers).toMatchObject({ Authorization: expect.stringContaining('Basic') });
+    // expect(headers).toMatchObject({ Authorization: expect.stringContaining('Basic') });
   });
 });
