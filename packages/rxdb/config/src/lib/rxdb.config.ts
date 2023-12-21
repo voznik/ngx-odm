@@ -1,24 +1,35 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { InjectionToken } from '@angular/core';
-import type { RxCollection, RxCollectionCreator, RxDatabaseCreator } from 'rxdb';
+import type {
+  RxCollection,
+  RxCollectionCreator,
+  RxDatabaseCreator,
+  RxJsonSchema,
+} from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
-import { Merge, SetOptional, SetRequired } from 'type-fest';
+import { EmptyObject, Merge, SetOptional, SetRequired } from 'type-fest';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface RxCollectionCreatorOptions {
   schemaUrl?: string;
   initialDocs?: Record<string, any>[];
   recreate?: boolean;
-  replicationStateFactory?: (col: RxCollection) => RxReplicationState<any, any>;
+  replicationStateFactory?: (
+    col: RxCollection
+  ) => RxReplicationState<any, any> | EmptyObject;
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-export interface RxCollectionCreatorExtended extends RxCollectionCreator {
-  name: string;
-  options?: RxCollectionCreatorOptions;
-}
+export type RxCollectionCreatorExtended = Merge<
+  RxCollectionCreator,
+  {
+    schema: RxJsonSchema<any> | string;
+    name: string;
+    options?: RxCollectionCreatorOptions;
+  }
+>;
 
 /**
  * Instance of RxDatabaseCreator

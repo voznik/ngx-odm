@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any */
 import { isDevMode } from '@angular/core';
-import { flatClone as clone } from 'rxdb/plugins/utils';
+import type { FilledMangoQuery, PreparedQuery, RxJsonSchema } from 'rxdb';
+import { prepareQuery } from 'rxdb';
 import { Observable, OperatorFunction, retry, tap, timer } from 'rxjs';
 
 /** @internal */
@@ -222,10 +223,18 @@ export namespace NgxRxdbUtils {
       }
       // eslint-disable-next-line no-console
       return console.log.bind(
-        window.console,
+        console,
         `%c[${new Date().toISOString()}::DEBUG::@ngx-odm/rxdb]`,
         `background:${bgColor};color:#fff;padding:2px;font-size:normal;`
       );
+    })(),
+    table: (function () {
+      const bgColor = '#8d2089';
+      if (isTestEnvironment() || !isDevMode() || !isDevModeForced()) {
+        return noop;
+      }
+      // eslint-disable-next-line no-console
+      return console.table.bind(console);
     })(),
   };
 
@@ -274,6 +283,36 @@ export namespace NgxRxdbUtils {
         })
       );
   }
+
+  export const getDefaultQuery: () => FilledMangoQuery<any> = () => ({
+    selector: { _deleted: { $eq: false } },
+    skip: 0,
+    sort: [{ id: 'asc' }],
+  });
+
+  const _schema = {
+    properties: {
+      id: { type: 'string' },
+      _deleted: { type: 'boolean' },
+    },
+    primaryKey: 'id',
+    indexes: [['_deleted', 'id']],
+  } as unknown as RxJsonSchema<any>;
+  const _queryPlan: PreparedQuery<any> = {
+    query: getDefaultQuery(),
+    queryPlan: {
+      index: ['_deleted', 'id'],
+      startKeys: [false, -9007199254740991] as any,
+      endKeys: [false, '￿'] as any,
+      inclusiveEnd: true,
+      inclusiveStart: true,
+      sortSatisfiedByIndex: true,
+      selectorSatisfiedByIndex: false,
+    },
+  };
+
+  export const getDefaultPreparedQuery: () => PreparedQuery<any> = () =>
+    prepareQuery(_schema, getDefaultQuery());
 }
 
 /**

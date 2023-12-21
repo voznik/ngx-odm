@@ -1,6 +1,7 @@
 import { isDevMode } from '@angular/core';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import { addRxPlugin } from 'rxdb';
+import { RxDBCleanupPlugin } from 'rxdb/plugins/cleanup';
 import { RxDBJsonDumpPlugin } from 'rxdb/plugins/json-dump';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
 import { RxDBLocalDocumentsPlugin } from 'rxdb/plugins/local-documents';
@@ -22,6 +23,7 @@ export async function loadRxDBPlugins(): Promise<void> {
     addRxPlugin(RxDBMigrationPlugin);
     addRxPlugin(RxDBUpdatePlugin);
     addRxPlugin(RxDBPreparePlugin);
+    addRxPlugin(RxDBCleanupPlugin);
 
     /** * to reduce the build-size, we use some plugins in dev-mode only */
     if (isDevMode() && !NgxRxdbUtils.isTestEnvironment()) {

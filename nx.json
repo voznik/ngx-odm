@@ -9,6 +9,8 @@
     }
   },
   "workspaceLayout": {
+    "appsDir": "examples",
+    "libsDir": "packages",
     "projectNameAndRootFormat": "as-provided"
   },
   "targetDefaults": {

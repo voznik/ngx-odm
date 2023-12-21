@@ -90,13 +90,9 @@ export class NgxRxdbService {
   }
 
   async initCollection(colConfig: RxCollectionCreatorExtended): Promise<RxCollection> {
-    const { name, options } = colConfig;
+    const { name } = colConfig;
     let col = this.collections[name];
     if (isRxCollection(col)) {
-      // delete  data in collection if exists
-      if (options?.recreate) {
-        await col.remove();
-      }
       NgxRxdbUtils.logger.log('collection', col.name, 'exists, skip create');
       return col;
     }

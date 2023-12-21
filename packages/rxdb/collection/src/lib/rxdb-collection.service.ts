@@ -12,10 +12,9 @@ import type {
   RxDumpCollection,
   RxDumpCollectionAny,
   RxLocalDocument,
-  RxStorageInfoResult,
   RxStorageWriteError,
 } from 'rxdb';
-import { RxReplicationState } from 'rxdb/dist/types/plugins/replication';
+import { RxReplicationState } from 'rxdb/plugins/replication';
 import {
   Observable,
   ReplaySubject,
@@ -27,6 +26,9 @@ import {
   switchMap,
   takeWhile,
 } from 'rxjs';
+
+/** @deprecated */
+type RxStorageInfoResult = any;
 
 /**
  * Injection token for Service for interacting with a RxDB {@link RxCollection}.
@@ -99,7 +101,13 @@ export class NgxRxdbCollection<T = {}> {
       return;
     }
 
-    this._replicationState = this.config.options.replicationStateFactory(this.collection);
+    const _replicationState = this.config.options.replicationStateFactory(this.collection);
+
+    if (!(_replicationState instanceof RxReplicationState)) {
+      return;
+    }
+
+    this._replicationState = _replicationState;
 
     if (!this.replicationState.autoStart) {
       this.replicationState.reSync();
@@ -134,8 +142,9 @@ export class NgxRxdbCollection<T = {}> {
    */
   async info(): Promise<RxStorageInfoResult> {
     await this.ensureCollection();
-    const collectionInfo = (await this.collection.storageInstance.info()) || {
-      totalCount: 0,
+    const totalCount = (await this.collection.count().exec()) ?? 0;
+    const collectionInfo = {
+      totalCount,
     };
     NgxRxdbUtils.logger.log({ collectionInfo });
     return collectionInfo;

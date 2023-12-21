@@ -5,8 +5,9 @@ import { compare } from 'compare-versions';
 import type { Table as DexieTable } from 'dexie';
 import type {
   CollectionsOfDatabase,
+  FilledMangoQuery,
   InternalStoreDocType,
-  RxCollection,
+  PreparedQuery,
   RxCollectionCreator,
   RxDatabase,
   RxDatabaseCreator,
@@ -15,15 +16,20 @@ import type {
   RxJsonSchema,
   RxPlugin,
   RxStorage,
-  RxStorageInfoResult,
   RxStorageInstance,
+  RxCollection as _RxCollection,
 } from 'rxdb';
-import { getAllCollectionDocuments } from 'rxdb';
+import { getAllCollectionDocuments, isRxDatabaseFirstTimeInstantiated } from 'rxdb';
 // TODO: use when stable
 // import { AfterMigrateBatchHandlerInput, migrateStorage, } from 'rxdb/plugins/migration-storage';
 
+type RxCollection = _RxCollection & {
+  defaultQuery: FilledMangoQuery<any>;
+  defaultPreparedQuery: PreparedQuery<any>;
+  getMetadata: () => Promise<any>;
+};
+
 const RXDB_STORAGE_TOKEN_ID = 'storage-token|storageToken';
-const IMPORTED_FLAG = '_ngx_rxdb_imported';
 
 export const fetchSchema = async (
   schemaUrl: string
@@ -64,7 +70,7 @@ export const prepareCollections = async (
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         config.schema = (await fetchSchema(config.options.schemaUrl))!;
       }
-      colCreators[config.name] = config;
+      colCreators[config.name] = config as RxCollectionCreator;
     }
     return colCreators;
   } catch (error) {
@@ -157,54 +163,65 @@ const afterCreateRxDatabase = async ({
   database: RxDatabase;
   creator: RxDatabaseCreator<any, any>;
 }) => {
+  const isFirstTimeInstantiated = await isRxDatabaseFirstTimeInstantiated(db);
   NgxRxdbUtils.logger.log('prepare-plugin: hook:createRxDatabase:after');
 
   const { storage, internalStore: storageInstance, rxdbVersion } = db;
   await migrateStorageVersion(storage, storageInstance, rxdbVersion); // TODO: remove or improve this hack
 
-  if (!creator.options?.dumpPath || db._imported) {
+  if (!creator.options?.dumpPath || !isFirstTimeInstantiated) {
     return;
   }
 
   try {
     const dump = await prepareDbDump(creator.options.dumpPath, db.collections);
     await db.importJSON(dump);
-    (db as any)._imported = Date.now();
     NgxRxdbUtils.logger.log(`prepare-plugin: imported dump for db "${db.name}"`);
   } catch (error) {
     NgxRxdbUtils.logger.log('prepare-plugin: imported dump error', error);
-    // impoted but possible conflicts - mark as imported
-    (db as any)._imported = Date.now();
   }
 };
 
 /**
- * preload data into collection if provided
+ * Optionally fetch schema from remote url if jsonschema is not provided.
+ * @param maybeSchema
  */
-const afterCreateRxCollection = async ({
+export const preCreateRxSchemaBefore = async (maybeSchema: RxJsonSchema<any> | any) => {
+  if (typeof maybeSchema === 'string') {
+    const realSchema = await fetchSchema(maybeSchema);
+    if (!realSchema) {
+      throw new Error(`Failed to fetch schema from "${maybeSchema}"`);
+    }
+    maybeSchema = realSchema;
+  }
+};
+
+/**
+ * Preload data into collection if provided
+ */
+const beforeCreateRxCollection = async ({
   collection: col,
   creator,
 }: {
   collection: RxCollection;
   creator: RxCollectionCreator;
 }) => {
-  const meta = await (col as any).getMetadata();
-  NgxRxdbUtils.logger.log('prepare-plugin: hook:createRxCollection:after', meta);
+  NgxRxdbUtils.logger.log('prepare-plugin: hook:createRxCollection:before');
+  const meta = await col.getMetadata();
+  NgxRxdbUtils.logger.log('prepare-plugin: hook:createRxCollection:before', meta);
   const initialDocs = creator.options?.initialDocs || [];
-  const { totalCount: count } = await col.storageInstance.info().catch(e => {
-    return { totalCount: 0 } as RxStorageInfoResult;
-  });
+  const initialCount = await countDocs();
   if (!initialDocs.length) {
     return;
   }
-  if (count || meta.rev >= 1) {
+  if (initialCount || !meta.isNewDb) {
     if (!creator.options?.recreate || creator.options?.replication) {
       return;
     } else {
       NgxRxdbUtils.logger.log(
-        `prepare-plugin: collection "${col.name}" already has ${count} docs (including _deleted), but recreate option is set`
+        `prepare-plugin: collection "${col.name}" already has ${initialCount} docs (including _deleted), but recreate option is set`
       );
-      // await col.remove();
+      // await removeAllDocs(); // TODO:
     }
   }
   const schemaHash = await col.schema.hash;
@@ -214,13 +231,29 @@ const afterCreateRxCollection = async ({
     docs: initialDocs,
   };
   try {
-    await col.importJSON(dump);
-    (col.database as any)._imported = Date.now();
+    const { success, error } = (await col.importJSON(dump)) as unknown as {
+      success: any[];
+      error: any[];
+    };
+    const count = await countDocs();
     NgxRxdbUtils.logger.log(
-      `prepare-plugin: imported ${initialDocs.length} docs for collection "${col.name}"`
+      `prepare-plugin: imported ${success.length} docs for collection "${col.name}", errors count ${error.length}, current docs count ${count}`
     );
+    NgxRxdbUtils.logger.table(success);
   } catch (error) {
     NgxRxdbUtils.logger.log('prepare-plugin: imported dump error', error);
+  }
+
+  async function removeAllDocs() {
+    await col.find().update({ $set: { _deleted: true } });
+    await col.cleanup();
+  }
+
+  async function countDocs() {
+    const { count } = await col.storageInstance
+      .count(col.defaultPreparedQuery)
+      .catch(e => ({ count: 0 }));
+    return count;
   }
 };
 
@@ -229,29 +262,16 @@ export const RxDBPreparePlugin: RxPlugin = {
   rxdb: true,
   prototypes: {
     RxDatabase: (proto: RxDatabase) => {
-      (proto as any).fetchSchema = fetchSchema;
-      // create proxy to get & set value from localstorage
-      Object.defineProperty(proto, '_imported', {
-        enumerable: false,
-        get(): number | null {
-          if (this.storage.name !== 'dexie') {
-            return null;
-          }
-          const imported = localStorage.getItem(IMPORTED_FLAG);
-          return imported ? parseInt(imported) : null;
-        },
-        set(value) {
-          if (this.storage.name !== 'dexie') {
-            return;
-          }
-          localStorage.setItem(IMPORTED_FLAG, value);
-        },
+      Object.assign(proto, {
+        fetchSchema,
       });
     },
-    RxCollection: (proto: RxCollection) => {
-      (proto as any).getMetadata = async function (): Promise<any> {
+    RxCollection: (proto: _RxCollection) => {
+      const getMetadata = async function (this: RxCollection): Promise<any> {
+        const isFirstTimeInstantiated = await isRxDatabaseFirstTimeInstantiated(
+          this.database
+        );
         const allCollectionMetaDocs = await getAllCollectionDocuments(
-          this.database.storage.statics,
           this.database.internalStore
         );
         const { id, data, _meta, _rev } =
@@ -260,18 +280,31 @@ export const RxDBPreparePlugin: RxPlugin = {
         return {
           id,
           name: data?.name,
-          last_modified: Math.floor(_meta!.lwt) || null,
-          rev: Number(_rev?.at(0)),
+          last_modified: _meta?.lwt ? Math.floor(_meta?.lwt) : null,
+          rev: _rev ? Number(_rev?.at(0)) : 1,
+          isNewDb: isFirstTimeInstantiated,
         };
       };
+      const defaultQuery = NgxRxdbUtils.getDefaultQuery();
+      const defaultPreparedQuery = NgxRxdbUtils.getDefaultPreparedQuery();
+      Object.assign(proto, {
+        getMetadata,
+        defaultQuery,
+        defaultPreparedQuery,
+      });
     },
   },
   hooks: {
     createRxDatabase: {
       after: afterCreateRxDatabase,
     },
+    preCreateRxSchema: {
+      before: preCreateRxSchemaBefore,
+    },
     createRxCollection: {
-      after: afterCreateRxCollection,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore // INFO: there's no way to fix type inheritance & rxdb typings
+      before: beforeCreateRxCollection,
     },
   },
 };
