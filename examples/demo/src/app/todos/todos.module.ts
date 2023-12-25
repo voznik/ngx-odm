@@ -9,7 +9,6 @@ import { getDefaultFetchWithHeaders } from '@ngx-odm/rxdb/utils';
 import { b64EncodeUnicode } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import { replicateCouchDB } from 'rxdb/plugins/replication-couchdb';
-import { EmptyObject } from 'type-fest';
 import { environment } from '../../environments/environment';
 import { TodosComponent } from './components/todos/todos.component';
 import { TodosPipe } from './components/todos/todos.pipe';
@@ -33,7 +32,7 @@ import { TodosRoutingModule } from './todos-routing.module';
         initialDocs: TODOS_INITIAL_STATE.items, // populate collection with initial data,
         recreate: true,
         replicationStateFactory: collection => {
-          let replicationState: RxReplicationState<Todo, any> | EmptyObject = {};
+          let replicationState: RxReplicationState<Todo, any> | null = null;
 
           switch (localStorage['_ngx_rxdb_replication']) {
             case 'kinto': {

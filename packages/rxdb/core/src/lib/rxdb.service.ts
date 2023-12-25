@@ -1,9 +1,12 @@
 import { Injectable } from '@angular/core';
-import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
+import type {
+  RxCollectionCreatorExtended,
+  RxCollectionExtended as RxCollection,
+} from '@ngx-odm/rxdb/config';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import {
   CollectionsOfDatabase,
-  RxCollection,
+  RxCollection as _RxCollection,
   RxDatabase,
   RxDatabaseCreator,
   createRxDatabase,
@@ -91,7 +94,7 @@ export class NgxRxdbService {
 
   async initCollection(colConfig: RxCollectionCreatorExtended): Promise<RxCollection> {
     const { name } = colConfig;
-    let col = this.collections[name];
+    let col = this.collections[name] as RxCollection;
     if (isRxCollection(col)) {
       NgxRxdbUtils.logger.log('collection', col.name, 'exists, skip create');
       return col;
@@ -102,7 +105,7 @@ export class NgxRxdbService {
         [name]: colConfig,
       });
       const res = await this.db.addCollections(colCreator);
-      col = res[name];
+      col = res[name] as RxCollection;
       NgxRxdbUtils.logger.log(`created collection "${name}"`);
 
       return col;

@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
-import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
+import {
+  RxCollectionExtended as RxCollection,
+  RxCollectionCreatorExtended,
+  RxDbMetadata,
+} from '@ngx-odm/rxdb/config';
 import { NgxRxdbUtils, getDefaultFetch } from '@ngx-odm/rxdb/utils';
 import { compare } from 'compare-versions';
 import type { Table as DexieTable } from 'dexie';
 import type {
   CollectionsOfDatabase,
-  FilledMangoQuery,
   InternalStoreDocType,
-  PreparedQuery,
   RxCollectionCreator,
   RxDatabase,
   RxDatabaseCreator,
@@ -22,12 +24,6 @@ import type {
 import { getAllCollectionDocuments, isRxDatabaseFirstTimeInstantiated } from 'rxdb';
 // TODO: use when stable
 // import { AfterMigrateBatchHandlerInput, migrateStorage, } from 'rxdb/plugins/migration-storage';
-
-type RxCollection = _RxCollection & {
-  defaultQuery: FilledMangoQuery<any>;
-  defaultPreparedQuery: PreparedQuery<any>;
-  getMetadata: () => Promise<any>;
-};
 
 const RXDB_STORAGE_TOKEN_ID = 'storage-token|storageToken';
 
@@ -186,7 +182,7 @@ const afterCreateRxDatabase = async ({
  * Optionally fetch schema from remote url if jsonschema is not provided.
  * @param maybeSchema
  */
-export const preCreateRxSchemaBefore = async (maybeSchema: RxJsonSchema<any> | any) => {
+export const beforePreCreateRxSchema = async (maybeSchema: RxJsonSchema<any> | any) => {
   if (typeof maybeSchema === 'string') {
     const realSchema = await fetchSchema(maybeSchema);
     if (!realSchema) {
@@ -214,7 +210,7 @@ const beforeCreateRxCollection = async ({
   if (!initialDocs.length) {
     return;
   }
-  if (initialCount || !meta.isNewDb) {
+  if (initialCount || !meta.isFirstTimeInstantiated) {
     if (!creator.options?.recreate || creator.options?.replication) {
       return;
     } else {
@@ -267,7 +263,7 @@ export const RxDBPreparePlugin: RxPlugin = {
       });
     },
     RxCollection: (proto: _RxCollection) => {
-      const getMetadata = async function (this: RxCollection): Promise<any> {
+      const getMetadata = async function (this: RxCollection): Promise<RxDbMetadata> {
         const isFirstTimeInstantiated = await isRxDatabaseFirstTimeInstantiated(
           this.database
         );
@@ -275,14 +271,16 @@ export const RxDBPreparePlugin: RxPlugin = {
           this.database.internalStore
         );
         const { id, data, _meta, _rev } =
-          allCollectionMetaDocs.filter(metaDoc => metaDoc.data.name === this.name)?.at(0) ||
+          allCollectionMetaDocs.filter(metaDoc => metaDoc.data.name === this.name)!.at(0) ||
           {};
         return {
-          id,
-          name: data?.name,
-          last_modified: _meta?.lwt ? Math.floor(_meta?.lwt) : null,
+          id: id || this.name,
+          databaseName: this.database.name,
+          collectionName: data?.name || this.name,
+          storageName: this.storageInstance.originalStorageInstance['storage'].name,
+          last_modified: _meta?.lwt ? Math.floor(_meta?.lwt) : Date.now(),
           rev: _rev ? Number(_rev?.at(0)) : 1,
-          isNewDb: isFirstTimeInstantiated,
+          isFirstTimeInstantiated,
         };
       };
       const defaultQuery = NgxRxdbUtils.getDefaultQuery();
@@ -299,7 +297,7 @@ export const RxDBPreparePlugin: RxPlugin = {
       after: afterCreateRxDatabase,
     },
     preCreateRxSchema: {
-      before: preCreateRxSchemaBefore,
+      before: beforePreCreateRxSchema,
     },
     createRxCollection: {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment

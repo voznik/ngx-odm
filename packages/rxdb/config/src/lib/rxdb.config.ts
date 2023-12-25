@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { InjectionToken } from '@angular/core';
 import type {
+  FilledMangoQuery,
+  PreparedQuery,
   RxCollection,
   RxCollectionCreator,
   RxDatabaseCreator,
@@ -9,27 +11,47 @@ import type {
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
-import { EmptyObject, Merge, SetOptional, SetRequired } from 'type-fest';
+import type { Merge, SetOptional, SetRequired } from 'type-fest';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface RxCollectionCreatorOptions {
   schemaUrl?: string;
   initialDocs?: Record<string, any>[];
   recreate?: boolean;
-  replicationStateFactory?: (
-    col: RxCollection
-  ) => RxReplicationState<any, any> | EmptyObject;
+  replicationStateFactory?: (col: RxCollection) => RxReplicationState<any, any> | null;
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-export type RxCollectionCreatorExtended = Merge<
-  RxCollectionCreator,
+export type RxCollectionCreatorExtended<T = any> = Merge<
+  RxCollectionCreator<T>,
   {
     schema: RxJsonSchema<any> | string;
     name: string;
     options?: RxCollectionCreatorOptions;
   }
 >;
+
+export type RxCollectionExtended<T = any> = Merge<
+  RxCollection<T>,
+  {
+    /** Static empty query */
+    defaultQuery: FilledMangoQuery<any>;
+    /** Static empty query "prepared" (RxDb) */
+    defaultPreparedQuery: PreparedQuery<any>;
+    /** Get DB metadata */
+    getMetadata: () => Promise<RxDbMetadata>;
+  }
+>;
+
+export interface RxDbMetadata {
+  id: string;
+  collectionName: string;
+  databaseName: string;
+  storageName: string;
+  last_modified: number;
+  rev: number;
+  isFirstTimeInstantiated: boolean;
+}
 
 /**
  * Instance of RxDatabaseCreator

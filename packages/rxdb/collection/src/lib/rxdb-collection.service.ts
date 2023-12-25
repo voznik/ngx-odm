@@ -1,11 +1,14 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { InjectionToken } from '@angular/core';
-import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
+import type {
+  RxCollectionExtended as RxCollection,
+  RxCollectionCreatorExtended,
+  RxDbMetadata,
+} from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import type {
   MangoQuery,
-  RxCollection,
   RxDatabase,
   RxDatabaseCreator,
   RxDocument,
@@ -13,6 +16,7 @@ import type {
   RxDumpCollectionAny,
   RxLocalDocument,
   RxStorageWriteError,
+  RxCollection as _RxCollection,
 } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import {
@@ -26,9 +30,6 @@ import {
   switchMap,
   takeWhile,
 } from 'rxjs';
-
-/** @deprecated */
-type RxStorageInfoResult = any;
 
 /**
  * Injection token for Service for interacting with a RxDB {@link RxCollection}.
@@ -53,7 +54,7 @@ export function collectionServiceFactory(config: RxCollectionCreatorExtended) {
  */
 export class NgxRxdbCollection<T = {}> {
   private _collection!: RxCollection<T>;
-  private _replicationState!: RxReplicationState<T, any>;
+  private _replicationState: RxReplicationState<T, any> | null = null;
   private _init$ = new ReplaySubject<boolean>();
 
   get initialized$(): Observable<boolean> {
@@ -73,7 +74,7 @@ export class NgxRxdbCollection<T = {}> {
   }
 
   get replicationState(): RxReplicationState<T, any> {
-    return this._replicationState;
+    return this._replicationState as RxReplicationState<T, any>;
   }
 
   constructor(
@@ -92,7 +93,7 @@ export class NgxRxdbCollection<T = {}> {
 
   async sync(): Promise<void> {
     await this.ensureCollection();
-    if (this._replicationState) {
+    if (this._replicationState && this._replicationState instanceof RxReplicationState) {
       this.replicationState.reSync();
       return;
     }
@@ -101,13 +102,18 @@ export class NgxRxdbCollection<T = {}> {
       return;
     }
 
-    const _replicationState = this.config.options.replicationStateFactory(this.collection);
-
-    if (!(_replicationState instanceof RxReplicationState)) {
-      return;
+    try {
+      this._replicationState = this.config.options.replicationStateFactory(
+        this.collection as _RxCollection
+      );
+    } catch (error) {
+      NgxRxdbUtils.logger.log('replicationState has error, ignore replication');
+      NgxRxdbUtils.logger.log(error.message);
     }
 
-    this._replicationState = _replicationState;
+    if (!(this._replicationState instanceof RxReplicationState)) {
+      return;
+    }
 
     if (!this.replicationState.autoStart) {
       this.replicationState.reSync();
@@ -138,16 +144,13 @@ export class NgxRxdbCollection<T = {}> {
   }
 
   /**
-   * Returns some info about the db storage. Used in various places. This method is expected to not really care about performance, so do not use it in hot paths.
+   * Returns the internal data that is used by the storage engine
    */
-  async info(): Promise<RxStorageInfoResult> {
+  async info(): Promise<RxDbMetadata> {
     await this.ensureCollection();
-    const totalCount = (await this.collection.count().exec()) ?? 0;
-    const collectionInfo = {
-      totalCount,
-    };
-    NgxRxdbUtils.logger.log({ collectionInfo });
-    return collectionInfo;
+    const meta = await this.collection.getMetadata();
+    NgxRxdbUtils.logger.log({ meta });
+    return meta;
   }
 
   /**

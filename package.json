@@ -60,6 +60,7 @@
     "compodoc": "nx run tools:compodoc"
   },
   "dependencies": {
+    "@angular-architects/ngrx-toolkit": "^0.0.3",
     "@angular/animations": "16.2.5",
     "@angular/common": "16.2.5",
     "@angular/compiler": "16.2.5",
@@ -70,6 +71,7 @@
     "@angular/router": "16.2.5",
     "@angular/service-worker": "16.2.5",
     "@ngrx/component": "^16.3.0",
+    "@ngrx/signals": "^17.0.1",
     "@nrwl/angular": "16.8.1",
     "compare-versions": "^6.1.0",
     "normalize.css": "8.0.1",
