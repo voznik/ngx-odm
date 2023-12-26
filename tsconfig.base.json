@@ -13,7 +13,7 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "importHelpers": true,
-    "lib": ["es2020", "dom"],
+    "lib": ["es2022", "dom"],
     "module": "ESNext",
     "moduleResolution": "Node",
     "resolveJsonModule": true,
@@ -21,7 +21,7 @@
     "skipLibCheck": true,
     "ignoreDeprecations": "5.0",
     "suppressImplicitAnyIndexErrors": true,
-    "target": "es2015",
+    "target": "es2022",
     "typeRoots": ["node_modules/@types"],
     "types": ["node"],
     "paths": {
@@ -36,6 +36,7 @@
       ],
       "@ngx-odm/rxdb/core": ["dist/packages/rxdb/core", "packages/rxdb/core/src/index.ts"],
       "@ngx-odm/rxdb/replication-kinto": ["packages/rxdb/replication-kinto/src/index.ts"],
+      "@ngx-odm/rxdb/signals": ["packages/rxdb/signals/src/index.ts"],
       "@ngx-odm/rxdb/testing": ["packages/rxdb/testing/src/index.ts"],
       "@ngx-odm/rxdb/utils": [
         "dist/packages/rxdb/utils",

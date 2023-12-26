@@ -1,16 +1,11 @@
 import { Injectable } from '@angular/core';
-import type {
-  RxCollectionCreatorExtended,
-  RxCollectionExtended as RxCollection,
-} from '@ngx-odm/rxdb/config';
+import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import {
   CollectionsOfDatabase,
-  RxCollection as _RxCollection,
   RxDatabase,
   RxDatabaseCreator,
   createRxDatabase,
-  isRxCollection,
 } from 'rxdb';
 import { loadRxDBPlugins } from './rxdb-plugin.loader';
 import { prepareCollections } from './rxdb-prepare.plugin';
@@ -81,34 +76,12 @@ export class NgxRxdbService {
    * uses bulk `addCollections` method at the end of array
    * @param colConfigs
    */
-  async initCollections(
-    colConfigs: Record<string, RxCollectionCreatorExtended>
-  ): Promise<CollectionsOfDatabase> {
+  async initCollections(colConfigs: {
+    [name: string]: RxCollectionCreatorExtended;
+  }): Promise<CollectionsOfDatabase> {
     try {
       const colCreators = await prepareCollections(colConfigs);
       return await this.db.addCollections(colCreators);
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  }
-
-  async initCollection(colConfig: RxCollectionCreatorExtended): Promise<RxCollection> {
-    const { name } = colConfig;
-    let col = this.collections[name] as RxCollection;
-    if (isRxCollection(col)) {
-      NgxRxdbUtils.logger.log('collection', col.name, 'exists, skip create');
-      return col;
-    }
-
-    try {
-      const colCreator = await prepareCollections({
-        [name]: colConfig,
-      });
-      const res = await this.db.addCollections(colCreator);
-      col = res[name] as RxCollection;
-      NgxRxdbUtils.logger.log(`created collection "${name}"`);
-
-      return col;
     } catch (error) {
       throw new Error(error.message);
     }

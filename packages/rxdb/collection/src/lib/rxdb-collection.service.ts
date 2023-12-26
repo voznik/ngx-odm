@@ -31,6 +31,11 @@ import {
   takeWhile,
 } from 'rxjs';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type CheckpointType = any;
+type EntityId = string;
+type Entity = { id: EntityId };
+
 /**
  * Injection token for Service for interacting with a RxDB {@link RxCollection}.
  * This token is used to inject an instance of NgxRxdbCollection into a component or service.
@@ -52,9 +57,9 @@ export function collectionServiceFactory(config: RxCollectionCreatorExtended) {
 /**
  * Service for interacting with a RxDB {@link RxCollection}.
  */
-export class NgxRxdbCollection<T = {}> {
+export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   private _collection!: RxCollection<T>;
-  private _replicationState: RxReplicationState<T, any> | null = null;
+  private _replicationState: RxReplicationState<T, CheckpointType> | null = null;
   private _init$ = new ReplaySubject<boolean>();
 
   get initialized$(): Observable<boolean> {
@@ -73,8 +78,8 @@ export class NgxRxdbCollection<T = {}> {
     return this.dbService.dbOptions;
   }
 
-  get replicationState(): RxReplicationState<T, any> {
-    return this._replicationState as RxReplicationState<T, any>;
+  get replicationState(): RxReplicationState<T, CheckpointType> {
+    return this._replicationState as RxReplicationState<T, CheckpointType>;
   }
 
   constructor(
@@ -233,6 +238,8 @@ export class NgxRxdbCollection<T = {}> {
     );
   }
 
+  findById = this.get;
+
   /**
    * Inserts new document into the database.
    * The collection will validate the schema and automatically encrypt any encrypted fields
@@ -242,6 +249,8 @@ export class NgxRxdbCollection<T = {}> {
     await this.ensureCollection();
     return this.collection.insert(data);
   }
+
+  create = this.insert;
 
   /**
    * When you have to insert many documents at once, use bulk insert.
@@ -259,7 +268,7 @@ export class NgxRxdbCollection<T = {}> {
    * Inserts the document if it does not exist within the collection, otherwise it will overwrite it. Returns the new or overwritten RxDocument.
    * @param data
    */
-  async upsert(data: Partial<T>): Promise<RxDocument<T>> {
+  async upsert(data: T): Promise<RxDocument<T>> {
     await this.ensureCollection();
     return this.collection.upsert(data);
   }
@@ -298,12 +307,15 @@ export class NgxRxdbCollection<T = {}> {
 
   /**
    * Removes the document from the database by finding one with the matching id.
-   * @param id
+   * @param entityOrId
    */
-  async remove(id: string): Promise<RxDocument<T> | null> {
+  async remove(entityOrId: T | string): Promise<RxDocument<T> | null> {
     await this.ensureCollection();
+    const id = typeof entityOrId === 'object' ? entityOrId!['_id'] : entityOrId;
     return this.collection.findOne(id).remove();
   }
+
+  delete = this.remove;
 
   /**
    * Removes many documents at once
@@ -386,8 +398,11 @@ export class NgxRxdbCollection<T = {}> {
   }
 
   private async init(dbService: NgxRxdbService, config: RxCollectionCreatorExtended) {
+    const { name } = config;
     try {
-      this._collection = await dbService.initCollection(config);
+      this._collection = (await dbService.initCollections({ [name]: config }))[
+        name
+      ] as RxCollection;
       this._init$.next(true);
       this._init$.complete();
     } catch (e) {
