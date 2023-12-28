@@ -10,10 +10,10 @@
       "executor": "@angular-devkit/build-angular:application",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/examples/standalone",
+        "outputPath": "dist/standalone",
         "index": "examples/standalone/src/index.html",
         "browser": "examples/standalone/src/main.ts",
-        "polyfills": ["zone.js"],
+        "polyfills": [],
         "tsConfig": "examples/standalone/tsconfig.app.json",
         "assets": ["examples/standalone/src/favicon.ico", "examples/standalone/src/assets"],
         "styles": [

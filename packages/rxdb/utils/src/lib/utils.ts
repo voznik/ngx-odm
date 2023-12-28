@@ -18,6 +18,34 @@ type ValueIteratee<T, O> = (value: T) => O;
 type ArrayIteratee<I, O> = (item: I, index: number) => O;
 /** @internal */
 type ObjectIteratee<T, O> = (item: T[keyof T], key: StringifiedKey<T>) => O;
+/** @internal */
+export type Prettify<T> = {
+  [K in keyof T]: T[K];
+} & {};
+/** @internal */
+export type IsRecord<T> = T extends object
+  ? T extends unknown[]
+    ? false
+    : T extends Set<unknown>
+    ? false
+    : T extends Map<unknown, unknown>
+    ? false
+    : T extends Function
+    ? false
+    : true
+  : false;
+/** @internal */
+export type IsUnknownRecord<T> = string extends keyof T
+  ? true
+  : number extends keyof T
+  ? true
+  : false;
+/** @internal */
+export type IsKnownRecord<T> = IsRecord<T> extends true
+  ? IsUnknownRecord<T> extends true
+    ? false
+    : true
+  : false;
 
 export namespace NgxRxdbUtils {
   /**

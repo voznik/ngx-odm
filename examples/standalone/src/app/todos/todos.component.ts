@@ -1,12 +1,16 @@
 import { animate, query, stagger, style, transition, trigger } from '@angular/animations';
 import { CommonModule, Location } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  effect,
+  inject,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
-import { LetDirective, PushPipe } from '@ngrx/component';
 import { v4 as uuid } from 'uuid';
 import { Todo, TodosFilter } from './todos.model';
-import { TodosPipe } from './todos.pipe';
 import { TodoStore } from './todos.store';
 
 const listAnimation = trigger('listAnimation', [
@@ -15,7 +19,7 @@ const listAnimation = trigger('listAnimation', [
       ':enter',
       [
         style({ opacity: 0 }),
-        stagger('100ms', animate('150ms ease-out', style({ opacity: 1 }))),
+        stagger('50ms', animate('100ms ease-out', style({ opacity: 1 }))),
       ],
       { optional: true }
     ),
@@ -30,107 +34,69 @@ const listAnimation = trigger('listAnimation', [
   styleUrls: ['./todos.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [listAnimation],
-  imports: [
-    CommonModule,
-    FormsModule,
-    LetDirective,
-    PushPipe,
-    TodosPipe,
-    //
-  ],
+  imports: [CommonModule, FormsModule],
   providers: [TodoStore],
 })
 export class TodosComponent {
+  private cdRef = inject(ChangeDetectorRef);
   private location = inject(Location);
   private title = inject(Title);
   readonly todoStore = inject(TodoStore);
-  newTodo = '';
-  isEditing = '';
-  // todos: Todo[] = this.todoStore.entities();
-  // filter: TodosFilter;
-  // count = 0;
-  // remaining: number;
+
+  trackByFn = (index: number, item: Todo) => item.id;
 
   constructor() {
-    // effect(() => {
-    //   // this.todos = this.todoStore.entities();
-    //   this.count = this.todos.length;
-    //   this.filter = this.todoStore.filter().value;
-    //   this.remaining = this.todos.filter(doc => !doc.completed).length;
-    //   this.title.setTitle(`(${this.count - this.remaining}/${this.count}) Todos done`);
-    //   NgxRxdbUtils.logger.log(
-    //     'store:component:effect',
-    //     this.todoStore,
-    //     'filter',
-    //     this.todoStore.filter()
-    //   );
-    // });
+    effect(() => {
+      const { count, remaining } = this.todoStore;
+      this.title.setTitle(`(${count() - remaining()}/${count()}) Todos done`);
+      console.log('!!! ~ file: todos.component.ts:68 ~ constructor ~ effect');
+      this.cdRef.detectChanges();
+    });
   }
 
-  trackByFn(index: number, item: Todo) {
-    return item.id;
+  editTodo(todo: Todo, elm: HTMLElement) {
+    this.todoStore.setCurrent(todo);
+    elm.contentEditable = 'plaintext-only';
+    elm.focus();
   }
 
-  showRemainig(remaining: number | null) {
-    return remaining !== null;
-  }
-
-  shouldDisableClear(remaining: number | null, count: number | null) {
-    if (remaining === null || count === null) {
-      return true;
+  stopEditing({ title }: Todo, elm: HTMLElement) {
+    if (elm.contentEditable !== 'false') {
+      elm.contentEditable = 'false';
+      elm.innerText = title;
     }
-
-    return remaining > 0 || count === 0;
+    this.todoStore.setCurrent(undefined);
   }
 
-  get isAddTodoDisabled() {
-    return this.newTodo.length < 4;
-  }
-
-  newTodoChange(newTodo: string) {
-    this.newTodo = newTodo;
-  }
-
-  newTodoClear() {
-    this.newTodo = '';
-  }
-
-  editTodo(todo: Todo, elm: HTMLInputElement) {
-    this.isEditing = todo.id;
-    setTimeout(() => {
-      elm.focus();
-    }, 0);
-  }
-
-  stopEditing(todo: Todo, editedTitle: string) {
-    this.isEditing = '';
-  }
-
-  cancelEditingTodo(todo: Todo) {
-    this.isEditing = '';
-  }
-
-  updateEditingTodo(todo: Todo, editedTitle: string) {
-    editedTitle = editedTitle.trim();
-    this.isEditing = '';
+  updateEditingTodo(todo: Todo, elm: HTMLElement) {
     const payload: Todo = {
       ...todo,
-      title: editedTitle,
+      title: elm.innerText.trim(),
       last_modified: Date.now(),
     };
     this.todoStore.update(payload);
+    this.stopEditing(payload, elm);
   }
 
-  addTodo() {
+  addTodo(event: Event) {
+    event.preventDefault();
+    if (this.todoStore.isAddTodoDisabled()) {
+      return;
+    }
     const payload: Todo = {
       id: uuid(),
-      title: this.newTodo.trim(),
+      title: this.todoStore.newTodo().trim(),
       completed: false,
       createdAt: new Date().toISOString(),
       last_modified: Date.now(),
     };
+    this.resetInput(event.target as HTMLInputElement);
     this.todoStore.create(payload);
-    this.newTodo = '';
+  }
+
+  resetInput(newtodoInput: HTMLInputElement) {
+    newtodoInput.value = '';
+    this.todoStore.newTodoChange('');
   }
 
   toggleTodo(todo: Todo) {
@@ -142,6 +108,13 @@ export class TodosComponent {
     this.todoStore.update(payload);
   }
 
+  toggleAllTodos(completed: boolean) {
+    this.todoStore.updateAllBy(
+      { selector: { completed: { $eq: !completed } } },
+      { completed }
+    );
+  }
+
   removeTodo(todo: Todo) {
     this.todoStore.delete(todo);
   }
@@ -150,9 +123,10 @@ export class TodosComponent {
     this.todoStore.deleteAllBy({ selector: { completed: { $eq: true } } });
   }
 
-  filterTodos(filterValue: TodosFilter): void {
+  filterTodos(filter: TodosFilter): void {
     const path = this.location.path().split('?')[0];
-    this.location.replaceState(path, `filter=${filterValue}`);
-    this.todoStore.updateFilter({ value: filterValue });
+    this.location.replaceState(path, `filter=${filter}`);
+    this.todoStore.updateFilter(filter);
+    this.cdRef.detectChanges();
   }
 }

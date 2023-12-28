@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { provideHttpClient } from '@angular/common/http';
-import { ApplicationConfig } from '@angular/core';
-import { provideAnimations } from '@angular/platform-browser/animations';
+import { ApplicationConfig, NgZone, ɵNoopNgZone } from '@angular/core';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideRxDatabase } from '@ngx-odm/rxdb';
 import { getRxDatabaseCreator } from '@ngx-odm/rxdb/config';
@@ -10,8 +10,9 @@ import { appRoutes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    { provide: NgZone, useClass: ɵNoopNgZone },
     provideRouter(appRoutes, withComponentInputBinding()),
-    provideAnimations(),
+    provideAnimationsAsync(),
     provideHttpClient(),
     provideRxDatabase(
       getRxDatabaseCreator({

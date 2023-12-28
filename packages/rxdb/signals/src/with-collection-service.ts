@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */ // FIXME: Remove this
 import { Signal, computed, inject } from '@angular/core';
 import {
-  CallState,
   getCallStateKeys,
   setError,
   setLoaded,
   setLoading,
 } from '@angular-architects/ngrx-toolkit';
-import { tapResponse } from '@ngrx/operators';
 import {
   SignalStoreFeature,
   patchState,
@@ -17,32 +15,34 @@ import {
   withState,
 } from '@ngrx/signals';
 import {
-  EntityState,
   addEntity,
   removeEntities,
   removeEntity,
   setAllEntities,
+  updateEntities,
   updateEntity,
 } from '@ngrx/signals/entities';
-import { NamedEntitySignals } from '@ngrx/signals/entities/src/models';
-import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import {
-  SignalStoreFeatureResult,
-  SignalStoreSlices,
-} from '@ngrx/signals/src/signal-store-models';
+import { EntityChanges, NamedEntitySignals } from '@ngrx/signals/entities/src/models';
+import { SignalStoreFeatureResult } from '@ngrx/signals/src/signal-store-models';
 import { StateSignal } from '@ngrx/signals/src/state-signal';
-import { Prettify } from '@ngrx/signals/src/ts-helpers';
 import { NgxRxdbCollection } from '@ngx-odm/rxdb/collection';
 import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import { MangoQuery } from 'rxdb';
+import type { MangoQuerySelector } from 'rxdb';
 import { firstValueFrom } from 'rxjs';
-import { EmptyObject } from 'type-fest';
 
-export type Filter = Record<string, unknown>;
 type EntityId = string;
 type Entity = { id: EntityId };
+export type Filter = string | Record<string, unknown>;
+export type Query<T = Entity> = {
+  /**
+   * Selector is optional,
+   * if not given, the query matches all documents
+   * that are not _deleted=true.
+   */
+  selector?: MangoQuerySelector<T>;
+};
 
 function capitalize(str: string): string {
   return str ? str[0].toUpperCase() + str.substring(1) : str;
@@ -160,7 +160,7 @@ export type NamedCollectionServiceMethods<
     selected: boolean
   ) => void;
 } & {
-  [K in CName as `find${Capitalize<K>}Entities`]: (query?: MangoQuery) => Promise<void>;
+  [K in CName as `find${Capitalize<K>}Entities`]: (query?: Query<E>) => Promise<void>;
 } & {
   [K in CName as `setCurrent${Capitalize<K>}`]: (entity: E) => void;
 } & {
@@ -170,25 +170,28 @@ export type NamedCollectionServiceMethods<
 } & {
   [K in CName as `update${Capitalize<K>}`]: (entity: E) => Promise<void>;
 } & {
-  [K in CName as `updateAll${Capitalize<K>}By`]: (equery: MangoQuery) => Promise<void>;
+  [K in CName as `updateAll${Capitalize<K>}By`]: (
+    query: Query<E>,
+    data: Partial<E>
+  ) => Promise<void>;
 } & {
   [K in CName as `delete${Capitalize<K>}`]: (entity: E) => Promise<void>;
 } & {
-  [K in CName as `deleteAll${Capitalize<K>}By`]: (query: MangoQuery) => Promise<void>;
+  [K in CName as `deleteAll${Capitalize<K>}By`]: (query: Query<E>) => Promise<void>;
 };
 
 export type CollectionServiceMethods<E extends Entity, F extends Filter> = {
   updateFilter: (filter: F) => void;
   updateSelected: (id: EntityId, selected: boolean) => void;
-  find: (query?: MangoQuery) => Promise<void>;
+  find: (query?: Query<E>) => Promise<void>;
 
   setCurrent(entity: E): void;
   findById(id: EntityId): Promise<void>;
   create(entity: E): Promise<void>;
   update(entity: E): Promise<void>;
-  updateAllBy(query: MangoQuery): Promise<void>;
+  updateAllBy(query: Query<E>, data: Partial<E>): Promise<void>;
   delete(entity: E): Promise<void>;
-  deleteAllBy(query: MangoQuery): Promise<void>;
+  deleteAllBy(query: Query<E>): Promise<void>;
 };
 
 export function withCollectionService<
@@ -285,7 +288,7 @@ export function withCollectionService<
       );
 
       return {
-        [updateFilterKey]: (filter: any): void => {
+        [updateFilterKey]: (filter: F): void => {
           patchState(store, { [filterKey]: filter });
         },
         [updateSelectedKey]: (id: EntityId, selected: boolean): void => {
@@ -296,7 +299,7 @@ export function withCollectionService<
             },
           }));
         },
-        [findKey]: async (query?: MangoQuery): Promise<void> => {
+        [findKey]: async (query?: Query<E>): Promise<void> => {
           store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
@@ -330,12 +333,12 @@ export function withCollectionService<
           patchState(store, { [currentKey]: current });
         },
         [createKey]: async (entity: E): Promise<void> => {
-          patchState(store, { [currentKey]: entity });
+          // patchState(store, { [currentKey]: entity });
           store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
             const created = (await collection.create(entity)).toJSON();
-            patchState(store, { [currentKey]: created });
+            // patchState(store, { [currentKey]: created });
             patchState(
               store,
               prefix ? addEntity(created, { collection: prefix }) : addEntity(created)
@@ -347,14 +350,14 @@ export function withCollectionService<
           }
         },
         [updateKey]: async (entity: E): Promise<void> => {
-          patchState(store, { [currentKey]: entity });
           store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
             const updated = (await collection.upsert(entity))?.toJSON();
-            patchState(store, { [currentKey]: updated });
-            // Why do we need this cast to Partial<Entity>?
-            const updateArg = { id: updated!.id, changes: updated as Partial<E> };
+            const updateArg = {
+              id: updated!.id,
+              changes: updated as EntityChanges<E>,
+            };
             patchState(
               store,
               prefix
@@ -363,6 +366,25 @@ export function withCollectionService<
             );
             store[callStateKey] && patchState(store, setLoaded(prefix));
             NgxRxdbUtils.logger.log('store:find:updated', entity, updated);
+          } catch (e) {
+            store[callStateKey] && patchState(store, setError(e, prefix));
+            throw e;
+          }
+        },
+        [updateAllByKey]: async (query: Query<E>, data: Partial<E>): Promise<void> => {
+          store[callStateKey] && patchState(store, setLoading(prefix));
+
+          try {
+            const result = await collection.updateBulk(query, data);
+            const ids = result.map((e: any) => e.id);
+            patchState(store, { [currentKey]: undefined });
+            patchState(
+              store,
+              prefix
+                ? updateEntities({ ids, changes: data }, { collection: prefix })
+                : updateEntities({ ids, changes: data })
+            );
+            store[callStateKey] && patchState(store, setLoaded(prefix));
           } catch (e) {
             store[callStateKey] && patchState(store, setError(e, prefix));
             throw e;
@@ -387,7 +409,7 @@ export function withCollectionService<
             throw e;
           }
         },
-        [deleteAllByKey]: async (query: any): Promise<void> => {
+        [deleteAllByKey]: async (query: Query<E>): Promise<void> => {
           store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {

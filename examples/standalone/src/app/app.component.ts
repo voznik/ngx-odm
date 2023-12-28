@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { ApplicationRef, Component, inject } from '@angular/core';
+import { NavigationEnd, Router, RouterModule } from '@angular/router';
+import { filter } from 'rxjs';
 
 @Component({
   standalone: true,
@@ -8,8 +9,22 @@ import { RouterModule } from '@angular/router';
   template: `
     <router-outlet></router-outlet>
   `,
-  styles: ``,
 })
 export class AppComponent {
-  title = 'standalone';
+  private router = inject(Router)
+  private appRef = inject(ApplicationRef)
+  constructor() {
+    this.zonelessRouterStarter();
+  }
+
+  private zonelessRouterStarter(): void {
+    this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        // takeUntilDestroyed()
+      )
+      .subscribe(() => {
+        this.appRef.tick();
+      });
+  }
 }

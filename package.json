@@ -46,6 +46,7 @@
     "build:demo": "nx run demo:build --base-href=/ngx-odm/",
     "build:demo:sourcemaps": "nx run demo:build --configuration=production --sourceMap=true --statsJson",
     "build": "nx run rxdb:build --configuration=production",
+    "build:standalone:sourcemaps": "nx run standalone:build --configuration=production --sourceMap=true --statsJson",
     "test": "nx run rxdb:test --ci --run-in-band --parallel --pass-with-no-tests --collectCoverage && npm run test:merge",
     "test:merge": "./node_modules/.bin/lcov-result-merger 'coverage/packages/*.lcov' coverage/lcov.info",
     "lint": "nx run rxdb:lint",
@@ -55,7 +56,8 @@
     "format:check": "nx format:check --base=master --head=HEAD",
     "update": "ng update @nrwl/workspace",
     "dep-graph": "nx dep-graph",
-    "analyze": "node --max_old_space_size=8000 ./node_modules/.bin/source-map-explorer dist/demo/{vendor,main}.*.js{,.map} -m --no-border-checks",
+    "analyze:demo": "node --max_old_space_size=8000 ./node_modules/.bin/source-map-explorer dist/demo/{vendor,main}.*.js{,.map} -m --no-border-checks",
+    "analyze:standalone": "node --max_old_space_size=8000 ./node_modules/.bin/source-map-explorer dist/standalone/{vendor,main}.*.js{,.map} -m --no-border-checks",
     "analyze:file": "node --max_old_space_size=8000 ./node_modules/.bin/source-map-explorer dist/demo/{vendor,main}.*.js{,.map} -m --no-border-checks --html dist/out/result.html",
     "changelog:write": "conventional-changelog -p angular -i CHANGELOG.md -s --config=tools/scripts/conventional-changelog-config.js --skip-unstable",
     "compodoc": "nx run tools:compodoc"
