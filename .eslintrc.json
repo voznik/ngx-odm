@@ -16,19 +16,10 @@
     "project": "tsconfig.base.json",
     "sourceType": "module"
   },
-  "plugins": [
-    "@nx",
-    "jsdoc",
-    "prettier",
-    "@typescript-eslint",
-    "import"
-  ],
+  "plugins": ["@nx", "jsdoc", "prettier", "@typescript-eslint", "import"],
   "overrides": [
     {
-      "files": [
-        "*.ts",
-        "*.js"
-      ],
+      "files": ["*.ts", "*.js"],
       "excludedFiles": [],
       "extends": [
         "plugin:import/recommended",
@@ -37,10 +28,7 @@
       ],
       "rules": {
         "no-prototype-builtins": 0,
-        "curly": [
-          "error",
-          "all"
-        ],
+        "curly": ["error", "all"],
         "jsdoc/newline-after-description": 0,
         "jsdoc/require-returns-type": 0,
         "jsdoc/require-returns-description": 0,
@@ -111,45 +99,23 @@
               "caseInsensitive": true
             },
             "newlines-between": "never",
-            "groups": [
-              "builtin",
-              "external",
-              "internal",
-              "parent",
-              "sibling",
-              "index"
-            ]
+            "groups": ["builtin", "external", "internal", "parent", "sibling", "index"]
           }
         ]
       }
     },
     {
-      "files": [
-        "*.ts",
-        "*.tsx"
-      ],
-      "extends": [
-        "plugin:@nx/typescript"
-      ],
+      "files": ["*.ts", "*.tsx"],
+      "extends": ["plugin:@nx/typescript"],
       "rules": {}
     },
     {
-      "files": [
-        "*.js",
-        "*.jsx"
-      ],
-      "extends": [
-        "plugin:@nx/javascript"
-      ],
+      "files": ["*.js", "*.jsx"],
+      "extends": ["plugin:@nx/javascript"],
       "rules": {}
     },
     {
-      "files": [
-        "*.spec.ts",
-        "*.spec.tsx",
-        "*.spec.js",
-        "*.spec.jsx"
-      ],
+      "files": ["*.spec.ts", "*.spec.tsx", "*.spec.js", "*.spec.jsx"],
       "env": {
         "jest": true
       },

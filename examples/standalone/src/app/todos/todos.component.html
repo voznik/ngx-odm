@@ -8,8 +8,8 @@
       placeholder="What needs to be done?"
       autofocus=""
       (keyup)="todoStore.newTodoChange(newtodoInput.value)"
-      (keyup.enter)="addTodo($event)"
-      (keyup.escape)="resetInput(newtodoInput)"
+      (keyup.enter)="todoStore.addTodo($event)"
+      (keyup.escape)="todoStore.resetInput(newtodoInput)"
     />
   </header>
   <main class="main">
@@ -19,10 +19,10 @@
       type="checkbox"
       [hidden]="!todoStore.count()"
       #toggleall
-      (click)="toggleAllTodos(!!todoStore.remaining())"
+      (click)="todoStore.toggleAllTodos(!!todoStore.remaining())"
     />
     <label for="toggle-all" title="Mark all as complete">Mark all as complete</label>
-    <ul [@listAnimation]="todoStore.count()" class="todo-list">
+    <ul [@listAnimation]="todoStore.filter()" class="todo-list">
       <li
         *ngFor="let todo of todoStore.filtered(); trackBy: trackByFn"
         [class.completed]="todo.completed"
@@ -33,18 +33,18 @@
             [class.editing]="todoStore.current()?.id == todo.id"
             type="checkbox"
             [checked]="todo.completed"
-            (change)="toggleTodo(todo)"
+            (change)="todoStore.toggleTodo(todo)"
           />
           <label
             #editable
-            (dblclick)="editTodo(todo, editable)"
-            (blur)="stopEditing(todo, editable)"
-            (keydown.enter)="$event.preventDefault(); updateEditingTodo(todo, editable)"
-            (keydown.escape)="stopEditing(todo, editable)"
+            (dblclick)="todoStore.editTodo(todo, editable)"
+            (blur)="todoStore.stopEditing(todo, editable)"
+            (keydown.enter)="$event.preventDefault(); todoStore.updateEditingTodo(todo, editable)"
+            (keydown.escape)="todoStore.stopEditing(todo, editable)"
           >
             {{ todo.title }}
           </label>
-          <button class="destroy" (click)="removeTodo(todo)"></button>
+          <button class="destroy" (click)="todoStore.removeTodo(todo)"></button>
         </div>
       </li>
     </ul>
@@ -61,7 +61,7 @@
       <li>
         <a
           href="javascript:void(0);"
-          (click)="filterTodos('ALL')"
+          (click)="todoStore.filterTodos('ALL')"
           [ngClass]="{ selected: todoStore.filter() == 'ALL' }"
         >
           All
@@ -70,7 +70,7 @@
       <li>
         <a
           href="javascript:void(0);"
-          (click)="filterTodos('ACTIVE')"
+          (click)="todoStore.filterTodos('ACTIVE')"
           [ngClass]="{ selected: todoStore.filter() == 'ACTIVE' }"
         >
           Active
@@ -79,7 +79,7 @@
       <li>
         <a
           href="javascript:void(0);"
-          (click)="filterTodos('COMPLETED')"
+          (click)="todoStore.filterTodos('COMPLETED')"
           [ngClass]="{ selected: todoStore.filter() == 'COMPLETED' }"
         >
           Completed
@@ -89,7 +89,7 @@
     <button
       class="clear-completed"
       [disabled]="!todoStore.count()"
-      (click)="removeCompletedTodos()"
+      (click)="todoStore.removeCompletedTodos()"
       style="z-index: 3"
     >
       Clear completed ({{ todoStore.count() - todoStore.remaining() }})

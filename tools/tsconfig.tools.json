@@ -13,11 +13,7 @@
     "esModuleInterop": true,
     "moduleResolution": "node",
     "module": "ESNext",
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
-  "include": [
-    "**/*.ts"
-  ]
+  "include": ["**/*.ts"]
 }

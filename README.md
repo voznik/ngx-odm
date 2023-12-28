@@ -24,6 +24,7 @@
   - [Diagrams](#diagrams)
   - [Status](#status)
   - [Inspiration](#inspiration)
+  - [Notes](#notes)
   - [Contact](#contact)
 
 ## General info
@@ -32,9 +33,9 @@ If you don't want to setup RxDB manually in your next Angular project - just imp
 
 ## Technologies
 
-| RxDB |Angular 10+|
-|------|------|
-|[![RxDB](https://cdn.rawgit.com/pubkey/rxdb/ba7c9b80/docs/files/logo/logo_text.svg)](https://rxdb.info/)|[![Angular](https://angular.io/assets/images/logos/angular/angular.svg )](https://angular.io/)|
+| RxDB                                                                                                     | Angular 10+                                                                                   |
+| -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [![RxDB](https://cdn.rawgit.com/pubkey/rxdb/ba7c9b80/docs/files/logo/logo_text.svg)](https://rxdb.info/) | [![Angular](https://angular.io/assets/images/logos/angular/angular.svg)](https://angular.io/) |
 
 ## Install
 
@@ -51,26 +52,27 @@ If you don't want to setup RxDB manually in your next Angular project - just imp
     // ...
     NgxRxdbModule.forRoot({
       // optional, NgxRxdbConfig extends RxDatabaseCreator, will be merged with default config
-      name: 'ngx',                        // <- name (required, 'ngx')
-      adapter: 'idb',                     // <- storage-adapter (required, default: 'idb')
-      password: '123456789',              // <- password (optional)
-      multiInstance: true,                // <- multiInstance (optional, default: true)
-      queryChangeDetection: false,        // <- queryChangeDetection (optional, default: false)
-      options: {                          // NgxRxdb options (optional)
-        schemas: [ ...CollectionConfigs], // array of NgxRxdbCollectionConfig (optional)
-        dumpPath: 'assets/dump.json'      // path to datbase dump file (optional)
-      }
+      name: 'ngx', // <- name (required, 'ngx')
+      adapter: 'idb', // <- storage-adapter (required, default: 'idb')
+      password: '123456789', // <- password (optional)
+      multiInstance: true, // <- multiInstance (optional, default: true)
+      queryChangeDetection: false, // <- queryChangeDetection (optional, default: false)
+      options: {
+        // NgxRxdb options (optional)
+        schemas: [...CollectionConfigs], // array of NgxRxdbCollectionConfig (optional)
+        dumpPath: 'assets/dump.json', // path to datbase dump file (optional)
+      },
     }),
   ],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}
 ```
 
 ### In your `FeatureModule`
 
->Schemas define how your data looks. Which field should be used as primary, which fields should be used as indexes and what should be encrypted. The schema also validates that every inserted document of your collections conforms to the schema. Every collection has its own schema. With RxDB, schemas are defined with the jsonschema-standard which you might know from other projects.
+> Schemas define how your data looks. Which field should be used as primary, which fields should be used as indexes and what should be encrypted. The schema also validates that every inserted document of your collections conforms to the schema. Every collection has its own schema. With RxDB, schemas are defined with the jsonschema-standard which you might know from other projects.
 > https://rxdb.info/rx-schema.html
 
 ```typescript
@@ -79,13 +81,13 @@ const todoSchema: RxSchema = require('../../../assets/data/todo.schema.json');
 // create config
 // NgxRxdbCollectionConfig extends RxCollectionCreator
 const todoCollectionConfig: NgxRxdbCollectionConfig = {
-  name: 'todo',                           // <- name (required)
-  schema: todoSchema,                     // <- name (required)
-  statics: {},                            // <- collection methods (optional)
-  methods: {},                            // <- instance-methods methods (optional)
+  name: 'todo', // <- name (required)
+  schema: todoSchema, // <- name (required)
+  statics: {}, // <- collection methods (optional)
+  methods: {}, // <- instance-methods methods (optional)
   options: {
-    initialDocs: [] // docs to be imported into empty collection (optional)
-  }
+    initialDocs: [], // docs to be imported into empty collection (optional)
+  },
 };
 
 @NgModule({
@@ -154,14 +156,14 @@ export class TodosService {
 
 By using this module you can
 
-* Automatically initialize db with settings, optionally provide db dumb to pre-fill with collections & documents
-* Automatically initialize RxCollection for each _lazy-loaded Feature module_ with config
-* Work straight with `db.collection` or via _NgxRxdbCollectionService_ wrapper with some helper methods
+- Automatically initialize db with settings, optionally provide db dumb to pre-fill with collections & documents
+- Automatically initialize RxCollection for each _lazy-loaded Feature module_ with config
+- Work straight with `db.collection` or via _NgxRxdbCollectionService_ wrapper with some helper methods
 
 To-do list:
 
-* Enable sync
-* ...
+- Enable sync
+- ...
 
 ## Diagrams
 
@@ -179,9 +181,29 @@ Project is: _in progress_
 
 Project inspired by
 
-* [rxdb-angular2-example](https://github.com/pubkey/rxdb/blob/master/examples/angular2/README.md#rxdb-angular2-example)
-* [Angular NgRx Material Starter](https://tomastrajan.github.io/angular-ngrx-material-starter#/examples/todos)
-* _The Angular Library Series_ from [Angular In Depth](https://blog.angularindepth.com/)
+- [rxdb-angular2-example](https://github.com/pubkey/rxdb/blob/master/examples/angular2/README.md#rxdb-angular2-example)
+- [Angular NgRx Material Starter](https://tomastrajan.github.io/angular-ngrx-material-starter#/examples/todos)
+- _The Angular Library Series_ from [Angular In Depth](https://blog.angularindepth.com/)
+
+## Notes
+
+- example on how to trigger a query on signal change. e.g. filter todos using DB query and not in memory
+  so `fetch` then must be triggered every time
+
+```
+toObservable(filter)
+  .pipe(
+    switchMap(filterValue => {
+      if (filterValue === 'COMPLETED') {
+        query.selector = { completed: { $eq: true } };
+      } else if (filterValue === 'ACTIVE') {
+        query.selector = { completed: { $eq: false } };
+      }
+      return find(query);
+    }),
+    takeUntilDestroyed(this)
+  ).subscribe();
+```
 
 ## Contact
 

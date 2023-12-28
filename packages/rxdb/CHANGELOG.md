@@ -4,20 +4,13 @@ This file was generated using [@jscutlery/semver](https://github.com/jscutlery/s
 
 # [4.0.0](https://github.com/voznik/ngx-odm/compare/v3.0.0...v4.0.0) (2023-11-02)
 
-
-
 # [3.0.0](https://github.com/voznik/ngx-odm/compare/v3.0.0-dev.0...v3.0.0) (2023-10-18)
-
-
 
 # [3.0.0-dev.0](https://github.com/voznik/ngx-odm/compare/v2.5.1...v3.0.0-dev.0) (2023-10-18)
 
-
 ### Features
 
-* refactor & upgrade to Angular 16, main dependencies (no RxDB upgrade yet) ([#38](https://github.com/voznik/ngx-odm/issues/38)) ([5547acf](https://github.com/voznik/ngx-odm/commit/5547acfcff324ad105b4f6526fab0c439e796524))
-
-
+- refactor & upgrade to Angular 16, main dependencies (no RxDB upgrade yet) ([#38](https://github.com/voznik/ngx-odm/issues/38)) ([5547acf](https://github.com/voznik/ngx-odm/commit/5547acfcff324ad105b4f6526fab0c439e796524))
 
 ## 2.5.1 (2021-08-15)
 

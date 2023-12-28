@@ -20,8 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
     permissions:
-      pages: write      # to deploy to Pages
-      id-token: write   # to verify the deployment originates from an appropriate source
+      pages: write # to deploy to Pages
+      id-token: write # to verify the deployment originates from an appropriate source
     # strategy:
     #   matrix:
     #     node-version: [12.x, 14.x]
@@ -67,8 +67,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
         # env:
-          # COVERALLS_SERVICE_NAME: '@ngx-odm'
-          # COVERALLS_PARALLEL: true
+        # COVERALLS_SERVICE_NAME: '@ngx-odm'
+        # COVERALLS_PARALLEL: true
       # Build if release published
       - name: Build
         # if: github.event.release.published
