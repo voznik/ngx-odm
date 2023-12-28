@@ -400,9 +400,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   private async init(dbService: NgxRxdbService, config: RxCollectionCreatorExtended) {
     const { name } = config;
     try {
-      this._collection = (await dbService.initCollections({ [name]: config }))[
-        name
-      ] as RxCollection;
+      const collectionsOfDatabase = await dbService.initCollections({ [name]: config });
+      this._collection = collectionsOfDatabase[name] as RxCollection;
       this._init$.next(true);
       this._init$.complete();
     } catch (e) {

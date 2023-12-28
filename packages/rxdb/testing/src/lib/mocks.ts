@@ -15,7 +15,14 @@ import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 
 type AnyObject = Record<string, any>;
 
-export const TEST_SCHEMA: RxJsonSchema<AnyObject> = {
+export type TestDocType = {
+  id: string;
+  title: string;
+  completed: boolean;
+  createdAt: number;
+};
+
+export const TEST_SCHEMA: RxJsonSchema<TestDocType> = {
   type: 'object',
   title: 'Todo',
   description: 'Todo Schema',
@@ -46,7 +53,7 @@ export const TEST_SCHEMA: RxJsonSchema<AnyObject> = {
 };
 
 export const TEST_FEATURE_CONFIG_1: RxCollectionCreator & { name: string } = {
-  name: 'todo',
+  name: 'test',
   schema: TEST_SCHEMA,
   localDocuments: true,
   autoMigrate: true,
@@ -93,18 +100,18 @@ export const getMockRxdbService = async () => {
     collections: {},
     initDb: jest.fn(),
     destroyDb: jest.fn(),
-    initCollection: jest.fn(),
+    initCollections: jest.fn(),
   };
   jest.spyOn(service, 'initDb').mockImplementation(() => {
-    (service as any).db = Object.freeze(collection.database);
+    (service as any).db = collection.database;
     return Promise.resolve();
   });
   jest.spyOn(service, 'destroyDb').mockImplementation(() => {
     service.db = null;
   });
-  jest.spyOn(service, 'initCollection').mockImplementation(() => {
+  jest.spyOn(service, 'initCollections').mockImplementation(() => {
     service.collections['test'] = collection;
-    return Promise.resolve(collection);
+    return Promise.resolve(service.collections);
   });
   Object.setPrototypeOf(service, NgxRxdbService.prototype);
   return service as unknown as NgxRxdbService;

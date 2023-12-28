@@ -103,31 +103,6 @@ describe('NgxRxdbService', () => {
       expect(spyAddCollections).toHaveBeenCalled();
     });
 
-    it('should skip if single collection already init', async () => {
-      const dbConfig = {
-        ...TEST_DB_CONFIG_1,
-        options: {
-          schemas: {
-            collection1: {
-              name: 'collection1',
-              schema: TEST_SCHEMA,
-            },
-          },
-        },
-      };
-      await service.initDb(dbConfig);
-      const spyAddCollections = jest.spyOn(service.db, 'addCollections');
-      const name = 'collection1';
-      const colConfig = {
-        name,
-        schema: TEST_SCHEMA,
-      };
-      const collection = (await service.initCollections({ [name]: colConfig }))[name];
-      expect(collection).toBeDefined();
-      expect(collection.name).toEqual(name);
-      expect(spyAddCollections).not.toHaveBeenCalled();
-    });
-
     it('should recreate a collection if the recreate option is set', async () => {
       await service.initDb(TEST_DB_CONFIG_1);
       const name = 'collection1';

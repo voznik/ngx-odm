@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
-import { TEST_FEATURE_CONFIG_1, getMockRxdbService } from '@ngx-odm/rxdb/testing';
+import {
+  TEST_FEATURE_CONFIG_1,
+  TestDocType,
+  getMockRxdbService,
+} from '@ngx-odm/rxdb/testing';
 import { MangoQuery, RxQuery } from 'rxdb';
 import { createRxLocalDocument } from 'rxdb/plugins/local-documents';
 import { Observable, firstValueFrom } from 'rxjs';
@@ -9,7 +13,7 @@ import { NgxRxdbCollection } from './rxdb-collection.service';
 describe(`NgxRxdbCollectionService`, () => {
   describe(`test methods using mock NgxRxdbService`, () => {
     let dbService: NgxRxdbService;
-    let service: NgxRxdbCollection;
+    let service: NgxRxdbCollection<TestDocType>;
 
     beforeAll(async () => {
       dbService = await getMockRxdbService();
@@ -33,7 +37,7 @@ describe(`NgxRxdbCollectionService`, () => {
     });
 
     it(`should subscribe until collection init `, () => {
-      const spy = jest.spyOn(dbService, 'initCollection');
+      const spy = jest.spyOn(dbService, 'initCollections');
       service.initialized$.subscribe(() => {
         expect(spy).toHaveBeenCalled();
         expect(service.collection).toBeDefined();
@@ -42,7 +46,9 @@ describe(`NgxRxdbCollectionService`, () => {
 
     it('should initialize collection', async () => {
       await firstValueFrom(service.initialized$);
-      expect(dbService.initCollection).toHaveBeenCalledWith(TEST_FEATURE_CONFIG_1);
+      expect(dbService.initCollections).toHaveBeenCalledWith({
+        [TEST_FEATURE_CONFIG_1.name]: TEST_FEATURE_CONFIG_1,
+      });
       expect(service.collection).toBeDefined();
     });
 
@@ -60,11 +66,19 @@ describe(`NgxRxdbCollectionService`, () => {
 
     it('should get collection info', async () => {
       const storageInfo = await service.info();
-      expect(storageInfo).toMatchObject({ totalCount: expect.any(Number) });
+      expect(storageInfo).toMatchObject({
+        collectionName: TEST_FEATURE_CONFIG_1.name,
+        databaseName: TEST_FEATURE_CONFIG_1.name,
+        id: expect.stringMatching(`collection|${TEST_FEATURE_CONFIG_1.name}-0`),
+        isFirstTimeInstantiated: expect.any(Boolean),
+        last_modified: expect.any(Number),
+        rev: 1,
+        storageName: expect.any(String),
+      });
     });
 
     it('should import docs into collection', async () => {
-      const docs = [{ id: '1' }, { id: '2' }];
+      const docs = [{ id: '1' }, { id: '2' }] as TestDocType[];
       await service.import(docs);
       expect(service.collection.importJSON).toHaveBeenCalledWith({
         name: 'test',
@@ -102,19 +116,19 @@ describe(`NgxRxdbCollectionService`, () => {
     });
 
     it('should insert doc', async () => {
-      const data = { id: '0' };
+      const data = { id: '0' } as TestDocType;
       await service.insert(data);
       expect(service.collection.insert).toHaveBeenCalledWith(data);
     });
 
     it('should bulk insert docs', async () => {
-      const data = [{ id: '11' }, { id: '22' }];
+      const data = [{ id: '11' }, { id: '22' }] as TestDocType[];
       await service.insertBulk(data);
       expect(service.collection.bulkInsert).toHaveBeenCalledWith(data);
     });
 
     it('should upsert doc', async () => {
-      const data = { id: '11' };
+      const data = { id: '11' } as TestDocType;
       await service.upsert(data);
       expect(service.collection.upsert).toHaveBeenCalledWith(data);
     });
@@ -141,7 +155,7 @@ describe(`NgxRxdbCollectionService`, () => {
           },
         },
       };
-      const data = { name: 'test' };
+      const data = { title: 'test' } as TestDocType;
       await service.updateBulk(query, data);
       expect(service.collection.find).toHaveBeenCalledWith(query);
     });

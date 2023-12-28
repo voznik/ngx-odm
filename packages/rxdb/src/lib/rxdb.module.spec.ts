@@ -68,7 +68,7 @@ describe('NgxRxdbModule', () => {
       expect(NgxRxdbModule).toBeDefined();
     });
     it(`should not provide feature config token & collection service`, () => {
-      expect(dbService.initCollection).not.toHaveBeenCalled();
+      expect(dbService.initCollections).not.toHaveBeenCalled();
       expect(() => TestBed.inject(NgxRxdbCollectionService)).toThrowError(
         /No provider for/
       );
@@ -95,7 +95,10 @@ describe('NgxRxdbModule', () => {
       [NgxRxdbCollectionService],
       async (colService: NgxRxdbCollection) => {
         expect(dbService.initDb).toHaveBeenCalledWith(TEST_DB_CONFIG_1);
-        expect(dbService.initCollection).toHaveBeenCalledWith(TEST_FEATURE_CONFIG_1);
+        expect(dbService.initCollections).toHaveBeenCalledWith({
+          [TEST_FEATURE_CONFIG_1.name]: TEST_FEATURE_CONFIG_1,
+        });
+        await colService['ensureCollection']();
         expect(colService.collection).toBeDefined();
         expect(colService.collection.schema.version).toEqual(
           TEST_FEATURE_CONFIG_1.schema.version
