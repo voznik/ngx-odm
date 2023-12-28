@@ -1,13 +1,12 @@
-import { Provider, APP_INITIALIZER } from '@angular/core';
+import { APP_INITIALIZER, Provider } from '@angular/core';
 import {
-  NgxRxdbCollection,
   NgxRxdbCollectionService,
   collectionServiceFactory,
 } from '@ngx-odm/rxdb/collection';
 import {
   RXDB_CONFIG,
-  RxCollectionCreatorExtended,
   RXDB_CONFIG_COLLECTION,
+  RxCollectionCreatorExtended,
 } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import { RxDatabaseCreator } from 'rxdb';

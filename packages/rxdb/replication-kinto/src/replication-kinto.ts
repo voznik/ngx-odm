@@ -17,6 +17,7 @@ import {
   first,
   from,
   interval,
+  lastValueFrom,
   map,
   merge,
   of,
@@ -96,7 +97,7 @@ export function replicateKintoDB<RxDocType extends AnyObject>(
         //  Assign function to pull remote changes.
         _pullHandlerResult$ = of(null).pipe(
           switchMap(() => kintoCollection.listRecords({ since, limit })),
-          map(({ data: documents, last_modified, hasNextPage }: KintoListResponse<any>) => {
+          map(({ data: documents, last_modified, hasNextPage }: KintoListResponse) => {
             // TODO: expect pagination with `next` if batchSize was provided
             since = last_modified!;
             return {
@@ -106,9 +107,9 @@ export function replicateKintoDB<RxDocType extends AnyObject>(
           })
         );
 
-        return _pullHandlerResult$
-          .pipe(first(), NgxRxdbUtils.retryWithBackoff(1, retry))
-          .toPromise() as Promise<any>;
+        return lastValueFrom(
+          _pullHandlerResult$.pipe(first(), NgxRxdbUtils.retryWithBackoff(1, retry))
+        );
       },
       batchSize: pull?.batchSize,
       modifier: pull?.modifier,

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { getMockRxCollection } from '@ngx-odm/rxdb/testing';
 import type { RxCollection } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
@@ -65,9 +64,7 @@ describe('replication:kinto', () => {
     await replicationState.start();
     const expectedUrl =
       'https://kinto.dev.mozaws.net/v1/buckets/test/collections/test/records?_limit=100&_sort=-last_modified';
-    // @ts-expect-error
-    const [[url, { headers }]] = spy.mock.calls;
+    const [[url]] = spy.mock.calls as any[][];
     expect(url).toEqual(expectedUrl);
-    // expect(headers).toMatchObject({ Authorization: expect.stringContaining('Basic') });
   });
 });

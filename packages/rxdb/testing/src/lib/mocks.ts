@@ -10,11 +10,6 @@ import {
 } from 'rxdb';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 
-// const rootDir = resolve(__dirname, '../../../../../');
-// const dbPath = resolve(rootDir, 'tmp', 'websql', 'test');
-
-type AnyObject = Record<string, any>;
-
 export type TestDocType = {
   id: string;
   title: string;

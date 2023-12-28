@@ -240,6 +240,7 @@ const beforeCreateRxCollection = async ({
     NgxRxdbUtils.logger.log('prepare-plugin: imported dump error', error);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async function removeAllDocs() {
     await col.find().update({ $set: { _deleted: true } });
     await col.cleanup();
@@ -248,7 +249,7 @@ const beforeCreateRxCollection = async ({
   async function countDocs() {
     const { count } = await col.storageInstance
       .count(col.defaultPreparedQuery)
-      .catch(e => ({ count: 0 }));
+      .catch(() => ({ count: 0 }));
     return count;
   }
 };

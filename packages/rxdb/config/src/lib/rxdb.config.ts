@@ -13,31 +13,32 @@ import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 import type { Merge, SetOptional, SetRequired } from 'type-fest';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface RxCollectionCreatorOptions {
   schemaUrl?: string;
-  initialDocs?: Record<string, any>[];
+  initialDocs?: Record<string, unknown>[];
   recreate?: boolean;
-  replicationStateFactory?: (col: RxCollection) => RxReplicationState<any, any> | null;
+  replicationStateFactory?: (
+    col: RxCollection
+  ) => RxReplicationState<Record<string, unknown>, unknown> | null;
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
-export type RxCollectionCreatorExtended<T = any> = Merge<
+export type RxCollectionCreatorExtended<T = Record<string, unknown>> = Merge<
   RxCollectionCreator<T>,
   {
-    schema: RxJsonSchema<any> | string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    schema: RxJsonSchema<any>;
     name: string;
     options?: RxCollectionCreatorOptions;
   }
 >;
 
-export type RxCollectionExtended<T = any> = Merge<
+export type RxCollectionExtended<T = Record<string, unknown>> = Merge<
   RxCollection<T>,
   {
     /** Static empty query */
-    defaultQuery: FilledMangoQuery<any>;
+    defaultQuery: FilledMangoQuery<Record<string, unknown>>;
     /** Static empty query "prepared" (RxDb) */
-    defaultPreparedQuery: PreparedQuery<any>;
+    defaultPreparedQuery: PreparedQuery<Record<string, unknown>>;
     /** Get DB metadata */
     getMetadata: () => Promise<RxDbMetadata>;
   }

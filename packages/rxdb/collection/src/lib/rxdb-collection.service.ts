@@ -6,7 +6,7 @@ import type {
   RxDbMetadata,
 } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
-import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
+import { NgxRxdbUtils, isValidRxReplicationState } from '@ngx-odm/rxdb/utils';
 import type {
   MangoQuery,
   RxDatabase,
@@ -31,8 +31,6 @@ import {
   takeWhile,
 } from 'rxjs';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type CheckpointType = any;
 type EntityId = string;
 type Entity = { id: EntityId };
 
@@ -59,7 +57,7 @@ export function collectionServiceFactory(config: RxCollectionCreatorExtended) {
  */
 export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   private _collection!: RxCollection<T>;
-  private _replicationState: RxReplicationState<T, CheckpointType> | null = null;
+  private _replicationState: RxReplicationState<T, unknown> | null = null;
   private _init$ = new ReplaySubject<boolean>();
 
   get initialized$(): Observable<boolean> {
@@ -78,8 +76,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     return this.dbService.dbOptions;
   }
 
-  get replicationState(): RxReplicationState<T, CheckpointType> {
-    return this._replicationState as RxReplicationState<T, CheckpointType>;
+  get replicationState(): RxReplicationState<T, unknown> | null {
+    return this._replicationState;
   }
 
   constructor(
@@ -98,7 +96,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
 
   async sync(): Promise<void> {
     await this.ensureCollection();
-    if (this._replicationState && this._replicationState instanceof RxReplicationState) {
+    if (isValidRxReplicationState(this.replicationState)) {
       this.replicationState.reSync();
       return;
     }
@@ -109,43 +107,43 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
 
     try {
       this._replicationState = this.config.options.replicationStateFactory(
-        this.collection as _RxCollection
-      );
+        this.collection as _RxCollection<T>
+      ) as RxReplicationState<T, unknown>;
     } catch (error) {
       NgxRxdbUtils.logger.log('replicationState has error, ignore replication');
       NgxRxdbUtils.logger.log(error.message);
     }
 
-    if (!(this._replicationState instanceof RxReplicationState)) {
-      return;
-    }
-
-    if (!this.replicationState.autoStart) {
-      this.replicationState.reSync();
-    }
-
-    // Re-sync replication when back online
-    fromEvent(window, 'online')
-      .pipe(takeWhile(() => !this.replicationState.isStopped()))
-      .subscribe(() => {
-        NgxRxdbUtils.logger.log('online');
+    if (isValidRxReplicationState(this.replicationState)) {
+      if (!this.replicationState.autoStart) {
         this.replicationState.reSync();
-      });
-
-    this.replicationState.error$.subscribe(err => {
-      if (
-        err.message.includes('unauthorized')
-        // || err.message.includes('Failed to fetch')
-      ) {
-        this.replicationState.cancel();
-        NgxRxdbUtils.logger.log('replicationState has error, cancel replication');
-        NgxRxdbUtils.logger.log(err.message);
-      } else {
-        console.error(err);
       }
-    });
 
-    return this.replicationState.startPromise;
+      // Re-sync replication when back online
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
+      fromEvent(window, 'online')
+        .pipe(takeWhile(() => !this.replicationState!.isStopped()))
+        .subscribe(() => {
+          NgxRxdbUtils.logger.log('online');
+          this._replicationState!.reSync();
+        });
+
+      this.replicationState.error$.subscribe(err => {
+        if (
+          err.message.includes('unauthorized')
+          // || err.message.includes('Failed to fetch') // TODO: check if this is needed
+        ) {
+          this.replicationState!.cancel();
+          NgxRxdbUtils.logger.log('replicationState has error, cancel replication');
+          NgxRxdbUtils.logger.log(err.message);
+        } else {
+          console.error(err);
+        }
+      });
+      /* eslint-enable @typescript-eslint/no-non-null-assertion */
+
+      return this.replicationState.startPromise;
+    }
   }
 
   /**
@@ -311,7 +309,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    */
   async remove(entityOrId: T | string): Promise<RxDocument<T> | null> {
     await this.ensureCollection();
-    const id = typeof entityOrId === 'object' ? entityOrId!['_id'] : entityOrId;
+    const id = typeof entityOrId === 'object' ? entityOrId['_id'] : entityOrId;
     return this.collection.findOne(id).remove();
   }
 
@@ -401,7 +399,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     const { name } = config;
     try {
       const collectionsOfDatabase = await dbService.initCollections({ [name]: config });
-      this._collection = collectionsOfDatabase[name] as RxCollection;
+      this._collection = collectionsOfDatabase[name] as RxCollection<T>;
       this._init$.next(true);
       this._init$.complete();
     } catch (e) {

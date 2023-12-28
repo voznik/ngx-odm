@@ -16,12 +16,10 @@ function createRequest(
   { data, permissions }: any,
   options: any = {}
 ): KintoRequest {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
-  const { headers, safe } = {
+  const { headers } = {
     ...requestDefaults,
     ...options,
-  };
+  } as any;
   const method = options.method || (data && data.id) ? 'PUT' : 'POST';
   return {
     method,

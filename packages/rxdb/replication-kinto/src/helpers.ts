@@ -188,10 +188,8 @@ export function kintoCollectionFactory(
     bucket,
     collection: collectionName,
     headers,
-    retry,
     exclude,
     expectedTimestamp,
-    strategy,
   }: KintoCollectionSyncOptions = DEFAULT_KINTO_SYNC_OPTIONS,
   fetch = getDefaultFetch()
 ) {
@@ -248,8 +246,8 @@ export function kintoCollectionFactory(
           last_modified: undefined,
         };
       }
-      const safe = !strategy || strategy !== undefined;
       const toDelete: any[] = [];
+      // const safe = !strategy || strategy !== undefined; // TODO: implement similar to kinto
       const toUpdate: any[] = [];
       const toCreate: any[] = [];
       changes.forEach(doc => {
@@ -265,7 +263,7 @@ export function kintoCollectionFactory(
         defaults: { headers },
         requests: [
           // https://docs.kinto-storage.org/en/stable/api/1.x/records.html#uploading-a-record
-          ...toCreate.map(({ last_modified, ...data }) => ({
+          ...toCreate.map(({ ...data }) => ({
             method: 'PUT',
             path: `/${collectionUrl}/records/${data.id}`,
             headers: { 'If-None-Match': '*' },
@@ -279,7 +277,7 @@ export function kintoCollectionFactory(
             body: { data },
           })),
           // https://docs.kinto-storage.org/en/stable/api/1.x/records.html#deleting-a-single-record
-          ...toDelete.map(({ id, last_modified, ...data }) => ({
+          ...toDelete.map(({ id }) => ({
             method: 'DELETE',
             path: `/${collectionUrl}/records/${id}`,
           })),
