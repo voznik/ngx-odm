@@ -13,47 +13,47 @@
       class="new-todo"
       placeholder="What needs to be done?"
       autofocus=""
-      [(ngModel)]="newTodo"
-      (keyup)="newTodoChange($any($event.target).value)"
-      (keyup.enter)="!isAddTodoDisabled && addTodo()"
-      (keyup.escape)="newTodoClear()"
+      [(ngModel)]="todosService.newTodo"
+      (keyup)="todosService.newTodoChange($any($event.target).value)"
+      (keyup.enter)="todosService.add()"
+      (keyup.escape)="todosService.newTodoClear()"
     />
   </header>
   <main class="main">
-    <!-- <input
+    <input
       id="toggle-all"
       class="toggle-all"
       type="checkbox"
-      *ngIf="true"
+      [hidden]="!$.count"
       #toggleall
-      [checked]="(filter$ | async) === 'ALL'"
-      (click)="filterTodos('')"
-    /> -->
-    <ul [@listAnimation]="$.todos?.length" class="todo-list">
+      (click)="todosService.toggleAllTodos(!toggleall.value)"
+    />
+    <label for="toggle-all" title="Mark all as complete">Mark all as complete</label>
+    <ul [@listAnimation]="$.filter" class="todo-list">
       <li
         *ngFor="let todo of $.todos | byStatus: $.filter; trackBy: trackByFn"
         [class.completed]="todo.completed"
-        [class.editing]="isEditing === todo.id"
+        [class.editing]="todosService.isEditing === todo.id"
       >
         <div class="view">
           <input
             class="toggle"
-            [class.editing]="isEditing"
+            [class.editing]="todosService.isEditing"
             type="checkbox"
             [checked]="todo.completed"
-            (change)="toggleTodo(todo)"
+            (change)="todosService.toggle(todo)"
           />
-          <label (dblclick)="editTodo(todo, editInput)">{{ todo.title }}</label>
-          <button class="destroy" (click)="removeTodo(todo)"></button>
+          <label (dblclick)="todosService.editTodo(todo, editInput)">{{ todo.title }}</label>
+          <button class="destroy" (click)="todosService.removeTodo(todo)"></button>
         </div>
         <input
           class="edit"
-          [hidden]="!isEditing"
+          [hidden]="!todosService.isEditing"
           [value]="todo.title"
           #editInput
-          (blur)="stopEditing(todo, editInput.value)"
-          (keyup.enter)="updateEditingTodo(todo, editInput.value)"
-          (keyup.escape)="cancelEditingTodo(todo)"
+          (blur)="todosService.stopEditing(todo, editInput.value)"
+          (keyup.enter)="todosService.updateEditingTodo(todo, editInput.value)"
+          (keyup.escape)="todosService.cancelEditingTodo(todo)"
         />
       </li>
     </ul>
@@ -63,7 +63,7 @@
     [hidden]="$.count === 0"
     *ngrxLet="($.todos | byStatus: 'ACTIVE')?.length; let remainig"
   >
-    <ng-container *ngIf="showRemainig(remainig)">
+    <ng-container *ngIf="remainig">
       <span class="todo-count" [ngPlural]="remainig">
         <ng-template ngPluralCase="other">{{ remainig }} items left</ng-template>
         <ng-template ngPluralCase="=1">one item left</ng-template>
@@ -74,7 +74,7 @@
       <li>
         <a
           href="javascript:void(0);"
-          (click)="filterTodos('ALL')"
+          (click)="todosService.filterTodos('ALL')"
           [ngClass]="{ selected: $.filter == 'ALL' }"
         >
           All
@@ -83,7 +83,7 @@
       <li>
         <a
           href="javascript:void(0);"
-          (click)="filterTodos('ACTIVE')"
+          (click)="todosService.filterTodos('ACTIVE')"
           [ngClass]="{ selected: $.filter == 'ACTIVE' }"
         >
           Active
@@ -92,7 +92,7 @@
       <li>
         <a
           href="javascript:void(0);"
-          (click)="filterTodos('COMPLETED')"
+          (click)="todosService.filterTodos('COMPLETED')"
           [ngClass]="{ selected: $.filter == 'COMPLETED' }"
         >
           Completed
@@ -101,8 +101,8 @@
     </ul>
     <button
       class="clear-completed"
-      [disabled]="$.todos?.length - remainig < $.todos?.length"
-      (click)="removeCompletedTodos()"
+      [disabled]="!$.todos?.length || remainig === $.todos?.length"
+      (click)="todosService.removeCompletedTodos()"
       style="z-index: 3"
     >
       Clear completed ({{ $.todos?.length - remainig }})

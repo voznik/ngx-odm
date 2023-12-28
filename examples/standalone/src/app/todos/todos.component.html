@@ -90,7 +90,7 @@
     </ul>
     <button
       class="clear-completed"
-      [disabled]="!todoStore.count()"
+      [disabled]="!todoStore.count() || todoStore.count() === todoStore.remaining()"
       (click)="todoStore.removeCompletedTodos()"
       style="z-index: 3"
     >

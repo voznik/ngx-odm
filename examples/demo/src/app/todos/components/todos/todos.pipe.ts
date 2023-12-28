@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { Todo, TodosFilter, TodosState } from '../../models';
+import { Todo, TodosFilter } from '../../models';
 
 @Pipe({ name: 'byStatus', pure: false })
 export class TodosPipe implements PipeTransform {
