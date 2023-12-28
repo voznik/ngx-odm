@@ -32,6 +32,7 @@ import { TodosRoutingModule } from './todos-routing.module';
         initialDocs: TODOS_INITIAL_STATE.items, // populate collection with initial data,
         recreate: true,
         replicationStateFactory: collection => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           let replicationState: RxReplicationState<Todo, any> | null = null;
 
           switch (localStorage['_ngx_rxdb_replication']) {

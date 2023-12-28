@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import type {
   DocumentsWithCheckpoint,
@@ -36,9 +36,6 @@ import {
   KintoReplicationOptions,
 } from './types';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyObject = Record<string, any>;
-
 /**
  * The basic idea is to keep a local database up to date with the Kinto server:
  * - Remote changes are downloaded and applied on the local data.
@@ -57,10 +54,8 @@ type AnyObject = Record<string, any>;
  * Depending on the context (latest first, readonly, etc.), there are several strategies to poll the server for changes.
  * @param options
  */
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-constraint
-export function replicateKintoDB<RxDocType extends AnyObject>(
-  options: KintoReplicationOptions
-) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function replicateKintoDB<RxDocType = any>(options: KintoReplicationOptions) {
   const {
     replicationIdentifier,
     kintoSyncOptions,
@@ -145,8 +140,10 @@ export function replicateKintoDB<RxDocType extends AnyObject>(
           const missing = results.skipped
             .filter(({ error }) => error.code == 404)
             .map(({ path }) => {
-              const doc = outgoing.find(doc => String(path).endsWith(doc.id));
-              delete doc?.last_modified;
+              const doc = outgoing.find((d: RxDocType) => String(path).endsWith(d['id']));
+              if (doc) {
+                delete doc['last_modified'];
+              }
               return doc;
             });
           if (missing.length) {

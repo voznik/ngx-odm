@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/ban-types */
+// INFO: we NEED to keep `any` here. only Typescript complains, but type resolution for consumers does work
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types */
 import { InjectionToken } from '@angular/core';
 import type {
   FilledMangoQuery,
@@ -15,30 +16,27 @@ import type { Merge, SetOptional, SetRequired } from 'type-fest';
 
 export interface RxCollectionCreatorOptions {
   schemaUrl?: string;
-  initialDocs?: Record<string, unknown>[];
+  initialDocs?: any[];
   recreate?: boolean;
-  replicationStateFactory?: (
-    col: RxCollection
-  ) => RxReplicationState<Record<string, unknown>, unknown> | null;
+  replicationStateFactory?: (col: RxCollection) => RxReplicationState<any, any> | null;
 }
 
-export type RxCollectionCreatorExtended<T = Record<string, unknown>> = Merge<
+export type RxCollectionCreatorExtended<T = any> = Merge<
   RxCollectionCreator<T>,
   {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    schema: RxJsonSchema<any>;
+    schema: RxJsonSchema<T>;
     name: string;
     options?: RxCollectionCreatorOptions;
   }
 >;
 
-export type RxCollectionExtended<T = Record<string, unknown>> = Merge<
+export type RxCollectionExtended<T = any> = Merge<
   RxCollection<T>,
   {
     /** Static empty query */
-    defaultQuery: FilledMangoQuery<Record<string, unknown>>;
+    defaultQuery: FilledMangoQuery<any>;
     /** Static empty query "prepared" (RxDb) */
-    defaultPreparedQuery: PreparedQuery<Record<string, unknown>>;
+    defaultPreparedQuery: PreparedQuery<any>;
     /** Get DB metadata */
     getMetadata: () => Promise<RxDbMetadata>;
   }

@@ -30,7 +30,7 @@
         <div class="view">
           <input
             class="toggle"
-            [class.editing]="todoStore.current()?.id == todo.id"
+            [class.editing]="todoStore.current()?.id === todo.id"
             type="checkbox"
             [checked]="todo.completed"
             (change)="todoStore.toggleTodo(todo)"
@@ -39,7 +39,9 @@
             #editable
             (dblclick)="todoStore.editTodo(todo, editable)"
             (blur)="todoStore.stopEditing(todo, editable)"
-            (keydown.enter)="$event.preventDefault(); todoStore.updateEditingTodo(todo, editable)"
+            (keydown.enter)="
+              $event.preventDefault(); todoStore.updateEditingTodo(todo, editable)
+            "
             (keydown.escape)="todoStore.stopEditing(todo, editable)"
           >
             {{ todo.title }}
@@ -62,7 +64,7 @@
         <a
           href="javascript:void(0);"
           (click)="todoStore.filterTodos('ALL')"
-          [ngClass]="{ selected: todoStore.filter() == 'ALL' }"
+          [ngClass]="{ selected: todoStore.filter() === 'ALL' }"
         >
           All
         </a>
@@ -71,7 +73,7 @@
         <a
           href="javascript:void(0);"
           (click)="todoStore.filterTodos('ACTIVE')"
-          [ngClass]="{ selected: todoStore.filter() == 'ACTIVE' }"
+          [ngClass]="{ selected: todoStore.filter() === 'ACTIVE' }"
         >
           Active
         </a>
@@ -80,7 +82,7 @@
         <a
           href="javascript:void(0);"
           (click)="todoStore.filterTodos('COMPLETED')"
-          [ngClass]="{ selected: todoStore.filter() == 'COMPLETED' }"
+          [ngClass]="{ selected: todoStore.filter() === 'COMPLETED' }"
         >
           Completed
         </a>

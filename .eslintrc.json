@@ -7,13 +7,11 @@
     "node": true
   },
   "extends": [
-    "plugin:import/errors",
-    "plugin:import/warnings",
     "plugin:prettier/recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "tsconfig.base.json",
+    "project": "tsconfig.json",
     "sourceType": "module"
   },
   "plugins": ["@nx", "jsdoc", "prettier", "@typescript-eslint", "import"],
@@ -85,7 +83,6 @@
         "import/extensions": "off",
         "import/no-unresolved": "off",
         "import/named": "off",
-        "import/namespace": "off",
         "import/newline-after-import": "error",
         "import/no-default-export": "error",
         "import/no-named-as-default": "off",

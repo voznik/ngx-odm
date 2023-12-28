@@ -10,8 +10,7 @@
       ],
       "rules": {
         "@angular-eslint/directive-selector": 2,
-        "@angular-eslint/component-selector": 2,
-        "@typescript-eslint/no-unused-vars": 1
+        "@angular-eslint/component-selector": 2
       }
     },
     {
