@@ -1,4 +1,3 @@
-<!-- https://angular.io/guide/template-typecheck#disabling-type-checking-using-any -->
 <section class="todoapp">
   <header class="header">
     <h1>todos</h1>
@@ -9,7 +8,7 @@
       autofocus=""
       (keyup)="todoStore.newTodoChange(newtodoInput.value)"
       (keyup.enter)="todoStore.addTodo($event)"
-      (keyup.escape)="todoStore.resetInput(newtodoInput)"
+      (keyup.escape)="newtodoInput.value = ''; todoStore.newTodoChange('')"
     />
   </header>
   <main class="main">
@@ -36,16 +35,18 @@
             (change)="todoStore.toggleTodo(todo)"
           />
           <label
-            #editable
-            (dblclick)="todoStore.editTodo(todo, editable)"
-            (blur)="todoStore.stopEditing(todo, editable)"
-            (keydown.enter)="
-              $event.preventDefault(); todoStore.updateEditingTodo(todo, editable)
-            "
-            (keydown.escape)="todoStore.stopEditing(todo, editable)"
+            [class.editing]="todoStore.current()?.id === todo.id"
+            (dblclick)="todoStore.setEditinigTodo(todo, $event, true)"
+            (blur)="todoStore.setEditinigTodo(todo, $event, false)"
+            (keyup)="$event.preventDefault()"
+            (keydown.escape)="todoStore.setEditinigTodo(todo, $event, false)"
+            (keydown.enter)="todoStore.updateEditingTodo(todo, $event)"
           >
             {{ todo.title }}
           </label>
+          <small class="last-modified">
+            Last modified: {{ todo.last_modified | date: 'short' }}
+          </small>
           <button class="destroy" (click)="todoStore.removeTodo(todo)"></button>
         </div>
       </li>

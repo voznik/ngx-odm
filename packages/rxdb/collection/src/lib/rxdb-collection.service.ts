@@ -236,8 +236,6 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     );
   }
 
-  findById = this.get;
-
   /**
    * Inserts new document into the database.
    * The collection will validate the schema and automatically encrypt any encrypted fields
@@ -247,8 +245,6 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     await this.ensureCollection();
     return this.collection.insert(data);
   }
-
-  create = this.insert;
 
   /**
    * When you have to insert many documents at once, use bulk insert.
@@ -312,8 +308,6 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     const id = typeof entityOrId === 'object' ? entityOrId['_id'] : entityOrId;
     return this.collection.findOne(id).remove();
   }
-
-  delete = this.remove;
 
   /**
    * Removes many documents at once

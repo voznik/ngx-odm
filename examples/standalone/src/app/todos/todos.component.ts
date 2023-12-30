@@ -8,6 +8,7 @@ import {
   inject,
 } from '@angular/core';
 import { Title } from '@angular/platform-browser';
+import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import { Todo } from './todos.model';
 import { TodoStore } from './todos.store';
 
@@ -41,15 +42,22 @@ export class TodosComponent {
   private cdRef = inject(ChangeDetectorRef);
   private titleService = inject(Title);
   readonly todoStore = inject(TodoStore);
+  manualCD = true; // INFO: Angular 17 doesn't provide way to detect changes with `signals` ONLY and no zone
 
-  trackByFn = (index: number, item: Todo) => item.id;
+  trackByFn = (index: number, item: Todo) => {
+    return item.last_modified;
+  };
 
   constructor() {
     effect(() => {
-      const { title } = this.todoStore;
+      const { title, filter, entities } = this.todoStore;
       const titleString = title();
       this.titleService.setTitle(titleString);
-      this.cdRef.detectChanges();
+      NgxRxdbUtils.logger.log(filter()); // INFO: signals on their own do not work if we do not use it directly here to trigger CD
+      NgxRxdbUtils.logger.table(entities()); // INFO: signals on their own do not work if we do not use it directly here to trigger CD
+      if (this.manualCD) {
+        this.cdRef.detectChanges();
+      }
     });
   }
 }

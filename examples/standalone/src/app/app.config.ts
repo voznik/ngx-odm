@@ -2,16 +2,15 @@
 import { provideHttpClient } from '@angular/common/http';
 import { ApplicationConfig, NgZone, ɵNoopNgZone } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideRouter, withRouterConfig } from '@angular/router';
 import { provideRxDatabase } from '@ngx-odm/rxdb';
 import { getRxDatabaseCreator } from '@ngx-odm/rxdb/config';
-import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { appRoutes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     { provide: NgZone, useClass: ɵNoopNgZone },
-    provideRouter(appRoutes, withComponentInputBinding()),
+    provideRouter(appRoutes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
     provideAnimationsAsync(),
     provideHttpClient(),
     provideRxDatabase(

@@ -58,7 +58,7 @@
     "update": "ng update @nrwl/workspace",
     "dep-graph": "nx dep-graph",
     "analyze:demo": "node --max_old_space_size=8000 ./node_modules/.bin/source-map-explorer dist/demo/{vendor,main}.*.js{,.map} -m --no-border-checks",
-    "analyze:standalone": "node --max_old_space_size=8000 ./node_modules/.bin/source-map-explorer dist/standalone/{vendor,main}.*.js{,.map} -m --no-border-checks",
+    "analyze:standalone": "node --max_old_space_size=8000 ./node_modules/.bin/source-map-explorer dist/standalone/browser/{chunk,main}-*.js{,.map} -m --no-border-checks",
     "analyze:file": "node --max_old_space_size=8000 ./node_modules/.bin/source-map-explorer dist/demo/{vendor,main}.*.js{,.map} -m --no-border-checks --html dist/out/result.html",
     "changelog:write": "conventional-changelog -p angular -i CHANGELOG.md -s --config=tools/scripts/conventional-changelog-config.js --skip-unstable",
     "compodoc": "nx run tools:compodoc"

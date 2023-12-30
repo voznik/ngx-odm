@@ -6,6 +6,7 @@ import {
   setLoaded,
   setLoading,
 } from '@angular-architects/ngrx-toolkit';
+import { tapResponse } from '@ngrx/operators';
 import {
   SignalStoreFeature,
   patchState,
@@ -14,23 +15,16 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
-import {
-  addEntity,
-  removeEntities,
-  removeEntity,
-  setAllEntities,
-  updateEntities,
-  updateEntity,
-} from '@ngrx/signals/entities';
-import { EntityChanges, NamedEntitySignals } from '@ngrx/signals/entities/src/models';
+import { setAllEntities } from '@ngrx/signals/entities';
+import { NamedEntitySignals } from '@ngrx/signals/entities/src/models';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { SignalStoreFeatureResult } from '@ngrx/signals/src/signal-store-models';
 import { StateSignal } from '@ngrx/signals/src/state-signal';
 import { NgxRxdbCollection } from '@ngx-odm/rxdb/collection';
 import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
-import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import type { MangoQuerySelector } from 'rxdb';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, pipe, switchMap } from 'rxjs';
 
 type EntityId = string;
 type Entity = { id: EntityId };
@@ -39,7 +33,7 @@ export type Query<T = Entity> = {
   /**
    * Selector is optional,
    * if not given, the query matches all documents
-   * that are not _deleted=true.
+   * that are not _removed=true.
    */
   selector?: MangoQuerySelector<T>;
 };
@@ -76,21 +70,21 @@ function getCollectionServiceKeys(options: { collection?: string }) {
   const setCurrentKey = options.collection
     ? `setCurrent${capitalize(options.collection)}`
     : 'setCurrent';
-  const createKey = options.collection
-    ? `create${capitalize(options.collection)}`
-    : 'create';
+  const insertKey = options.collection
+    ? `insert${capitalize(options.collection)}`
+    : 'insert';
   const updateKey = options.collection
     ? `update${capitalize(options.collection)}`
     : 'update';
   const updateAllByKey = options.collection
     ? `updateAll${capitalize(options.collection)}By`
     : 'updateAllBy';
-  const deleteKey = options.collection
-    ? `delete${capitalize(options.collection)}`
-    : 'delete';
-  const deleteAllByKey = options.collection
-    ? `deleteAll${capitalize(options.collection)}By`
-    : 'deleteAllBy';
+  const removeKey = options.collection
+    ? `remove${capitalize(options.collection)}`
+    : 'remove';
+  const removeAllByKey = options.collection
+    ? `removeAll${capitalize(options.collection)}By`
+    : 'removeAllBy';
 
   // TODO: Take these from @ngrx/signals/entities, when they are exported
   const entitiesKey = options.collection ? `${options.collection}Entities` : 'entities';
@@ -111,11 +105,11 @@ function getCollectionServiceKeys(options: { collection?: string }) {
     currentKey,
     findByIdKey,
     setCurrentKey,
-    createKey,
+    insertKey,
     updateKey,
     updateAllByKey,
-    deleteKey,
-    deleteAllByKey,
+    removeKey,
+    removeAllByKey,
   };
 }
 
@@ -160,13 +154,13 @@ export type NamedCollectionServiceMethods<
     selected: boolean
   ) => void;
 } & {
-  [K in CName as `find${Capitalize<K>}Entities`]: (query?: Query<E>) => Promise<void>;
-} & {
   [K in CName as `setCurrent${Capitalize<K>}`]: (entity: E) => void;
+} & {
+  ['findAllDocs']: (query?: Query<E>) => void;
 } & {
   [K in CName as `find${Capitalize<K>}ById`]: (id: EntityId) => Promise<void>;
 } & {
-  [K in CName as `create${Capitalize<K>}`]: (entity: E) => Promise<void>;
+  [K in CName as `insert${Capitalize<K>}`]: (entity: E) => Promise<void>;
 } & {
   [K in CName as `update${Capitalize<K>}`]: (entity: E) => Promise<void>;
 } & {
@@ -175,23 +169,22 @@ export type NamedCollectionServiceMethods<
     data: Partial<E>
   ) => Promise<void>;
 } & {
-  [K in CName as `delete${Capitalize<K>}`]: (entity: E) => Promise<void>;
+  [K in CName as `remove${Capitalize<K>}`]: (entity: E) => Promise<void>;
 } & {
-  [K in CName as `deleteAll${Capitalize<K>}By`]: (query: Query<E>) => Promise<void>;
+  [K in CName as `removeAll${Capitalize<K>}By`]: (query: Query<E>) => Promise<void>;
 };
 
 export type CollectionServiceMethods<E extends Entity, F extends Filter> = {
   updateFilter: (filter: F) => void;
   updateSelected: (id: EntityId, selected: boolean) => void;
-  find: (query?: Query<E>) => Promise<void>;
-
   setCurrent(entity: E): void;
+  findAllDocs: (query?: Query<E>) => void;
   findById(id: EntityId): Promise<void>;
-  create(entity: E): Promise<void>;
+  insert(entity: E): Promise<void>;
   update(entity: E): Promise<void>;
   updateAllBy(query: Query<E>, data: Partial<E>): Promise<void>;
-  delete(entity: E): Promise<void>;
-  deleteAllBy(query: Query<E>): Promise<void>;
+  remove(entity: E): Promise<void>;
+  removeAllBy(query: Query<E>): Promise<void>;
 };
 
 export function withCollectionService<
@@ -248,18 +241,17 @@ export function withCollectionService<
   const {
     entitiesKey,
     filterKey,
-    findKey,
     selectedEntitiesKey,
     selectedIdsKey,
     updateFilterKey,
     updateSelectedKey,
 
     currentKey,
-    createKey,
+    insertKey,
     updateKey,
     updateAllByKey,
-    deleteKey,
-    deleteAllByKey,
+    removeKey,
+    removeAllByKey,
     findByIdKey,
     setCurrentKey,
   } = getCollectionServiceKeys(options);
@@ -299,29 +291,34 @@ export function withCollectionService<
             },
           }));
         },
-        [findKey]: async (query?: Query<E>): Promise<void> => {
-          store[callStateKey] && patchState(store, setLoading(prefix));
-
-          try {
-            const result = await firstValueFrom(collection.docs(query));
-            NgxRxdbUtils.logger.log('store:find:result', result);
-            patchState(
-              store,
-              prefix
-                ? setAllEntities(result, { collection: prefix })
-                : setAllEntities(result)
-            );
-            store[callStateKey] && patchState(store, setLoaded(prefix));
-          } catch (e) {
-            store[callStateKey] && patchState(store, setError(e, prefix));
-            throw e;
-          }
-        },
+        findAllDocs: rxMethod(
+          pipe(
+            switchMap(query =>
+              collection.docs({}).pipe(
+                tapResponse({
+                  next: result => {
+                    // NgxRxdbUtils.logger.table(result);
+                    store[callStateKey] && patchState(store, setLoading(prefix));
+                    return patchState(
+                      store,
+                      prefix
+                        ? setAllEntities(result, { collection: prefix })
+                        : setAllEntities(result)
+                    );
+                  },
+                  error: console.error,
+                  finalize: () =>
+                    store[callStateKey] && patchState(store, setLoaded(prefix)),
+                })
+              )
+            )
+          )
+        ),
         [findByIdKey]: async (id: EntityId): Promise<void> => {
           store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
-            const current = await firstValueFrom(collection.findById(id));
+            const current = await firstValueFrom(collection.get(id));
             store[callStateKey] && patchState(store, setLoaded(prefix));
             patchState(store, { [currentKey]: current });
           } catch (e) {
@@ -332,17 +329,14 @@ export function withCollectionService<
         [setCurrentKey]: (current: E): void => {
           patchState(store, { [currentKey]: current });
         },
-        [createKey]: async (entity: E): Promise<void> => {
+        [insertKey]: async (entity: E): Promise<void> => {
           // patchState(store, { [currentKey]: entity });
           store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
-            const created = (await collection.create(entity)).toJSON();
-            // patchState(store, { [currentKey]: created });
-            patchState(
-              store,
-              prefix ? addEntity(created, { collection: prefix }) : addEntity(created)
-            );
+            const insertd = (await collection.insert(entity)).toJSON();
+            // INFO: here we don't need to update entity store because
+            // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
             store[callStateKey] && patchState(store, setLoaded(prefix));
           } catch (e) {
             store[callStateKey] && patchState(store, setError(e, prefix));
@@ -350,22 +344,15 @@ export function withCollectionService<
           }
         },
         [updateKey]: async (entity: E): Promise<void> => {
+          // patchState(store, { [currentKey]: entity }); // TODO: if we need to use `current`
           store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
             const updated = (await collection.upsert(entity))?.toJSON();
-            const updateArg = {
-              id: updated!.id,
-              changes: updated as EntityChanges<E>,
-            };
-            patchState(
-              store,
-              prefix
-                ? updateEntity(updateArg, { collection: prefix })
-                : updateEntity(updateArg)
-            );
+            // INFO: here we don't need to update entity store because
+            // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
             store[callStateKey] && patchState(store, setLoaded(prefix));
-            NgxRxdbUtils.logger.log('store:find:updated', entity, updated);
+            // patchState(store, { [currentKey]: undefined }); // TODO: if we need to use `current`
           } catch (e) {
             store[callStateKey] && patchState(store, setError(e, prefix));
             throw e;
@@ -376,50 +363,34 @@ export function withCollectionService<
 
           try {
             const result = await collection.updateBulk(query, data);
-            const ids = result.map((e: any) => e.id);
-            patchState(store, { [currentKey]: undefined });
-            patchState(
-              store,
-              prefix
-                ? updateEntities({ ids, changes: data }, { collection: prefix })
-                : updateEntities({ ids, changes: data })
-            );
+            // INFO: here we don't need to update entity store because
+            // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
             store[callStateKey] && patchState(store, setLoaded(prefix));
           } catch (e) {
             store[callStateKey] && patchState(store, setError(e, prefix));
             throw e;
           }
         },
-        [deleteKey]: async (entity: E): Promise<void> => {
-          patchState(store, { [currentKey]: entity });
+        [removeKey]: async (entity: E): Promise<void> => {
           store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
-            await collection.delete(entity);
-            patchState(store, { [currentKey]: undefined });
-            patchState(
-              store,
-              prefix
-                ? removeEntity(entity.id, { collection: prefix })
-                : removeEntity(entity.id)
-            );
+            await collection.remove(entity);
+            // INFO: here we don't need to update entity store because
+            // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
             store[callStateKey] && patchState(store, setLoaded(prefix));
           } catch (e) {
             store[callStateKey] && patchState(store, setError(e, prefix));
             throw e;
           }
         },
-        [deleteAllByKey]: async (query: Query<E>): Promise<void> => {
+        [removeAllByKey]: async (query: Query<E>): Promise<void> => {
           store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
-            const { success } = await collection.removeBulk(query);
-            const ids = success.map((e: any) => e.id);
-            patchState(store, { [currentKey]: undefined });
-            patchState(
-              store,
-              prefix ? removeEntities(ids, { collection: prefix }) : removeEntities(ids)
-            );
+            const { success, error } = await collection.removeBulk(query);
+            // INFO: here we don't need to update entity store because
+            // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
             store[callStateKey] && patchState(store, setLoaded(prefix));
           } catch (e) {
             store[callStateKey] && patchState(store, setError(e, prefix));

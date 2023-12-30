@@ -1,7 +1,7 @@
 import { ApplicationRef, Component, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
-import { filter } from 'rxjs';
+import { filter, tap } from 'rxjs';
 
 @Component({
   standalone: true,
@@ -15,17 +15,18 @@ export class AppComponent {
   private router = inject(Router);
   private appRef = inject(ApplicationRef);
   constructor() {
-    this.zonelessRouterStarter();
+    this.zonelessCD();
   }
 
-  private zonelessRouterStarter(): void {
+  private zonelessCD(): void {
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
+        tap(() => {
+          this.appRef.tick();
+        }),
         takeUntilDestroyed()
       )
-      .subscribe(() => {
-        this.appRef.tick();
-      });
+      .subscribe();
   }
 }

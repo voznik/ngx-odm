@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Location } from '@angular/common';
-import { ChangeDetectorRef, computed, inject } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { withDevtools } from '@angular-architects/ngrx-toolkit';
 import {
   patchState,
@@ -25,27 +25,30 @@ export const TodoStore = signalStore(
     newTodo: '',
   }),
   withEntities<Todo>(),
-  withCollectionService<Todo, string, RxCollectionCreatorExtended>({
-    filter: 'ALL' as string,
+  // INFO: an instance of RxCollection will be provided by this
+  withCollectionService<Todo, TodosFilter, RxCollectionCreatorExtended>({
+    filter: 'ALL' as TodosFilter,
     collectionConfig: TodosCollectionConfig,
   }),
   // INFO: Function calls in a template
   // Over the years, Angular developers have learned to avoid calling functions inside templates because a function re-runs every change detection and used pure pipes instead. This would cause expensive computations to run multiple times unnecessarily if the passed arguments did not change.
   // In a signal-based component, this idea no longer applies because the expressions will only re-evaluate as a result of a signal dependency change.
   // With signals, we no longer have to care about handling subscriptions. It is absolutely fine to call a signal function in the template since only the part that depends on that signal will be updated.
-  withComputed(({ count, entities, newTodo, filter }) => {
+  withComputed(({ count, entities, entityMap, newTodo, filter }) => {
     return {
       isAddTodoDisabled: computed(() => newTodo().length < 4),
-      remaining: computed(() => entities().filter(todo => !todo.completed).length),
-      filtered: computed(() =>
-        entities().filter(todo => {
+      filtered: computed(() => {
+        return entities().filter(todo => {
           const filterValue = filter();
           if (filterValue === 'ALL') {
             return todo;
           }
           return todo.completed === (filterValue === 'COMPLETED');
-        })
-      ),
+        });
+      }),
+      remaining: computed(() => {
+        return count() - entities().filter(todo => !todo.completed).length;
+      }),
       title: computed(() => {
         const all = count(),
           remaining = entities().filter(todo => !todo.completed).length;
@@ -55,13 +58,13 @@ export const TodoStore = signalStore(
   }),
   withMethods(store => {
     const location = inject(Location);
-    const cdRef = inject(ChangeDetectorRef);
     return {
       newTodoChange(newTodo: string) {
         patchState(store, { newTodo });
       },
       addTodo(event: Event) {
         event.preventDefault();
+        const elm = event.target as HTMLInputElement;
         if (store.isAddTodoDisabled()) {
           return;
         }
@@ -72,34 +75,33 @@ export const TodoStore = signalStore(
           createdAt: new Date().toISOString(),
           last_modified: Date.now(),
         };
-        (event.target as HTMLInputElement).value = '';
+        elm.value = '';
         patchState(store, { newTodo: '' });
-        store.create(payload);
+        store.insert(payload);
       },
-      editTodo(todo: Todo, elm: HTMLElement) {
-        store.setCurrent(todo);
-        elm.contentEditable = 'plaintext-only';
-        elm.focus();
-      },
-      stopEditing({ title }: Todo, elm: HTMLElement) {
-        if (elm.contentEditable !== 'false') {
+      setEditinigTodo(todo: Todo, event: Event, isEditing: boolean) {
+        const current = store.current();
+        const elm = event.target as HTMLElement;
+        if (isEditing) {
+          elm.contentEditable = 'plaintext-only';
+          elm.focus();
+          store.setCurrent(todo);
+        } else {
           elm.contentEditable = 'false';
-          elm.innerText = title;
+          elm.innerText = current.title;
+          store.setCurrent(undefined);
         }
-        store.setCurrent(undefined);
       },
-      updateEditingTodo(todo: Todo, elm: HTMLElement) {
+      updateEditingTodo(todo: Todo, event: Event) {
+        event.preventDefault();
+        const elm = event.target as HTMLElement;
         const payload: Todo = {
           ...todo,
           title: elm.innerText.trim(),
           last_modified: Date.now(),
         };
         store.update(payload);
-        this.stopEditing(payload, elm);
-      },
-      resetInput(newtodoInput: HTMLInputElement) {
-        newtodoInput.value = '';
-        patchState(store, { newTodo: '' });
+        this.setEditinigTodo({}, event, false);
       },
       toggleTodo(todo: Todo) {
         const payload: Todo = {
@@ -113,27 +115,26 @@ export const TodoStore = signalStore(
         store.updateAllBy({ selector: { completed: { $eq: !completed } } }, { completed });
       },
       removeTodo(todo: Todo) {
-        store.delete(todo);
+        store.remove(todo);
       },
       removeCompletedTodos() {
-        store.deleteAllBy({ selector: { completed: { $eq: true } } });
+        store.removeAllBy({ selector: { completed: { $eq: true } } });
       },
       filterTodos(filter: TodosFilter): void {
         const path = location.path().split('?')[0];
         location.replaceState(path, `filter=${filter}`);
         store.updateFilter(filter);
-        cdRef.detectChanges();
       },
     };
   }),
   withHooks({
     /** On init update filter from URL and fetch documents from RxDb */
-    onInit: ({ filter, find, updateFilter }) => {
+    onInit: ({ findAllDocs, filter, updateFilter }) => {
       const query: MangoQuery<Todo> = { selector: {}, sort: [{ createdAt: 'desc' }] };
       const params = location.search.split('?')[1];
       const searchParams = new URLSearchParams(params);
-      updateFilter(searchParams.get('filter') || filter());
-      find(query);
+      updateFilter((searchParams.get('filter') as TodosFilter) || filter());
+      findAllDocs(query);
     },
   })
 );

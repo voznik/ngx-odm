@@ -4,6 +4,7 @@ export const appRoutes: Route[] = [
   {
     path: 'todos',
     loadComponent: () => import('./todos/todos.component').then(mod => mod.TodosComponent),
+    runGuardsAndResolvers: 'always',
   },
   {
     path: '',
