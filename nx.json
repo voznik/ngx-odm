@@ -5,6 +5,9 @@
     "libsDir": "packages",
     "projectNameAndRootFormat": "as-provided"
   },
+  "affected": {
+    "defaultBase": "origin/master"
+  },
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],

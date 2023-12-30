@@ -31,8 +31,9 @@ jobs:
         run: echo This event is a pull request that was opened.
       #
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: false
       #
       - name: Build on Node.js # ${{ matrix.node-version }}
@@ -57,7 +58,10 @@ jobs:
       - name: Install
         run: npm ci
       - name: Lint & Test
-        run: npm run lint && npm run test
+        # This line is needed for nx affected to work when CI is running on a PR
+        uses: nrwl/nx-set-shas@v3
+      - run: git branch --track master origin/master
+      - run: npm run lint:all && npm run test
         env:
           CI: true
       # Save coverage report in Coveralls
