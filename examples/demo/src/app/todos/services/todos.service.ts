@@ -69,11 +69,7 @@ export class TodosService {
     }, 0);
   }
 
-  stopEditing(todo: Todo, editedTitle: string) {
-    this.isEditing = '';
-  }
-
-  cancelEditingTodo(todo: Todo) {
+  stopEditing() {
     this.isEditing = '';
   }
 

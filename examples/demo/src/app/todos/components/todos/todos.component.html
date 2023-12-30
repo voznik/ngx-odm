@@ -43,7 +43,9 @@
             [checked]="todo.completed"
             (change)="todosService.toggle(todo)"
           />
-          <label (dblclick)="todosService.editTodo(todo, editInput)">{{ todo.title }}</label>
+          <label (dblclick)="todosService.editTodo(todo, editInput)">
+            {{ todo.title }}
+          </label>
           <button class="destroy" (click)="todosService.removeTodo(todo)"></button>
         </div>
         <input
@@ -51,9 +53,9 @@
           [hidden]="!todosService.isEditing"
           [value]="todo.title"
           #editInput
-          (blur)="todosService.stopEditing(todo, editInput.value)"
+          (blur)="todosService.stopEditing()"
           (keyup.enter)="todosService.updateEditingTodo(todo, editInput.value)"
-          (keyup.escape)="todosService.cancelEditingTodo(todo)"
+          (keyup.escape)="todosService.stopEditing()"
         />
       </li>
     </ul>
@@ -75,7 +77,7 @@
         <a
           href="javascript:void(0);"
           (click)="todosService.filterTodos('ALL')"
-          [ngClass]="{ selected: $.filter == 'ALL' }"
+          [ngClass]="{ selected: $.filter === 'ALL' }"
         >
           All
         </a>
@@ -84,7 +86,7 @@
         <a
           href="javascript:void(0);"
           (click)="todosService.filterTodos('ACTIVE')"
-          [ngClass]="{ selected: $.filter == 'ACTIVE' }"
+          [ngClass]="{ selected: $.filter === 'ACTIVE' }"
         >
           Active
         </a>
@@ -93,7 +95,7 @@
         <a
           href="javascript:void(0);"
           (click)="todosService.filterTodos('COMPLETED')"
-          [ngClass]="{ selected: $.filter == 'COMPLETED' }"
+          [ngClass]="{ selected: $.filter === 'COMPLETED' }"
         >
           Completed
         </a>
