@@ -24,7 +24,7 @@ export type ObjectIteratee<T, O> = (item: T[keyof T], key: StringifiedKey<T>) =>
 /** @internal */
 export type Prettify<T> = {
   [K in keyof T]: T[K];
-} & {};
+} & {}; // NOSONAR
 /** @internal */
 export type IsRecord<T> = T extends object
   ? T extends unknown[]

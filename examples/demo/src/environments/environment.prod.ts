@@ -4,7 +4,7 @@ export const environment = {
   kintoServer: 'https://demo.kinto-storage.org/v1/',
   bucket: 'default',
   collection: 'todos',
-  couchDbRemote: process.env.COUCHDB_SERVER,
-  couchDbSyncLive: Boolean(process.env.COUCHDB_SYNC_LIVE),
-  couchDbSyncHeartbeat: Boolean(process.env.COUCHDB_SYNC_HEARTBEAT),
+  couchDbRemote: 'localhost:5983', // process.env.COUCHDB_SERVER,
+  couchDbSyncLive: true,
+  couchDbSyncHeartbeat: 60,
 };
