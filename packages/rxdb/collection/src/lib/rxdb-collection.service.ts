@@ -82,7 +82,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
 
   constructor(
     protected readonly dbService: NgxRxdbService,
-    protected readonly config: RxCollectionCreatorExtended
+    public readonly config: RxCollectionCreatorExtended
   ) {
     this.init(dbService, config);
   }
@@ -120,27 +120,12 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
       }
 
       // Re-sync replication when back online
-      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       fromEvent(window, 'online')
         .pipe(takeWhile(() => !this.replicationState!.isStopped()))
         .subscribe(() => {
           NgxRxdbUtils.logger.log('online');
           this._replicationState!.reSync();
         });
-
-      this.replicationState.error$.subscribe(err => {
-        if (
-          err.message.includes('unauthorized')
-          // || err.message.includes('Failed to fetch') // TODO: check if this is needed
-        ) {
-          this.replicationState!.cancel();
-          NgxRxdbUtils.logger.log('replicationState has error, cancel replication');
-          NgxRxdbUtils.logger.log(err.message);
-        } else {
-          console.error(err);
-        }
-      });
-      /* eslint-enable @typescript-eslint/no-non-null-assertion */
 
       return this.replicationState.startPromise;
     }

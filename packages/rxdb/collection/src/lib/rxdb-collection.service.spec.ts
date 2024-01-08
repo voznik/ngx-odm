@@ -7,21 +7,31 @@ import {
 } from '@ngx-odm/rxdb/testing';
 import { MangoQuery, RxQuery } from 'rxdb';
 import { createRxLocalDocument } from 'rxdb/plugins/local-documents';
-import { Observable, firstValueFrom } from 'rxjs';
+import { RxReplicationState } from 'rxdb/plugins/replication';
+import { flatClone } from 'rxdb/plugins/utils';
+import { EMPTY, Observable, Subject, firstValueFrom } from 'rxjs';
 import { NgxRxdbCollection } from './rxdb-collection.service';
+
+const getMockReplicationState = (obj: Partial<RxReplicationState<any, any>>) => {
+  obj.reSync = jest.fn();
+  obj.cancel = jest.fn();
+  obj.startPromise = Promise.resolve();
+  Object.setPrototypeOf(obj, RxReplicationState.prototype);
+  return obj as RxReplicationState<any, any>;
+};
 
 describe(`NgxRxdbCollectionService`, () => {
   describe(`test methods using mock NgxRxdbService`, () => {
     let dbService: NgxRxdbService;
     let service: NgxRxdbCollection<TestDocType>;
 
-    beforeAll(async () => {
+    beforeEach(async () => {
       dbService = await getMockRxdbService();
-      service = new NgxRxdbCollection(dbService, TEST_FEATURE_CONFIG_1);
+      service = new NgxRxdbCollection(dbService, flatClone(TEST_FEATURE_CONFIG_1));
     });
 
     afterEach(() => {
-      // jest.restoreAllMocks();
+      jest.restoreAllMocks();
       // await expect(result).rejects.toThrowError();
     });
 
@@ -52,6 +62,15 @@ describe(`NgxRxdbCollectionService`, () => {
       expect(service.collection).toBeDefined();
     });
 
+    it('should throw an error if collection is not initialized and initialized$ rejects', async () => {
+      service['_collection'] = null as any;
+      service['_init$'] = new Subject() as any;
+      service['_init$'].complete();
+      await expect(service['ensureCollection']()).rejects.toThrow(
+        `Collection "${service.config.name}" was not initialized. Please check previous RxDB errors.`
+      );
+    });
+
     it('should destroy collection', async () => {
       jest.spyOn(service.collection, 'destroy').mockResolvedValue(null as any);
       await service.destroy();
@@ -62,6 +81,63 @@ describe(`NgxRxdbCollectionService`, () => {
       jest.spyOn(service.collection, 'remove').mockResolvedValue(null as any);
       await service.clear();
       expect(service.collection.remove).toHaveBeenCalled();
+    });
+
+    it('should call ensureCollection', async () => {
+      const spy = jest
+        .spyOn(service as any, 'ensureCollection')
+        .mockImplementation(() => Promise.resolve());
+      await service.sync();
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('should handle valid replicationState', async () => {
+      service.config.options = {
+        ...service.config.options,
+        replicationStateFactory: jest.fn(),
+      };
+      jest.spyOn(service, 'replicationState', 'get').mockReturnValue(
+        getMockReplicationState({
+          isStopped: jest.fn().mockReturnValue(false),
+          error$: EMPTY,
+          autoStart: true,
+        })
+      );
+      await service.sync();
+      expect(service.replicationState).toBeDefined();
+      expect(service.replicationState!.isStopped()).toBeFalsy();
+      expect(service.replicationState!.reSync).toHaveBeenCalled();
+    });
+
+    it('should create replicationState from factory and sync', async () => {
+      service.config.options = {
+        ...service.config.options,
+        replicationStateFactory: jest.fn().mockReturnValueOnce(getMockReplicationState({})),
+      };
+      await service.sync();
+      expect(service.config.options!.replicationStateFactory).toHaveBeenCalled();
+      expect(service.replicationState).toBeDefined();
+      expect(service.replicationState!.reSync).toHaveBeenCalled();
+    });
+
+    it('should ignore wrong replicationStateFactory', async () => {
+      service.config.options = {
+        ...service.config.options,
+        replicationStateFactory: {} as any,
+      };
+      await service.sync();
+      expect(service.replicationState).toBeNull();
+    });
+
+    it('should handle error in replicationStateFactory', async () => {
+      service.config.options = {
+        ...service.config.options,
+        replicationStateFactory: jest.fn().mockImplementation(() => {
+          throw new Error('Test error');
+        }),
+      };
+      await service.sync();
+      expect(service.config.options!.replicationStateFactory).toHaveBeenCalled();
     });
 
     it('should get collection info', async () => {
@@ -131,6 +207,12 @@ describe(`NgxRxdbCollectionService`, () => {
       const data = { id: '11' } as TestDocType;
       await service.upsert(data);
       expect(service.collection.upsert).toHaveBeenCalledWith(data);
+    });
+
+    it('should bulk upsert doc', async () => {
+      const data = [{ id: '11' }] as TestDocType[];
+      await service.upsertBulk(data);
+      expect(service.collection.bulkUpsert).toHaveBeenCalledWith(data);
     });
 
     it('should set doc', async () => {

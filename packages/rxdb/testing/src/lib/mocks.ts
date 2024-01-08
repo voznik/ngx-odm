@@ -52,6 +52,9 @@ export const TEST_FEATURE_CONFIG_1: RxCollectionCreator & { name: string } = {
   schema: TEST_SCHEMA,
   localDocuments: true,
   autoMigrate: true,
+  options: {
+    replicationStateFactory: undefined,
+  },
 };
 
 export const TEST_DB_CONFIG_1: RxDatabaseCreator = {
