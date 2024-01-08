@@ -6,7 +6,7 @@ import { NgxRxdbService } from './rxdb.service';
 
 describe('NgxRxdbService', () => {
   let service: NgxRxdbService;
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [NgxRxdbModule.forRoot(TEST_DB_CONFIG_1)],
     });
@@ -92,50 +92,28 @@ describe('NgxRxdbService', () => {
     it('should initialize single collection via method', async () => {
       await service.initDb(TEST_DB_CONFIG_1);
       const spyAddCollections = jest.spyOn(service.db, 'addCollections');
+      const name = 'collection1';
       const colConfig = {
-        name: 'collection1',
+        name,
         schema: TEST_SCHEMA,
       };
-      const collection = await service.initCollection(colConfig);
+      const collection = (await service.initCollections({ [name]: colConfig }))[name];
       expect(collection).toBeDefined();
-      expect(collection.name).toEqual(colConfig.name);
+      expect(collection.name).toEqual(name);
       expect(spyAddCollections).toHaveBeenCalled();
-    });
-
-    it('should skip if single collection already init', async () => {
-      const dbConfig = {
-        ...TEST_DB_CONFIG_1,
-        options: {
-          schemas: {
-            collection1: {
-              name: 'collection1',
-              schema: TEST_SCHEMA,
-            },
-          },
-        },
-      };
-      await service.initDb(dbConfig);
-      const spyAddCollections = jest.spyOn(service.db, 'addCollections');
-      const colConfig = {
-        name: 'collection1',
-        schema: TEST_SCHEMA,
-      };
-      const collection = await service.initCollection(colConfig);
-      expect(collection).toBeDefined();
-      expect(collection.name).toEqual(colConfig.name);
-      expect(spyAddCollections).not.toHaveBeenCalled();
     });
 
     it('should recreate a collection if the recreate option is set', async () => {
       await service.initDb(TEST_DB_CONFIG_1);
+      const name = 'collection1';
       const colConfig = {
-        name: 'collection1',
+        name,
         schema: TEST_SCHEMA,
         options: { recreate: true },
       };
-      const collection = await service.initCollection(colConfig);
+      const collection = (await service.initCollections({ [name]: colConfig }))[name];
       expect(collection).toBeDefined();
-      expect(collection.name).toEqual(colConfig.name);
+      expect(collection.name).toEqual(name);
     });
 
     it('should throw an error if the collection cannot be created', async () => {
@@ -146,28 +124,11 @@ describe('NgxRxdbService', () => {
       };
       let exception;
       try {
-        await service.initCollection(invalidColConfig as any);
+        await service.initCollections(invalidColConfig as any);
       } catch (e) {
         exception = e;
       }
       expect(exception).toBeDefined();
     });
   });
-
-  /* describe(`:: init db AND col`, () => {
-    beforeEach(async () => {
-      TestBed.configureTestingModule({
-        imports: [NgxRxdbModule.forRoot(TEST_DB_CONFIG_2)],
-      });
-      service = TestBed.inject(NgxRxdbService);
-      await TestBed.inject(ApplicationInitStatus).donePromise;
-    });
-    it(`should init database AND collection`, () => {
-      expect(service.db).toBeDefined();
-      expect(service.db.name).toBeDefined();
-      // expect(service.db.name).toEqual(TEST_DB_CONFIG_2.name);
-      expect(service.db.collections['todo']).toBeDefined();
-      // expect(service.db.collections['todo']?.statics?.countAllDocuments).toBeInstanceOf(Function);
-    });
-  }); */
 });

@@ -7,9 +7,7 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:package",
-      "outputs": [
-        "{workspaceRoot}/dist/{projectRoot}"
-      ],
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
       "options": {
         "project": "packages/rxdb/ng-package.json"
       },
@@ -25,42 +23,14 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": [
-        "{workspaceRoot}/coverage/{projectRoot}"
-      ],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "packages/rxdb/jest.config.ts",
-        "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "codeCoverage": true
-        }
+        "jestConfig": "packages/rxdb/jest.config.ts"
       }
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
-      "options": {
-        "lintFilePatterns": [
-          "packages/rxdb/**/*.ts",
-          "packages/rxdb/**/*.html",
-          "packages/rxdb/package.json",
-          "packages/rxdb/utils/**/*.ts",
-          "packages/rxdb/utils/**/*.html",
-          "packages/rxdb/core/**/*.ts",
-          "packages/rxdb/core/**/*.html",
-          "packages/rxdb/collection/**/*.ts",
-          "packages/rxdb/collection/**/*.html",
-          "packages/rxdb/config/**/*.ts",
-          "packages/rxdb/config/**/*.html",
-          "packages/rxdb/testing/**/*.ts",
-          "packages/rxdb/testing/**/*.html"
-        ]
-      }
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
     },
     "version": {
       "executor": "@jscutlery/semver:version",
@@ -75,15 +45,44 @@
         "skipCommitTypes": ["docs", "ci"],
         "postTargets": ["rxdb:github"],
         "types": [
-          { "type": "feat", "section": "Features" },
-          { "type": "fix", "section": "Bug Fixes" },
-          { "type": "chore", "hidden": false },
-          { "type": "docs", "hidden": false },
-          { "type": "style", "hidden": false },
-          { "type": "refactor", "section": "Features", "hidden": false },
-          { "type": "perf", "section": "Features", "hidden": false },
-          { "type": "test", "hidden": true },
-          { "type": "build", "hidden": true }
+          {
+            "type": "feat",
+            "section": "Features"
+          },
+          {
+            "type": "fix",
+            "section": "Bug Fixes"
+          },
+          {
+            "type": "chore",
+            "hidden": false
+          },
+          {
+            "type": "docs",
+            "hidden": false
+          },
+          {
+            "type": "style",
+            "hidden": false
+          },
+          {
+            "type": "refactor",
+            "section": "Features",
+            "hidden": false
+          },
+          {
+            "type": "perf",
+            "section": "Features",
+            "hidden": false
+          },
+          {
+            "type": "test",
+            "hidden": true
+          },
+          {
+            "type": "build",
+            "hidden": true
+          }
         ]
       }
     },

@@ -1,0 +1,101 @@
+<section class="todoapp">
+  <header class="header">
+    <h1>todos</h1>
+    <input
+      #newtodoInput
+      class="new-todo"
+      placeholder="What needs to be done?"
+      autofocus=""
+      (keyup)="todoStore.newTodoChange(newtodoInput.value)"
+      (keyup.enter)="todoStore.addTodo($event)"
+      (keyup.escape)="newtodoInput.value = ''; todoStore.newTodoChange('')"
+    />
+  </header>
+  <main class="main">
+    <input
+      id="toggle-all"
+      class="toggle-all"
+      type="checkbox"
+      [hidden]="!todoStore.count()"
+      #toggleall
+      (click)="todoStore.toggleAllTodos(!!todoStore.remaining())"
+    />
+    <label for="toggle-all" title="Mark all as complete">Mark all as complete</label>
+    <ul [@listAnimation]="todoStore.filter()" class="todo-list">
+      <li
+        *ngFor="let todo of todoStore.filtered(); trackBy: trackByFn"
+        [class.completed]="todo.completed"
+      >
+        <div class="view">
+          <input
+            class="toggle"
+            [class.editing]="todoStore.current()?.id === todo.id"
+            type="checkbox"
+            [checked]="todo.completed"
+            (change)="todoStore.toggleTodo(todo)"
+          />
+          <label
+            [class.editing]="todoStore.current()?.id === todo.id"
+            (dblclick)="todoStore.setEditinigTodo(todo, $event, true)"
+            (blur)="todoStore.setEditinigTodo(todo, $event, false)"
+            (keyup)="$event.preventDefault()"
+            (keydown.escape)="todoStore.setEditinigTodo(todo, $event, false)"
+            (keydown.enter)="todoStore.updateEditingTodo(todo, $event)"
+          >
+            {{ todo.title }}
+          </label>
+          <small class="last-modified">
+            Last modified: {{ todo.last_modified | date: 'short' }}
+          </small>
+          <button class="destroy" (click)="todoStore.removeTodo(todo)"></button>
+        </div>
+      </li>
+    </ul>
+  </main>
+  <footer class="footer" [hidden]="todoStore.count() === 0">
+    <ng-container *ngIf="todoStore.remaining() as remaining">
+      <span class="todo-count" [ngPlural]="remaining">
+        <ng-template ngPluralCase="other">{{ remaining }} items left</ng-template>
+        <ng-template ngPluralCase="=1">one item left</ng-template>
+        <ng-template ngPluralCase="=0">no items left</ng-template>
+      </span>
+    </ng-container>
+    <ul class="filters">
+      <li>
+        <a
+          href="javascript:void(0);"
+          (click)="todoStore.filterTodos('ALL')"
+          [ngClass]="{ selected: todoStore.filter() === 'ALL' }"
+        >
+          All
+        </a>
+      </li>
+      <li>
+        <a
+          href="javascript:void(0);"
+          (click)="todoStore.filterTodos('ACTIVE')"
+          [ngClass]="{ selected: todoStore.filter() === 'ACTIVE' }"
+        >
+          Active
+        </a>
+      </li>
+      <li>
+        <a
+          href="javascript:void(0);"
+          (click)="todoStore.filterTodos('COMPLETED')"
+          [ngClass]="{ selected: todoStore.filter() === 'COMPLETED' }"
+        >
+          Completed
+        </a>
+      </li>
+    </ul>
+    <button
+      class="clear-completed"
+      [disabled]="!todoStore.count() || todoStore.count() === todoStore.remaining()"
+      (click)="todoStore.removeCompletedTodos()"
+      style="z-index: 3"
+    >
+      Clear completed ({{ todoStore.count() - todoStore.remaining() }})
+    </button>
+  </footer>
+</section>

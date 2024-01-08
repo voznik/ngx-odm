@@ -20,8 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
     permissions:
-      pages: write      # to deploy to Pages
-      id-token: write   # to verify the deployment originates from an appropriate source
+      pages: write # to deploy to Pages
+      id-token: write # to verify the deployment originates from an appropriate source
     # strategy:
     #   matrix:
     #     node-version: [12.x, 14.x]
@@ -31,8 +31,9 @@ jobs:
         run: echo This event is a pull request that was opened.
       #
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: false
       #
       - name: Build on Node.js # ${{ matrix.node-version }}
@@ -57,7 +58,10 @@ jobs:
       - name: Install
         run: npm ci
       - name: Lint & Test
-        run: npm run lint && npm run test
+        # This line is needed for nx affected to work when CI is running on a PR
+        uses: nrwl/nx-set-shas@v3
+      - run: git branch --track master origin/master
+      - run: npm run lint:all && npm run test
         env:
           CI: true
       # Save coverage report in Coveralls
@@ -67,8 +71,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
         # env:
-          # COVERALLS_SERVICE_NAME: '@ngx-odm'
-          # COVERALLS_PARALLEL: true
+        # COVERALLS_SERVICE_NAME: '@ngx-odm'
+        # COVERALLS_PARALLEL: true
       # Build if release published
       - name: Build
         # if: github.event.release.published

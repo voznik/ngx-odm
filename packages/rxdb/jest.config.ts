@@ -21,6 +21,7 @@ const config: Config = {
     ],
   },
   transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
+  collectCoverage: process.env.CI ? true : false,
   coverageDirectory: `${workspaceRoot}/coverage/packages`,
   collectCoverageFrom: [
     '**/*.{ts,tsx}',

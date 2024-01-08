@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { TestBed, waitForAsync } from '@angular/core/testing';
-import { NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
+import { ApplicationInitStatus } from '@angular/core';
+import { TestBed, inject } from '@angular/core/testing';
+import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
 import { RXDB_CONFIG } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import {
   setupNavigationWarnStub,
-  getMockRxdbServiceFactory,
+  getMockRxdbService,
   TEST_DB_CONFIG_1,
   TEST_FEATURE_CONFIG_1,
 } from '@ngx-odm/rxdb/testing';
@@ -54,10 +55,12 @@ describe('NgxRxdbModule', () => {
   });
 
   describe(`NgxRxdbModule :: init w/o forFeature`, () => {
-    beforeEach(() => {
+    let dbService: NgxRxdbService;
+    beforeEach(async () => {
+      dbService = await getMockRxdbService();
       TestBed.configureTestingModule({
         imports: [NgxRxdbModule.forRoot(TEST_DB_CONFIG_1)],
-        providers: [{ provide: NgxRxdbService, useFactory: getMockRxdbServiceFactory }],
+        providers: [{ provide: NgxRxdbService, useValue: dbService }],
       });
     });
 
@@ -65,6 +68,7 @@ describe('NgxRxdbModule', () => {
       expect(NgxRxdbModule).toBeDefined();
     });
     it(`should not provide feature config token & collection service`, () => {
+      expect(dbService.initCollections).not.toHaveBeenCalled();
       expect(() => TestBed.inject(NgxRxdbCollectionService)).toThrowError(
         /No provider for/
       );
@@ -73,31 +77,33 @@ describe('NgxRxdbModule', () => {
 
   describe(`NgxRxdbModule :: forFeature`, () => {
     let dbService: NgxRxdbService;
-    let dbInitSpy: jest.SpyInstance<Promise<void>>;
 
-    beforeEach(() => {
+    beforeEach(async () => {
+      dbService = await getMockRxdbService();
       TestBed.configureTestingModule({
         imports: [
           NgxRxdbModule.forRoot(TEST_DB_CONFIG_1),
           NgxRxdbModule.forFeature(TEST_FEATURE_CONFIG_1),
         ],
-        providers: [{ provide: NgxRxdbService, useFactory: getMockRxdbServiceFactory }],
+        providers: [{ provide: NgxRxdbService, useValue: dbService }],
       });
-      dbService = TestBed.inject(NgxRxdbService);
-      dbInitSpy = jest.spyOn(dbService, 'initDb');
+      const appInitStatus = TestBed.inject(ApplicationInitStatus);
+      await appInitStatus.donePromise;
     });
 
-    it(`should init db via dbService`, waitForAsync(async () => {
-      expect(dbInitSpy).toHaveBeenCalled();
-      const calls = dbInitSpy.mock.calls;
-      expect(calls[0].length).toEqual(1);
-      expect(calls[0][0]).toEqual(TEST_DB_CONFIG_1);
-      await Promise.resolve();
-    }));
-
-    /* it(`should provide collectionConfig & collection service`, waitForAsync(() => {
-      expect(NgxRxdbFeatureModule).toBeDefined();
-      expect(TestBed.inject(NgxRxdbCollectionService)).toBeDefined();
-    })); */
+    it(`should init db via dbService`, inject(
+      [NgxRxdbCollectionService],
+      async (colService: NgxRxdbCollection) => {
+        expect(dbService.initDb).toHaveBeenCalledWith(TEST_DB_CONFIG_1);
+        expect(dbService.initCollections).toHaveBeenCalledWith({
+          [TEST_FEATURE_CONFIG_1.name]: TEST_FEATURE_CONFIG_1,
+        });
+        await colService['ensureCollection']();
+        expect(colService.collection).toBeDefined();
+        expect(colService.collection.schema.version).toEqual(
+          TEST_FEATURE_CONFIG_1.schema.version
+        );
+      }
+    ));
   });
 });

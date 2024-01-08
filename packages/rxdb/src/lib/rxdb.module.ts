@@ -1,41 +1,19 @@
 import {
   ApplicationInitStatus,
-  APP_INITIALIZER,
   Inject,
+  Injector,
   ModuleWithProviders,
   NgModule,
   Optional,
   Self,
   SkipSelf,
-  Injector,
 } from '@angular/core';
-import {
-  NgxRxdbFeatureModule,
-  NgxRxdbCollectionService,
-  collectionServiceFactory,
-} from '@ngx-odm/rxdb/collection';
-import {
-  RxCollectionCreatorExtended,
-  RXDB_CONFIG,
-  RXDB_CONFIG_COLLECTION,
-} from '@ngx-odm/rxdb/config';
+import { NgxRxdbFeatureModule } from '@ngx-odm/rxdb/collection';
+import { RXDB_CONFIG, RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import type { RxDatabaseCreator } from 'rxdb';
-
-/**
- * run at APP_INITIALIZER cycle
- * @param dbService
- * @param dbConfig
- */
-export function dbInitializerFactory(
-  dbService: NgxRxdbService,
-  dbConfig: RxDatabaseCreator
-): () => Promise<void> {
-  return async () => {
-    await dbService.initDb(dbConfig);
-  };
-}
+import { provideRxCollection, provideRxDatabase } from './rxdb.providers';
 
 /**
  * Main module which should be imported once in app module, will init RxDbDatabase with given configuration
@@ -86,9 +64,7 @@ export function dbInitializerFactory(
  * <example-url>http://localhost/demo/mysample.component.html</example-url>
  * <example-url>../index.html</example-url>
  */
-@NgModule({
-  // id: 'NgxRxdbModule',
-})
+@NgModule()
 export class NgxRxdbModule {
   /**
    * Creates a feature module with providers for a specific RxDB collection.
@@ -99,14 +75,7 @@ export class NgxRxdbModule {
   ): ModuleWithProviders<NgxRxdbFeatureModule> {
     return {
       ngModule: NgxRxdbFeatureModule,
-      providers: [
-        { provide: RXDB_CONFIG_COLLECTION, useValue: collectionConfig, multi: true },
-        {
-          provide: NgxRxdbCollectionService,
-          useFactory: collectionServiceFactory(collectionConfig),
-          deps: [NgxRxdbService],
-        },
-      ],
+      providers: provideRxCollection(collectionConfig),
     };
   }
 
@@ -117,16 +86,7 @@ export class NgxRxdbModule {
   static forRoot(config: RxDatabaseCreator): ModuleWithProviders<NgxRxdbModule> {
     return {
       ngModule: NgxRxdbModule,
-      providers: [
-        { provide: RXDB_CONFIG, useValue: config },
-        NgxRxdbService,
-        {
-          provide: APP_INITIALIZER,
-          useFactory: dbInitializerFactory,
-          deps: [NgxRxdbService, RXDB_CONFIG],
-          multi: true,
-        },
-      ],
+      providers: provideRxDatabase(config),
     };
   }
 

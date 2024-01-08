@@ -1,80 +1,117 @@
 /* eslint-disable no-console */
 import { Location } from '@angular/common';
-import { Inject, Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
-import { MangoQuery } from 'rxdb/dist/types/types';
-import { Observable } from 'rxjs';
-import { distinctUntilChanged, startWith, switchMap, tap } from 'rxjs/operators';
+import { NgxRxdbCollectionService, NgxRxdbCollection } from '@ngx-odm/rxdb/collection';
+import type { RxDatabaseCreator } from 'rxdb';
+import {
+  Observable,
+  defaultIfEmpty,
+  distinctUntilChanged,
+  of,
+  startWith,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { Todo, TodosFilter } from '../models';
 
 @Injectable()
 export class TodosService {
+  private collectionService: NgxRxdbCollection<Todo> = inject<NgxRxdbCollection<Todo>>(
+    NgxRxdbCollectionService
+  );
+  private location = inject(Location);
+  private title = inject(Title);
+  newTodo = '';
+  isEditing = '';
+
   filter$: Observable<TodosFilter> = this.collectionService
     .getLocal('local', 'filterValue')
-    .pipe(startWith('ALL'), distinctUntilChanged()) as Observable<TodosFilter>;
+    .pipe(
+      startWith('ALL'),
+      distinctUntilChanged(),
+      defaultIfEmpty('ALL')
+    ) as Observable<TodosFilter>;
 
-  count$ = this.collectionService.count();
+  count$ = this.collectionService.count().pipe(defaultIfEmpty(0));
 
-  todos$: Observable<Todo[]> = this.collectionService.docs().pipe(
+  todos$: Observable<Todo[]> = of([]).pipe(
+    switchMap(() => this.collectionService.docs()),
     tap(docs => {
       const total = docs.length;
       const remaining = docs.filter(doc => !doc.completed).length;
       this.title.setTitle(`(${total - remaining}/${total}) Todos done`);
-    })
+    }),
+    defaultIfEmpty([])
   );
 
-  constructor(
-    @Inject(NgxRxdbCollectionService) private collectionService: NgxRxdbCollection<Todo>,
-    private location: Location,
-    private title: Title
-  ) {}
-
-  select(completedOnly = false): Observable<Todo[]> {
-    const queryObj = this.buildQueryObject(completedOnly);
-    return this.filter$.pipe(
-      switchMap(filterValue => {
-        if (filterValue !== 'ALL') {
-          Object.assign(queryObj.selector, {
-            completed: filterValue === 'COMPLETED',
-          });
-        } else {
-          delete queryObj.selector['completed'];
-        }
-        return this.collectionService.docs(queryObj);
-      })
-    );
+  get dbOptions(): Readonly<RxDatabaseCreator> {
+    return this.collectionService.dbOptions;
   }
 
-  add(title: string): void {
+  get isAddTodoDisabled() {
+    return this.newTodo.length < 4;
+  }
+
+  newTodoChange(newTodo: string) {
+    this.newTodo = newTodo;
+  }
+
+  newTodoClear() {
+    this.newTodo = '';
+  }
+
+  editTodo(todo: Todo, elm: HTMLInputElement) {
+    this.isEditing = todo.id;
+    setTimeout(() => {
+      elm.focus();
+    }, 0);
+  }
+
+  stopEditing() {
+    this.isEditing = '';
+  }
+
+  add(): void {
+    if (this.isAddTodoDisabled) {
+      return;
+    }
     const id = uuid();
     const payload: Todo = {
       id,
-      // _id: id,
-      title,
+      title: this.newTodo.trim(),
       completed: false,
-      createdAt: Date.now(),
+      createdAt: new Date().toISOString(),
+      last_modified: undefined,
     };
     this.collectionService.insert(payload);
+    this.newTodo = '';
   }
 
-  edit(id: string, title: string): void {
-    this.collectionService.set(id, { title });
+  updateEditingTodo(todo: Todo, title: string): void {
+    this.collectionService.set(todo.id, { title });
   }
 
-  toggle(id: string, completed: boolean): void {
-    this.collectionService.set(id, { completed });
+  toggle(todo: Todo): void {
+    this.collectionService.set(todo.id, { completed: !todo.completed });
   }
 
-  remove(id: string): void {
-    this.collectionService.remove(id);
+  toggleAllTodos(completed: boolean) {
+    this.collectionService.updateBulk(
+      { selector: { completed: { $eq: !completed } } },
+      { completed }
+    );
+  }
+
+  removeTodo(todo: Todo): void {
+    this.collectionService.remove(todo.id);
   }
 
   removeCompletedTodos(): void {
     const rulesObject = { selector: { completed: true } };
     this.collectionService.removeBulk(rulesObject);
-    this.changeFilter('ALL');
+    this.filterTodos('ALL');
   }
 
   restoreFilter(): void {
@@ -84,22 +121,9 @@ export class TodosService {
     this.collectionService.upsertLocal('local', { filterValue });
   }
 
-  changeFilter(filterValue: TodosFilter): void {
+  filterTodos(filterValue: TodosFilter): void {
     const path = this.location.path().split('?')[0];
     this.location.replaceState(path, `filter=${filterValue}`);
     this.collectionService.upsertLocal('local', { filterValue });
-  }
-
-  private buildQueryObject(completedOnly: boolean): MangoQuery<Todo> {
-    const queryObj: MangoQuery<Todo> = {
-      selector: {},
-      sort: [{ createdAt: 'desc' }],
-    };
-    if (completedOnly) {
-      Object.assign(queryObj.selector, {
-        completed: false,
-      });
-    }
-    return queryObj;
   }
 }

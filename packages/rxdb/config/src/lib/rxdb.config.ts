@@ -1,21 +1,55 @@
-/* eslint-disable @typescript-eslint/ban-types */
+// INFO: we NEED to keep `any` here. only Typescript complains, but type resolution for consumers does work
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types */
 import { InjectionToken } from '@angular/core';
-import type { RxCollectionCreator, RxDatabaseCreator } from 'rxdb/plugins/core';
+import type {
+  FilledMangoQuery,
+  PreparedQuery,
+  RxCollection,
+  RxCollectionCreator,
+  RxDatabaseCreator,
+  RxJsonSchema,
+} from 'rxdb';
+import { RxReplicationState } from 'rxdb/plugins/replication';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
-import { Merge, SetOptional, SetRequired } from 'type-fest';
+import type { Merge, SetOptional, SetRequired } from 'type-fest';
 
 export interface RxCollectionCreatorOptions {
-  syncOptions?: {}; // SyncOptionsCouchDB<any> & { queryObj?: MangoQuery<any> };
   schemaUrl?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  initialDocs?: Record<string, any>[];
+  initialDocs?: any[];
   recreate?: boolean;
+  replicationStateFactory?: (col: RxCollection) => RxReplicationState<any, any> | null;
 }
 
-export interface RxCollectionCreatorExtended extends RxCollectionCreator {
-  name: string;
-  options?: RxCollectionCreatorOptions;
+export type RxCollectionCreatorExtended<T = any> = Merge<
+  RxCollectionCreator<T>,
+  {
+    schema: RxJsonSchema<T>;
+    name: string;
+    options?: RxCollectionCreatorOptions;
+  }
+>;
+
+export type RxCollectionExtended<T = any> = Merge<
+  RxCollection<T>,
+  {
+    /** Static empty query */
+    defaultQuery: FilledMangoQuery<any>;
+    /** Static empty query "prepared" (RxDb) */
+    defaultPreparedQuery: PreparedQuery<any>;
+    /** Get DB metadata */
+    getMetadata: () => Promise<RxDbMetadata>;
+  }
+>;
+
+export interface RxDbMetadata {
+  id: string;
+  collectionName: string;
+  databaseName: string;
+  storageName: string;
+  last_modified: number;
+  rev: number;
+  isFirstTimeInstantiated: boolean;
 }
 
 /**

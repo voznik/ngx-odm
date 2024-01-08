@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { Todo, TodosFilter, TodosState } from '../../models';
+import { Todo, TodosFilter } from '../../models';
 
-@Pipe({ name: 'byStatus' })
+@Pipe({ name: 'byStatus', pure: false })
 export class TodosPipe implements PipeTransform {
   transform(value: Todo[], status: TodosFilter): Todo[] {
     if (!value) {

@@ -1,21 +1,54 @@
 /* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any */
 import { isDevMode } from '@angular/core';
-import { Observable, OperatorFunction, tap } from 'rxjs';
+import type { FilledMangoQuery, PreparedQuery, RxJsonSchema } from 'rxdb';
+import { prepareQuery } from 'rxdb';
+import { RxReplicationState } from 'rxdb/plugins/replication';
+import { Observable, OperatorFunction, retry, tap, timer } from 'rxjs';
 
 /** @internal */
-type Cast<I, O> = Exclude<I, O> extends never ? I : O;
+export type AnyObject = Record<string, any>;
 /** @internal */
-type Nil = null | undefined;
+export type Cast<I, O> = Exclude<I, O> extends never ? I : O;
 /** @internal */
-type EmptyObject = Record<string, never>;
+export type Nil = null | undefined;
 /** @internal */
-type StringifiedKey<T> = Cast<keyof T, string>;
+export type EmptyObject = Record<string, never>;
 /** @internal */
-type ValueIteratee<T, O> = (value: T) => O;
+export type StringifiedKey<T> = Cast<keyof T, string>;
 /** @internal */
-type ArrayIteratee<I, O> = (item: I, index: number) => O;
+export type ValueIteratee<T, O> = (value: T) => O;
 /** @internal */
-type ObjectIteratee<T, O> = (item: T[keyof T], key: StringifiedKey<T>) => O;
+export type ArrayIteratee<I, O> = (item: I, index: number) => O;
+/** @internal */
+export type ObjectIteratee<T, O> = (item: T[keyof T], key: StringifiedKey<T>) => O;
+/** @internal */
+export type Prettify<T> = {
+  [K in keyof T]: T[K];
+} & {}; // NOSONAR
+/** @internal */
+export type IsRecord<T> = T extends object
+  ? T extends unknown[]
+    ? false
+    : T extends Set<unknown>
+    ? false
+    : T extends Map<unknown, unknown>
+    ? false
+    : T extends Function
+    ? false
+    : true
+  : false;
+/** @internal */
+export type IsUnknownRecord<T> = string extends keyof T
+  ? true
+  : number extends keyof T
+  ? true
+  : false;
+/** @internal */
+export type IsKnownRecord<T> = IsRecord<T> extends true
+  ? IsUnknownRecord<T> extends true
+    ? false
+    : true
+  : false;
 
 export namespace NgxRxdbUtils {
   /**
@@ -198,34 +231,42 @@ export namespace NgxRxdbUtils {
   }
 
   /** https://github.com/angular/components/blob/main/src/cdk/platform/features/test-environment.ts */
-  /* eslint-disable */
   export function isTestEnvironment(): boolean {
     return (
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       (typeof __karma__ !== 'undefined' && !!__karma__) ||
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       (typeof jasmine !== 'undefined' && !!jasmine) ||
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       (typeof jest !== 'undefined' && !!jest) ||
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       (typeof Mocha !== 'undefined' && !!Mocha)
     );
   }
-  /* eslint-enable */
 
   export const logger = {
     log: (function () {
       const bgColor = '#8d2089';
-      if (isDevMode() || isDevModeForced()) {
-        // eslint-disable-next-line no-console
-        return console.log.bind(
-          window.console,
-          `%c[${new Date().toISOString()}::DEBUG::@ngx-odm/rxdb]`,
-          `background:${bgColor};color:#fff;padding:2px;font-size:normal;`
-        );
-      } else {
+      if (isTestEnvironment() || !isDevMode() || !isDevModeForced()) {
         return noop;
       }
+      // eslint-disable-next-line no-console
+      return console.log.bind(
+        console,
+        `%c[${new Date().toISOString()}::DEBUG::@ngx-odm/rxdb]`,
+        `background:${bgColor};color:#fff;padding:2px;font-size:normal;`
+      );
+    })(),
+    table: (function () {
+      if (isTestEnvironment() || !isDevMode() || !isDevModeForced()) {
+        return noop;
+      }
+      // eslint-disable-next-line no-console
+      return console.table.bind(console);
     })(),
   };
 
@@ -244,7 +285,6 @@ export namespace NgxRxdbUtils {
           next(value: T) {
             logger.log(`observable:${tag}:next:`, value);
           },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           error(e: any) {
             logger.log(`observable:${tag}:error:`, e.message);
           },
@@ -255,4 +295,93 @@ export namespace NgxRxdbUtils {
       );
     };
   }
+
+  /**
+   * Simple rxjs exponential backoff retry operator
+   * @param count
+   * @param retryTime
+   */
+  export function retryWithBackoff<T>(count = 3, retryTime = 10000) {
+    return (obs$: Observable<T>) =>
+      obs$.pipe(
+        retry({
+          count,
+          delay: (_, retryIndex) => {
+            const d = Math.pow(2, retryIndex - 1) * retryTime;
+            NgxRxdbUtils.logger.log('replication:kinto:longpoll:retry', retryIndex, d);
+            return timer(d);
+          },
+        })
+      );
+  }
+
+  export const getDefaultQuery: () => FilledMangoQuery<any> = () => ({
+    selector: { _deleted: { $eq: false } },
+    skip: 0,
+    sort: [{ id: 'asc' }],
+  });
+
+  const _schema = {
+    properties: {
+      id: { type: 'string' },
+      _deleted: { type: 'boolean' },
+    },
+    primaryKey: 'id',
+    indexes: [['_deleted', 'id']],
+  } as unknown as RxJsonSchema<any>;
+  const _queryPlan: PreparedQuery<any> = {
+    query: getDefaultQuery(),
+    queryPlan: {
+      index: ['_deleted', 'id'],
+      startKeys: [false, -9007199254740991] as any,
+      endKeys: [false, '￿'] as any,
+      inclusiveEnd: true,
+      inclusiveStart: true,
+      sortSatisfiedByIndex: true,
+      selectorSatisfiedByIndex: false,
+    },
+  };
+
+  export const getDefaultPreparedQuery: () => PreparedQuery<any> = () =>
+    prepareQuery(_schema, getDefaultQuery());
+}
+
+/**
+ * @see https://stackoverflow.com/a/47180009/3443137
+ */
+export const getDefaultFetch = () => {
+  if (typeof window === 'object' && 'fetch' in window) {
+    return window.fetch.bind(window);
+  } else {
+    return fetch;
+  }
+};
+
+/**
+ * Returns a fetch handler that contains (basic auth) headers
+ * @param headers
+ */
+export function getDefaultFetchWithHeaders(headers: Record<string, string> = {}) {
+  const fetch = getDefaultFetch();
+  const ret = (url: string, options: Record<string, any>) => {
+    Object.assign(options, {
+      headers: {
+        ...options.headers,
+        'Content-Type': 'application/json',
+        ...headers,
+      },
+    });
+    return fetch(url, options);
+  };
+  return ret;
+}
+
+/**
+ * Typescript validator function to check if object is not null and instanceof RxReplicationState
+ * @param obj
+ */
+export function isValidRxReplicationState<T>(
+  obj: any
+): obj is RxReplicationState<T, unknown> {
+  return obj && obj instanceof RxReplicationState;
 }

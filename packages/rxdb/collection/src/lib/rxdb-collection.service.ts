@@ -1,28 +1,38 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { InjectionToken } from '@angular/core';
-import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
+import type {
+  RxCollectionExtended as RxCollection,
+  RxCollectionCreatorExtended,
+  RxDbMetadata,
+} from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
-import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
+import { NgxRxdbUtils, isValidRxReplicationState } from '@ngx-odm/rxdb/utils';
 import type {
   MangoQuery,
-  RxCollection,
   RxDatabase,
+  RxDatabaseCreator,
   RxDocument,
   RxDumpCollection,
   RxDumpCollectionAny,
   RxLocalDocument,
-  RxStorageInfoResult,
   RxStorageWriteError,
+  RxCollection as _RxCollection,
 } from 'rxdb';
+import { RxReplicationState } from 'rxdb/plugins/replication';
 import {
   Observable,
   ReplaySubject,
+  fromEvent,
   lastValueFrom,
   map,
-  merge as merge$,
+  merge,
   startWith,
   switchMap,
+  takeWhile,
 } from 'rxjs';
+
+type EntityId = string;
+type Entity = { id: EntityId };
 
 /**
  * Injection token for Service for interacting with a RxDB {@link RxCollection}.
@@ -45,8 +55,9 @@ export function collectionServiceFactory(config: RxCollectionCreatorExtended) {
 /**
  * Service for interacting with a RxDB {@link RxCollection}.
  */
-export class NgxRxdbCollection<T = {}> {
+export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   private _collection!: RxCollection<T>;
+  private _replicationState: RxReplicationState<T, unknown> | null = null;
   private _init$ = new ReplaySubject<boolean>();
 
   get initialized$(): Observable<boolean> {
@@ -61,9 +72,17 @@ export class NgxRxdbCollection<T = {}> {
     return this.dbService.db as RxDatabase;
   }
 
+  get dbOptions(): Readonly<RxDatabaseCreator> {
+    return this.dbService.dbOptions;
+  }
+
+  get replicationState(): RxReplicationState<T, unknown> | null {
+    return this._replicationState;
+  }
+
   constructor(
     protected readonly dbService: NgxRxdbService,
-    protected readonly config: RxCollectionCreatorExtended
+    public readonly config: RxCollectionCreatorExtended
   ) {
     this.init(dbService, config);
   }
@@ -75,15 +94,51 @@ export class NgxRxdbCollection<T = {}> {
     this.collection?.destroy();
   }
 
-  /**
-   * Returns some info about the db storage. Used in various places. This method is expected to not really care about performance, so do not use it in hot paths.
-   */
-  async info(): Promise<RxStorageInfoResult> {
+  async sync(): Promise<void> {
     await this.ensureCollection();
-    const storageInfo = (await this.collection.storageInstance.info()) || {
-      totalCount: 0,
-    };
-    return storageInfo;
+    if (isValidRxReplicationState(this.replicationState)) {
+      this.replicationState.reSync();
+      return;
+    }
+
+    if (typeof this.config.options?.replicationStateFactory !== 'function') {
+      return;
+    }
+
+    try {
+      this._replicationState = this.config.options.replicationStateFactory(
+        this.collection as _RxCollection<T>
+      ) as RxReplicationState<T, unknown>;
+    } catch (error) {
+      NgxRxdbUtils.logger.log('replicationState has error, ignore replication');
+      NgxRxdbUtils.logger.log(error.message);
+    }
+
+    if (isValidRxReplicationState(this.replicationState)) {
+      if (!this.replicationState.autoStart) {
+        this.replicationState.reSync();
+      }
+
+      // Re-sync replication when back online
+      fromEvent(window, 'online')
+        .pipe(takeWhile(() => !this.replicationState!.isStopped()))
+        .subscribe(() => {
+          NgxRxdbUtils.logger.log('online');
+          this._replicationState!.reSync();
+        });
+
+      return this.replicationState.startPromise;
+    }
+  }
+
+  /**
+   * Returns the internal data that is used by the storage engine
+   */
+  async info(): Promise<RxDbMetadata> {
+    await this.ensureCollection();
+    const meta = await this.collection.getMetadata();
+    NgxRxdbUtils.logger.log({ meta });
+    return meta;
   }
 
   /**
@@ -146,7 +201,7 @@ export class NgxRxdbCollection<T = {}> {
   count(query?: MangoQuery<T>): Observable<number> {
     return this.initialized$.pipe(
       switchMap(() =>
-        merge$(this.collection.insert$, this.collection.remove$).pipe(startWith(null))
+        merge(this.collection.insert$, this.collection.remove$).pipe(startWith(null))
       ),
       switchMap(() => this.collection.count(query).exec()),
       NgxRxdbUtils.debug('count')
@@ -192,7 +247,7 @@ export class NgxRxdbCollection<T = {}> {
    * Inserts the document if it does not exist within the collection, otherwise it will overwrite it. Returns the new or overwritten RxDocument.
    * @param data
    */
-  async upsert(data: Partial<T>): Promise<RxDocument<T>> {
+  async upsert(data: T): Promise<RxDocument<T>> {
     await this.ensureCollection();
     return this.collection.upsert(data);
   }
@@ -231,10 +286,11 @@ export class NgxRxdbCollection<T = {}> {
 
   /**
    * Removes the document from the database by finding one with the matching id.
-   * @param id
+   * @param entityOrId
    */
-  async remove(id: string): Promise<RxDocument<T> | null> {
+  async remove(entityOrId: T | string): Promise<RxDocument<T> | null> {
     await this.ensureCollection();
+    const id = typeof entityOrId === 'object' ? entityOrId['_id'] : entityOrId;
     return this.collection.findOne(id).remove();
   }
 
@@ -319,8 +375,10 @@ export class NgxRxdbCollection<T = {}> {
   }
 
   private async init(dbService: NgxRxdbService, config: RxCollectionCreatorExtended) {
+    const { name } = config;
     try {
-      this._collection = await dbService.initCollection(config);
+      const collectionsOfDatabase = await dbService.initCollections({ [name]: config });
+      this._collection = collectionsOfDatabase[name] as RxCollection<T>;
       this._init$.next(true);
       this._init$.complete();
     } catch (e) {
@@ -331,7 +389,7 @@ export class NgxRxdbCollection<T = {}> {
           `Database version conflict.
           Opening an older RxDB database state with a new major version should throw an error`
         );
-        await dbService.db.destroy();
+        // await dbService.db.destroy();
         throw new Error(e);
       } else {
         this._init$.complete();
@@ -342,7 +400,11 @@ export class NgxRxdbCollection<T = {}> {
 
   private async ensureCollection(): Promise<boolean> {
     if (!this.collection) {
-      await lastValueFrom(this.initialized$);
+      await lastValueFrom(this.initialized$).catch(() => {
+        throw new Error(
+          `Collection "${this.config.name}" was not initialized. Please check previous RxDB errors.`
+        );
+      });
     }
     return true;
   }

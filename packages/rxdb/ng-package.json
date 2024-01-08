@@ -5,9 +5,6 @@
     "flatModuleFile": "ngx-odm-rxdb",
     "entryFile": "src/index.ts"
   },
-  "allowedNonPeerDependencies": [
-    "dexie",
-    "rxdb"
-  ],
+  "allowedNonPeerDependencies": ["dexie", "rxdb"],
   "deleteDestPath": true
 }

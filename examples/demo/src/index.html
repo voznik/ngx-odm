@@ -10,9 +10,10 @@
       #bottom {
         position: absolute;
         bottom: 1rem;
-        right: 1rem;
+        right: 0;
+        width: 100vw;
         display: flex;
-        justify-content: end;
+        justify-content: space-between;
         font-size: 0.75rem;
         color: #4d4d4d;
       }
@@ -20,42 +21,77 @@
         padding: 0 2px;
       }
     </style>
+    <script>
+      document.addEventListener('DOMContentLoaded', event => {
+        const selectStorage = document.getElementById('storage');
+        const selectReplication = document.getElementById('replication');
+        selectStorage.value = localStorage['_ngx_rxdb_storage'] =
+          localStorage['_ngx_rxdb_storage'] ?? 'dexie';
+        selectReplication.value = localStorage['_ngx_rxdb_replication'] =
+          localStorage['_ngx_rxdb_replication'] ?? '';
+        selectStorage.addEventListener('change', function () {
+          localStorage.setItem('_ngx_rxdb_storage', this.value);
+          window.location.reload();
+        });
+        selectReplication.addEventListener('change', function () {
+          localStorage.setItem('_ngx_rxdb_replication', this.value);
+          window.location.reload();
+        });
+      });
+    </script>
   </head>
   <body>
     <demo-root></demo-root>
     <div id="bottom">
-      <!-- Place this tag in your head or just before your close body tag. -->
-      <script async defer src="https://buttons.github.io/buttons.js"></script>
-      <a href="">
-        <img
-          alt="GitHub Repo stars"
-          src="https://img.shields.io/github/stars/voznik/ngx-odm?style=social"
-        />
-      </a>
-      <a href="">
-        <img
-          alt="Quality Gate Status"
-          src="https://sonarcloud.io/api/project_badges/measure?project=voznik_ngx-odm&metric=alert_status"
-        />
-      </a>
-      <a href="">
-        <img alt="Coveralls Coverage" src="https://img.shields.io/coverallsCoverage/github/voznik/ngx-odm">
-      </a>
-      <a href="">
-        <img alt="npm (scoped)" src="https://img.shields.io/npm/v/%40ngx-odm/rxdb">
-      </a>
-      <a href="">
-        <img
-          alt="GitHub issues"
-          src="https://img.shields.io/github/issues/voznik/ngx-odm"
-        />
-      </a>
-      <a href="documentation/index.html">
-        <img
-          alt="Documentation"
-          src="https://img.shields.io/badge/documentation-view-lightgrey"
-        />
-      </a>
+      <div>
+        <select name="storage" id="storage">
+          <option value="dexie" selected>dexie</option>
+          <option value="memory">memory</option>
+        </select>
+        &nbsp;
+        <select name="replication" id="replication">
+          <option value="" selected>none</option>
+          <option value="couchdb">couchdb</option>
+          <option value="kinto">kinto</option>
+        </select>
+      </div>
+      <div>
+        <!-- Place this tag in your head or just before your close body tag. -->
+        <script async defer src="https://buttons.github.io/buttons.js"></script>
+        <a href="">
+          <img
+            alt="GitHub Repo stars"
+            src="https://img.shields.io/github/stars/voznik/ngx-odm?style=social"
+          />
+        </a>
+        <a href="">
+          <img
+            alt="Quality Gate Status"
+            src="https://sonarcloud.io/api/project_badges/measure?project=voznik_ngx-odm&metric=alert_status"
+          />
+        </a>
+        <a href="">
+          <img
+            alt="Coveralls Coverage"
+            src="https://img.shields.io/coverallsCoverage/github/voznik/ngx-odm"
+          />
+        </a>
+        <a href="">
+          <img alt="npm (scoped)" src="https://img.shields.io/npm/v/%40ngx-odm/rxdb" />
+        </a>
+        <a href="">
+          <img
+            alt="GitHub issues"
+            src="https://img.shields.io/github/issues/voznik/ngx-odm"
+          />
+        </a>
+        <a href="documentation/index.html">
+          <img
+            alt="Documentation"
+            src="https://img.shields.io/badge/documentation-view-lightgrey"
+          />
+        </a>
+      </div>
     </div>
   </body>
 </html>
