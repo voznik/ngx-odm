@@ -3,7 +3,7 @@
   "name": "ngx-odm",
   "version": "0.0.0-dev",
   "private": false,
-  "description": "Angular ODMs for NoSql DBs like RxDB, Kinto",
+  "description": "Angular 10+ wrapper (module or standalone) for RxDB - A realtime Database for the Web",
   "keywords": [
     "angular",
     "rxjs",

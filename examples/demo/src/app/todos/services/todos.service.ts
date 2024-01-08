@@ -109,8 +109,7 @@ export class TodosService {
   }
 
   removeCompletedTodos(): void {
-    const rulesObject = { selector: { completed: true } };
-    this.collectionService.removeBulk(rulesObject);
+    this.collectionService.removeBulk({ selector: { completed: true } });
     this.filterTodos('ALL');
   }
 
