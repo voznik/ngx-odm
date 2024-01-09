@@ -1,4 +1,4 @@
-import { APP_INITIALIZER, Provider } from '@angular/core';
+import { APP_INITIALIZER, NgZone, Provider } from '@angular/core';
 import {
   NgxRxdbCollectionService,
   collectionServiceFactory,
@@ -84,7 +84,7 @@ export function provideRxCollection(
     {
       provide: NgxRxdbCollectionService,
       useFactory: collectionServiceFactory(collectionConfig),
-      deps: [NgxRxdbService],
+      deps: [NgxRxdbService, NgZone],
     },
   ];
 }

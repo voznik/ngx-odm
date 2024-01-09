@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */ // FIXME: Remove this
-import { Signal, computed, inject } from '@angular/core';
+import { NgZone, Signal, computed, inject } from '@angular/core';
 import {
   getCallStateKeys,
   setError,
@@ -276,7 +276,8 @@ export function withCollectionService<
     withMethods((store: Record<string, unknown> & StateSignal<object>) => {
       const collection = new NgxRxdbCollection(
         inject(NgxRxdbService),
-        options.collectionConfig
+        options.collectionConfig,
+        inject(NgZone)
       );
 
       return {

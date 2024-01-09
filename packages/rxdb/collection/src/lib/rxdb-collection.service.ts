@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { InjectionToken } from '@angular/core';
+import { InjectionToken, NgZone } from '@angular/core';
 import type {
   RxCollectionExtended as RxCollection,
   RxCollectionCreatorExtended,
@@ -48,8 +48,8 @@ export const NgxRxdbCollectionService = new InjectionToken<NgxRxdbCollection>(
  * @param config - The configuration object for the collection to be created automatically.
  */
 export function collectionServiceFactory(config: RxCollectionCreatorExtended) {
-  return (dbService: NgxRxdbService): NgxRxdbCollection =>
-    new NgxRxdbCollection(dbService, config);
+  return (dbService: NgxRxdbService, zone: NgZone): NgxRxdbCollection =>
+    new NgxRxdbCollection(dbService, config, zone);
 }
 
 /**
@@ -82,7 +82,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
 
   constructor(
     protected readonly dbService: NgxRxdbService,
-    public readonly config: RxCollectionCreatorExtended
+    public readonly config: RxCollectionCreatorExtended,
+    protected readonly ngZone: NgZone
   ) {
     this.init(dbService, config);
   }
@@ -173,6 +174,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     return this.initialized$.pipe(
       switchMap(() => this.collection.find(query).$),
       map((docs = []) => docs.map(d => d.toMutableJSON())),
+      NgxRxdbUtils.runInZone(this.ngZone),
       NgxRxdbUtils.debug('docs')
     );
   }
@@ -189,6 +191,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     return this.initialized$.pipe(
       switchMap(() => this.collection.findByIds(ids).$),
       map(result => [...result.values()].map(d => d.toMutableJSON())),
+      NgxRxdbUtils.runInZone(this.ngZone),
       NgxRxdbUtils.debug('docsByIds')
     );
   }
@@ -204,6 +207,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
         merge(this.collection.insert$, this.collection.remove$).pipe(startWith(null))
       ),
       switchMap(() => this.collection.count(query).exec()),
+      NgxRxdbUtils.runInZone(this.ngZone),
       NgxRxdbUtils.debug('count')
     );
   }
@@ -217,6 +221,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     return this.initialized$.pipe(
       switchMap(() => this.collection.findOne(id).$),
       map(doc => (doc ? doc.toMutableJSON() : null)),
+      NgxRxdbUtils.runInZone(this.ngZone),
       NgxRxdbUtils.debug('get one')
     );
   }
@@ -340,7 +345,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
         }
         return key ? doc.get(key) : doc;
       }),
-      NgxRxdbUtils.debug('get local')
+      NgxRxdbUtils.runInZone(this.ngZone),
+      NgxRxdbUtils.debug('local document')
     );
   }
 
@@ -381,6 +387,10 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
       this._collection = collectionsOfDatabase[name] as RxCollection<T>;
       this._init$.next(true);
       this._init$.complete();
+
+      this.collection.$.subscribe(event => {
+        NgxRxdbUtils.logger.log(`Collection "${name}" changed:`, event);
+      });
     } catch (e) {
       // @see rx-database-internal-store.ts:isDatabaseStateVersionCompatibleWithDatabaseCode
       // @see test/unit/data-migration.test.ts#L16

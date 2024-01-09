@@ -88,7 +88,7 @@ export const TodoStore = signalStore(
           store.setCurrent(todo);
         } else {
           elm.contentEditable = 'false';
-          elm.innerText = current.title;
+          elm.innerText = todo.title;
           store.setCurrent(undefined);
         }
       },
@@ -101,7 +101,7 @@ export const TodoStore = signalStore(
           last_modified: Date.now(),
         };
         store.update(payload);
-        this.setEditinigTodo({}, event, false);
+        this.setEditinigTodo(payload, event, false);
       },
       toggleTodo(todo: Todo) {
         const payload: Todo = {

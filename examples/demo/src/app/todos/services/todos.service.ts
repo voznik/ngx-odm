@@ -1,18 +1,9 @@
 /* eslint-disable no-console */
 import { Location } from '@angular/common';
 import { Injectable, inject } from '@angular/core';
-import { Title } from '@angular/platform-browser';
-import { NgxRxdbCollectionService, NgxRxdbCollection } from '@ngx-odm/rxdb/collection';
+import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
 import type { RxDatabaseCreator } from 'rxdb';
-import {
-  Observable,
-  defaultIfEmpty,
-  distinctUntilChanged,
-  of,
-  startWith,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { Observable, distinctUntilChanged, startWith } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { Todo, TodosFilter } from '../models';
 
@@ -22,29 +13,16 @@ export class TodosService {
     NgxRxdbCollectionService
   );
   private location = inject(Location);
-  private title = inject(Title);
   newTodo = '';
-  isEditing = '';
+  current: Todo = undefined;
 
   filter$: Observable<TodosFilter> = this.collectionService
     .getLocal('local', 'filterValue')
-    .pipe(
-      startWith('ALL'),
-      distinctUntilChanged(),
-      defaultIfEmpty('ALL')
-    ) as Observable<TodosFilter>;
+    .pipe(startWith('ALL'), distinctUntilChanged()) as Observable<TodosFilter>;
 
-  count$ = this.collectionService.count().pipe(defaultIfEmpty(0));
+  count$ = this.collectionService.count();
 
-  todos$: Observable<Todo[]> = of([]).pipe(
-    switchMap(() => this.collectionService.docs()),
-    tap(docs => {
-      const total = docs.length;
-      const remaining = docs.filter(doc => !doc.completed).length;
-      this.title.setTitle(`(${total - remaining}/${total}) Todos done`);
-    }),
-    defaultIfEmpty([])
-  );
+  todos$: Observable<Todo[]> = this.collectionService.docs();
 
   get dbOptions(): Readonly<RxDatabaseCreator> {
     return this.collectionService.dbOptions;
@@ -52,6 +30,10 @@ export class TodosService {
 
   get isAddTodoDisabled() {
     return this.newTodo.length < 4;
+  }
+
+  constructor() {
+    this.restoreFilter();
   }
 
   newTodoChange(newTodo: string) {
@@ -62,18 +44,7 @@ export class TodosService {
     this.newTodo = '';
   }
 
-  editTodo(todo: Todo, elm: HTMLInputElement) {
-    this.isEditing = todo.id;
-    setTimeout(() => {
-      elm.focus();
-    }, 0);
-  }
-
-  stopEditing() {
-    this.isEditing = '';
-  }
-
-  add(): void {
+  addTodo(): void {
     if (this.isAddTodoDisabled) {
       return;
     }
@@ -89,12 +60,36 @@ export class TodosService {
     this.newTodo = '';
   }
 
-  updateEditingTodo(todo: Todo, title: string): void {
-    this.collectionService.set(todo.id, { title });
+  setEditinigTodo(todo: Todo, event: Event, isEditing: boolean) {
+    const elm = event.target as HTMLElement;
+    if (isEditing) {
+      elm.contentEditable = 'plaintext-only';
+      elm.focus();
+      this.current = todo;
+    } else {
+      elm.contentEditable = 'false';
+      elm.innerText = todo.title;
+      this.current = undefined;
+    }
+  }
+  updateEditingTodo(todo: Todo, event: Event) {
+    event.preventDefault();
+    const elm = event.target as HTMLElement;
+    const payload = {
+      title: elm.innerText.trim(),
+      last_modified: Date.now(),
+    } as Todo;
+    this.collectionService.set(todo.id, payload);
+    this.setEditinigTodo(payload, event, false);
+    this.current = undefined;
   }
 
-  toggle(todo: Todo): void {
-    this.collectionService.set(todo.id, { completed: !todo.completed });
+  toggleTodo(todo: Todo): void {
+    const payload = {
+      completed: !todo.completed,
+      last_modified: Date.now(),
+    };
+    this.collectionService.set(todo.id, payload);
   }
 
   toggleAllTodos(completed: boolean) {

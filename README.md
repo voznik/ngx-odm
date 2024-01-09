@@ -149,7 +149,7 @@ export class TodosService {
 
   // remove many dcouments by qeury
   removeCompletedTodos(): void {
-    cthis.collectionService.removeBulk({ selector: { completed: true } });
+    this.collectionService.removeBulk({ selector: { completed: true } });
   }
   // ...
 }

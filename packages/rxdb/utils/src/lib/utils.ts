@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any */
-import { isDevMode } from '@angular/core';
+import { NgZone, isDevMode } from '@angular/core';
 import type { FilledMangoQuery, PreparedQuery, RxJsonSchema } from 'rxdb';
 import { prepareQuery } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
@@ -221,6 +221,10 @@ export namespace NgxRxdbUtils {
   /** @internal */
   export const isFunction = (value: any): value is Function => typeof value === 'function';
 
+  export function isNgZone(zone: unknown): zone is NgZone {
+    return zone instanceof NgZone;
+  }
+
   /** @internal */
   export function noop(): void {
     return void 0;
@@ -293,6 +297,22 @@ export namespace NgxRxdbUtils {
           },
         })
       );
+    };
+  }
+
+  /**
+   * Moves observable execution in and out of Angular zone.
+   * @param zone
+   */
+  export function runInZone<T>(zone: NgZone): OperatorFunction<T, T> {
+    return source => {
+      return new Observable(subscriber => {
+        return source.subscribe(
+          (value: T) => zone.run(() => subscriber.next(value)),
+          (e: any) => zone.run(() => subscriber.error(e)),
+          () => zone.run(() => subscriber.complete())
+        );
+      });
     };
   }
 
