@@ -1,23 +1,25 @@
 /* eslint-disable no-console */
-import { Location } from '@angular/common';
 import { Injectable, inject } from '@angular/core';
-import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
+import {
+  DEFAULT_LOCAL_DOCUMENT_ID,
+  NgxRxdbCollection,
+  NgxRxdbCollectionService,
+} from '@ngx-odm/rxdb/collection';
 import type { RxDatabaseCreator } from 'rxdb';
 import { Observable, distinctUntilChanged, startWith } from 'rxjs';
 import { v4 as uuid } from 'uuid';
-import { Todo, TodosFilter } from '../models';
+import { Todo, TodosFilter, TodosLocalState } from '../models';
 
 @Injectable()
 export class TodosService {
   private collectionService: NgxRxdbCollection<Todo> = inject<NgxRxdbCollection<Todo>>(
     NgxRxdbCollectionService
   );
-  private location = inject(Location);
   newTodo = '';
   current: Todo = undefined;
 
   filter$: Observable<TodosFilter> = this.collectionService
-    .getLocal('local', 'filterValue')
+    .getLocal$<TodosLocalState>(DEFAULT_LOCAL_DOCUMENT_ID, 'filter')
     .pipe(startWith('ALL'), distinctUntilChanged()) as Observable<TodosFilter>;
 
   count$ = this.collectionService.count();
@@ -33,15 +35,11 @@ export class TodosService {
   }
 
   constructor() {
+    this.collectionService.addHook('postSave', function (plainData, rxDocument) {
+      console.log('postSave', plainData, rxDocument);
+      return new Promise(res => setTimeout(res, 100));
+    });
     this.restoreFilter();
-  }
-
-  newTodoChange(newTodo: string) {
-    this.newTodo = newTodo;
-  }
-
-  newTodoClear() {
-    this.newTodo = '';
   }
 
   addTodo(): void {
@@ -72,6 +70,7 @@ export class TodosService {
       this.current = undefined;
     }
   }
+
   updateEditingTodo(todo: Todo, event: Event) {
     event.preventDefault();
     const elm = event.target as HTMLElement;
@@ -109,15 +108,14 @@ export class TodosService {
   }
 
   restoreFilter(): void {
-    const query = this.location.path().split('?')[1];
-    const searchParams = new URLSearchParams(query);
-    const filterValue = searchParams.get('filter') || 'ALL';
-    this.collectionService.upsertLocal('local', { filterValue });
+    this.collectionService.restoreLocalFromURL(DEFAULT_LOCAL_DOCUMENT_ID);
   }
 
-  filterTodos(filterValue: TodosFilter): void {
-    const path = this.location.path().split('?')[0];
-    this.location.replaceState(path, `filter=${filterValue}`);
-    this.collectionService.upsertLocal('local', { filterValue });
+  filterTodos(filter: TodosFilter): void {
+    this.collectionService.setLocal<TodosLocalState>(
+      DEFAULT_LOCAL_DOCUMENT_ID,
+      'filter',
+      filter
+    );
   }
 }

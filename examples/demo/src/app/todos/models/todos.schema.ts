@@ -1,6 +1,6 @@
 import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import type { RxCollection } from 'rxdb';
-import { TODOS_INITIAL_STATE } from './todos.model';
+import { TODOS_INITIAL_ITEMS } from './todos.model';
 
 export async function percentageCompletedFn() {
   const allDocs = await (this as RxCollection).find().exec();
@@ -17,6 +17,7 @@ export const TODOS_COLLECTION_CONFIG: RxCollectionCreatorExtended = {
   schema: null,
   options: {
     schemaUrl: 'assets/data/todo.schema.json',
-    initialDocs: TODOS_INITIAL_STATE.items,
+    initialDocs: TODOS_INITIAL_ITEMS.items,
+    persistLocalToURL: true,
   },
 };

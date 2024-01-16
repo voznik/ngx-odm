@@ -10,7 +10,11 @@ export type AnyObject = Record<string, any>;
 /** @internal */
 export type Cast<I, O> = Exclude<I, O> extends never ? I : O;
 /** @internal */
-export type Nil = null | undefined;
+type Nil = null | undefined;
+/** @internal */
+type Falsy = false | '' | 0 | null | undefined;
+/** @internal */
+type MaybeUndefined<T> = undefined extends T ? undefined : never;
 /** @internal */
 export type EmptyObject = Record<string, never>;
 /** @internal */
@@ -221,6 +225,20 @@ export namespace NgxRxdbUtils {
   /** @internal */
   export const isFunction = (value: any): value is Function => typeof value === 'function';
 
+  /** @internal */
+  export const isUndefined = (value: any): value is undefined =>
+    value === undefined || value === 'undefined';
+
+  /** @internal */
+  export function isNullOrUndefined(value: any): value is Nil {
+    /* prettier-ignore */
+    return value === undefined || value === null || value === 'undefined' || value === 'null';
+  }
+
+  /** @internal */
+  export const isObject = (x: any): x is object =>
+    Object.prototype.toString.call(x) === '[object Object]';
+
   export function isNgZone(zone: unknown): zone is NgZone {
     return zone instanceof NgZone;
   }
@@ -228,6 +246,75 @@ export namespace NgxRxdbUtils {
   /** @internal */
   export function noop(): void {
     return void 0;
+  }
+
+  /** @internal */
+  export function identity<T>(value: T): T {
+    return value;
+  }
+
+  /** @internal */
+  export function getMaybeId(entityOrId: any | string): string {
+    if (isObject(entityOrId)) {
+      return entityOrId!['_id'];
+    }
+    return String(entityOrId);
+  }
+
+  /** @internal */
+  export function compact<T>(array: Array<T>): Array<Exclude<T, Falsy>> {
+    return array.filter(identity) as Array<Exclude<T, Falsy>>;
+  }
+
+  /**
+   * Creates an object with all empty values removed. The values [], `null`, `""`, `undefined`, and `NaN` are empty.
+   * @param obj Object
+   * @internal
+   */
+  export function compactObject<T extends object>(obj: T): Partial<T> {
+    if (isEmpty(obj)) {
+      return obj;
+    }
+    if (Array.isArray(obj)) {
+      return compact(obj as any) as any;
+    }
+    return Object.entries(obj)
+      .filter(
+        ([, value]: [string, any]) => !isNullOrUndefined(identity(value)) && !isEmpty(value)
+      )
+      .reduce((acc: Partial<T>, [key, val]: [string, any]) => ({ ...acc, [key]: val }), {});
+  }
+
+  /**
+   * Transforms an object into an URL query string, stripping out any undefined
+   * values.
+   * @param  {object} obj
+   * @param prefix
+   * @returns {string}
+   * @internal
+   */
+  export function qsify(obj: any, prefix = ''): string {
+    const encode = (v: any): string =>
+      encodeURIComponent(typeof v === 'boolean' ? String(v) : v);
+    const result: string[] = [];
+    forEach(obj, (value, k) => {
+      if (isUndefined(value)) return;
+
+      let ks = encode(prefix + k) + '=';
+      if (Array.isArray(value)) {
+        const values: string[] = [];
+        forEach(value, v => {
+          if (isUndefined(v)) return;
+
+          values.push(encode(v));
+        });
+        ks += values.join(',');
+      } else {
+        ks += encode(value);
+      }
+      result.push(ks);
+    });
+    return result.length ? result.join('&') : '';
   }
 
   export function isDevModeForced(): boolean {
@@ -405,3 +492,11 @@ export function isValidRxReplicationState<T>(
 ): obj is RxReplicationState<T, unknown> {
   return obj && obj instanceof RxReplicationState;
 }
+
+/**
+ * Function to sync local RxDB document property when URL query segment changes
+ * @param document
+ * @param queryParam
+ * @param queryParamValue
+ * @param property
+ */

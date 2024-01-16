@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Location } from '@angular/common';
-import { computed, inject } from '@angular/core';
+import { computed } from '@angular/core';
 import { withDevtools } from '@angular-architects/ngrx-toolkit';
 import {
   patchState,
@@ -57,7 +56,6 @@ export const TodoStore = signalStore(
     };
   }),
   withMethods(store => {
-    const location = inject(Location);
     return {
       newTodoChange(newTodo: string) {
         patchState(store, { newTodo });
@@ -121,19 +119,15 @@ export const TodoStore = signalStore(
         store.removeAllBy({ selector: { completed: { $eq: true } } });
       },
       filterTodos(filter: TodosFilter): void {
-        const path = location.path().split('?')[0];
-        location.replaceState(path, `filter=${filter}`);
         store.updateFilter(filter);
       },
     };
   }),
   withHooks({
     /** On init update filter from URL and fetch documents from RxDb */
-    onInit: ({ findAllDocs, filter, updateFilter }) => {
+    onInit: ({ findAllDocs, filter, restoreFilter }) => {
       const query: MangoQuery<Todo> = { selector: {}, sort: [{ createdAt: 'desc' }] };
-      const params = location.search.split('?')[1];
-      const searchParams = new URLSearchParams(params);
-      updateFilter((searchParams.get('filter') as TodosFilter) || filter());
+      restoreFilter();
       findAllDocs(query);
     },
   })

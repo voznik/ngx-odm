@@ -1,8 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { InjectionToken, NgZone } from '@angular/core';
+import { Location } from '@angular/common';
+import { InjectionToken, NgZone, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import type {
   RxCollectionExtended as RxCollection,
   RxCollectionCreatorExtended,
+  RxCollectionHooks,
   RxDbMetadata,
 } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
@@ -34,6 +37,8 @@ import {
 type EntityId = string;
 type Entity = { id: EntityId };
 
+export const DEFAULT_LOCAL_DOCUMENT_ID = 'local';
+
 /**
  * Injection token for Service for interacting with a RxDB {@link RxCollection}.
  * This token is used to inject an instance of NgxRxdbCollection into a component or service.
@@ -48,14 +53,17 @@ export const NgxRxdbCollectionService = new InjectionToken<NgxRxdbCollection>(
  * @param config - The configuration object for the collection to be created automatically.
  */
 export function collectionServiceFactory(config: RxCollectionCreatorExtended) {
-  return (dbService: NgxRxdbService, zone: NgZone): NgxRxdbCollection =>
-    new NgxRxdbCollection(dbService, config, zone);
+  return (): NgxRxdbCollection => new NgxRxdbCollection(config);
 }
 
 /**
  * Service for interacting with a RxDB {@link RxCollection}.
  */
 export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
+  protected readonly dbService: NgxRxdbService = inject(NgxRxdbService);
+  protected readonly ngZone: NgZone = inject(NgZone);
+  protected readonly location: Location = inject(Location);
+  protected readonly router: Router = inject(Router);
   private _collection!: RxCollection<T>;
   private _replicationState: RxReplicationState<T, unknown> | null = null;
   private _init$ = new ReplaySubject<boolean>();
@@ -80,12 +88,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     return this._replicationState;
   }
 
-  constructor(
-    protected readonly dbService: NgxRxdbService,
-    public readonly config: RxCollectionCreatorExtended,
-    protected readonly ngZone: NgZone
-  ) {
-    this.init(dbService, config);
+  constructor(public readonly config: RxCollectionCreatorExtended) {
+    this.init(this.dbService, this.config);
   }
 
   /**
@@ -295,7 +299,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    */
   async remove(entityOrId: T | string): Promise<RxDocument<T> | null> {
     await this.ensureCollection();
-    const id = typeof entityOrId === 'object' ? entityOrId['_id'] : entityOrId;
+    const id = NgxRxdbUtils.getMaybeId(entityOrId);
     return this.collection.findOne(id).remove();
   }
 
@@ -329,56 +333,114 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     return this.collection.remove();
   }
 
-  // ---------------------------------------------------------------------------
-  // Local Documents @see https://rxdb.info/rx-local-document.html
-  // ---------------------------------------------------------------------------
+  /**
+   * Add one of RxDB-supported middleware-hooks to current collection, e.g run smth on document postSave.
+   * By default runs in series
+   * @param hook
+   * @param handler
+   * @param parralel
+   * @see https://rxdb.info/middleware.html
+   */
+  async addHook<Hook extends RxCollectionHooks>(
+    hook: Hook,
+    handler: Parameters<RxCollection<T>[Hook]>[0],
+    parralel = false
+  ): Promise<void> {
+    await this.ensureCollection();
+    // Type 'RxCollectionHookNoInstanceCallback<T, {}>' is not assignable to type 'RxCollectionHookCallback<T, {}>'.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.collection[hook](handler as any, parralel);
+  }
 
-  getLocal<I extends string, K extends string>(
-    id: I,
-    key?: K
-  ): Observable<K extends never ? RxLocalDocument<{}> : unknown> {
+  // ---------------------------------------------------------------------------
+  // Local Documents wrappers @see https://rxdb.info/rx-local-document.html
+  // ---------------------------------------------------------------------------
+  /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-constraint */
+
+  async getLocal<L = any>(id: string, key?: string | never): Promise<L | null> {
+    await this.ensureCollection();
+    const doc = await this.collection.getLocal<L>(id);
+    NgxRxdbUtils.logger.log('local document', doc);
+    if (!doc) {
+      return null;
+    }
+    return key ? doc?.get(key) : doc?.toJSON().data;
+  }
+
+  getLocal$<L = any>(id: string, key?: keyof L | never): Observable<L | null> {
     return this.initialized$.pipe(
-      switchMap(() => this.collection.getLocal$(id)),
+      switchMap(() => this.collection.getLocal$<L>(id)),
       map(doc => {
         if (!doc) {
           return null;
         }
-        return key ? doc.get(key) : doc;
+        return key ? doc.get(key as string) : doc.toJSON().data;
       }),
       NgxRxdbUtils.runInZone(this.ngZone),
       NgxRxdbUtils.debug('local document')
     );
   }
 
-  async insertLocal(id: string, data: unknown): Promise<RxLocalDocument<{}>> {
+  async insertLocal<L = any>(id: string, data: L): Promise<void> {
     await this.ensureCollection();
-    return this.collection.insertLocal(id, data);
+    const doc = await this.collection.insertLocal<L>(id, data);
+    await this.persistLocalToURL(doc);
   }
 
-  async upsertLocal(id: string, data: unknown): Promise<RxLocalDocument<{}>> {
+  async upsertLocal<L = any>(id: string, data: L): Promise<void> {
     await this.ensureCollection();
-    return this.collection.upsertLocal(id, data);
+    const doc = await this.collection.upsertLocal<L>(id, data);
+    await this.persistLocalToURL(doc);
   }
 
-  async setLocal(
-    id: string,
-    prop: string,
-    value: unknown
-  ): Promise<RxLocalDocument<unknown> | null> {
+  /**
+   * @param id
+   * @param prop
+   * @param value
+   * @deprecated as of RxDB version 15.3.0, local doc method `set` is missing
+   */
+  async setLocal<L = any>(id: string, prop: keyof L, value: unknown): Promise<void> {
     await this.ensureCollection();
-    const localDoc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
-    if (!localDoc || localDoc[prop] === value) {
-      return null;
+    const loc = await this.collection.getLocal<L>(id);
+    const doc = await this.collection.upsertLocal<L>(id, {
+      ...loc?.toJSON().data,
+      [prop]: value,
+    } as L);
+    await this.persistLocalToURL(doc);
+  }
+
+  async removeLocal(id: string): Promise<void> {
+    await this.ensureCollection();
+    const doc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
+    await doc?.remove();
+    await this.persistLocalToURL(doc);
+  }
+
+  async persistLocalToURL(doc: RxLocalDocument<any> | null): Promise<void> {
+    if (!doc || !doc.isLocal || !this.config.options?.persistLocalToURL) {
+      return;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return localDoc.update({ [prop]: value }) as Promise<any>;
+    const { data } = doc.toJSON();
+    await this.router.navigate([], {
+      queryParams: NgxRxdbUtils.compactObject(data),
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    NgxRxdbUtils.logger.log('persistLocalToURL', data, this.router.url);
   }
 
-  async removeLocal(id: string): Promise<unknown> {
-    await this.ensureCollection();
-    const localDoc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
-    return await localDoc?.remove();
+  async restoreLocalFromURL(id: string): Promise<void> {
+    if (!this.config.options?.persistLocalToURL) {
+      return;
+    }
+    const data = this.router.parseUrl(this.router.url).queryParams;
+    if (!data) {
+      return;
+    }
+    NgxRxdbUtils.logger.log('restoreLocalToURL', data);
+    await this.upsertLocal(id, data);
   }
+  /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-constraint */
 
   private async init(dbService: NgxRxdbService, config: RxCollectionCreatorExtended) {
     const { name } = config;
@@ -387,10 +449,6 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
       this._collection = collectionsOfDatabase[name] as RxCollection<T>;
       this._init$.next(true);
       this._init$.complete();
-
-      this.collection.$.subscribe(event => {
-        NgxRxdbUtils.logger.log(`Collection "${name}" changed:`, event);
-      });
     } catch (e) {
       // @see rx-database-internal-store.ts:isDatabaseStateVersionCompatibleWithDatabaseCode
       // @see test/unit/data-migration.test.ts#L16

@@ -13,9 +13,8 @@
       placeholder="What needs to be done?"
       autofocus=""
       [(ngModel)]="todosService.newTodo"
-      (keyup)="todosService.newTodoChange($any($event.target).value)"
       (keyup.enter)="todosService.addTodo()"
-      (keyup.escape)="todosService.newTodoClear()"
+      (keyup.escape)="todosService.newTodo = ''"
     />
   </header>
   <main class="main">

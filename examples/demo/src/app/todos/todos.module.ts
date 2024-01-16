@@ -12,7 +12,7 @@ import { replicateCouchDB } from 'rxdb/plugins/replication-couchdb';
 import { environment } from '../../environments/environment';
 import { TodosComponent } from './components/todos/todos.component';
 import { TodosPipe } from './components/todos/todos.pipe';
-import { TODOS_INITIAL_STATE, Todo } from './models';
+import { TODOS_INITIAL_ITEMS, Todo } from './models';
 import { TodosService } from './services';
 import { TodosRoutingModule } from './todos-routing.module';
 
@@ -29,8 +29,8 @@ import { TodosRoutingModule } from './todos-routing.module';
       schema: undefined, // to load schema from remote url pass `undefined` here
       options: {
         schemaUrl: 'assets/data/todo.schema.json', // load schema from remote url
-        initialDocs: TODOS_INITIAL_STATE.items, // populate collection with initial data,
-        recreate: true,
+        initialDocs: TODOS_INITIAL_ITEMS, // populate collection with initial data,
+        persistLocalToURL: true,
         replicationStateFactory: collection => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           let replicationState: RxReplicationState<Todo, any> | null = null;

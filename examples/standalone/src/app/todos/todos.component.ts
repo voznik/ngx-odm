@@ -47,7 +47,7 @@ export class TodosComponent {
       const { title, filter, entities } = this.todoStore;
       const titleString = title();
       this.titleService.setTitle(titleString);
-      NgxRxdbUtils.logger.log(filter()); // INFO: signals on their own do not work if we do not use it directly here with proper dependency
+      NgxRxdbUtils.logger.log('filter:', filter()); // INFO: signals on their own do not work if we do not use it directly here with proper dependency
       NgxRxdbUtils.logger.table(entities()); // INFO: signals on their own do not work if we do not use it directly here with proper dependency
 
       // INFO: Angular 17 doesn't provide way to detect changes with `signals` ONLY and no zone
