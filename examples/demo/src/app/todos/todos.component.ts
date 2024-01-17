@@ -2,8 +2,8 @@ import { animate, query, stagger, style, transition, trigger } from '@angular/an
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { Observable, tap } from 'rxjs';
-import { Todo } from '../../models';
-import { TodosService } from '../../services';
+import { Todo } from './todos.model';
+import { TodosService } from './todos.service';
 
 const listAnimation = trigger('listAnimation', [
   transition('* <=> *', [

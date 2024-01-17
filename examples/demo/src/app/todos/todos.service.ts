@@ -8,7 +8,7 @@ import {
 import type { RxDatabaseCreator } from 'rxdb';
 import { Observable, distinctUntilChanged, startWith } from 'rxjs';
 import { v4 as uuid } from 'uuid';
-import { Todo, TodosFilter, TodosLocalState } from '../models';
+import { Todo, TodosFilter, TodosLocalState } from './todos.model';
 
 @Injectable()
 export class TodosService {

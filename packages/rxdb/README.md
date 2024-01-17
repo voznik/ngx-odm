@@ -1,10 +1,10 @@
 # @ngx-odm/rxdb
 
-> Angular 10+ wrapper for **RxDB** - A realtime Database for the Web
+> Angular 14+ wrapper for **RxDB** - A realtime Database for the Web
 
 ## Demo
 
-![Example screenshot](examples/demo/src/assets/images/screenshot.png)
+![Example Screencast](screencast.gif)
 
 [demo](https://voznik.github.io/ngx-odm/) - based on TodoMVC
 
@@ -36,7 +36,7 @@ If you don't want to setup RxDB manually in your next Angular project - just imp
 
 ## Technologies
 
-| RxDB                                                                                                     | Angular 10+                                                                                   |
+| RxDB                                                                                                     | Angular 14+                                                                                   |
 | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | [![RxDB](https://cdn.rawgit.com/pubkey/rxdb/ba7c9b80/docs/files/logo/logo_text.svg)](https://rxdb.info/) | [![Angular](https://angular.io/assets/images/logos/angular/angular.svg)](https://angular.io/) |
 

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */ // FIXME: Remove this
-import { NgZone, Signal, computed, inject } from '@angular/core';
+import { Signal, computed } from '@angular/core';
 import {
   getCallStateKeys,
   setError,
@@ -22,7 +22,6 @@ import { SignalStoreFeatureResult } from '@ngrx/signals/src/signal-store-models'
 import { StateSignal } from '@ngrx/signals/src/state-signal';
 import { DEFAULT_LOCAL_DOCUMENT_ID, NgxRxdbCollection } from '@ngx-odm/rxdb/collection';
 import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
-import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import type { MangoQuerySelector } from 'rxdb';
 import { firstValueFrom, pipe, switchMap } from 'rxjs';
 

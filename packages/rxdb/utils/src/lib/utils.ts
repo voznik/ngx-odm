@@ -215,7 +215,7 @@ export namespace NgxRxdbUtils {
     return value;
   }
 
-  export function getMaybeId(entityOrId: any | string): string {
+  export function getMaybeId(entityOrId: object | string): string {
     if (isObject(entityOrId)) {
       return entityOrId['_id'];
     }

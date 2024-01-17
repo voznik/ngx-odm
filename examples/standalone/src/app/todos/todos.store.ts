@@ -78,7 +78,6 @@ export const TodoStore = signalStore(
         store.insert(payload);
       },
       setEditinigTodo(todo: Todo, event: Event, isEditing: boolean) {
-        const current = store.current();
         const elm = event.target as HTMLElement;
         if (isEditing) {
           elm.contentEditable = 'plaintext-only';

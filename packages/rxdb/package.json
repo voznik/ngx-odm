@@ -3,7 +3,7 @@
   "private": false,
   "name": "@ngx-odm/rxdb",
   "version": "5.0.0",
-  "description": "Angular 10+ wrapper (module or standalone) for RxDB - A realtime Database for the Web",
+  "description": "Angular 14+ wrapper (module or standalone) for RxDB - A realtime Database for the Web",
   "keywords": [
     "angular",
     "ngrx",

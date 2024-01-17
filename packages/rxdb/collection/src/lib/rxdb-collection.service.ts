@@ -357,7 +357,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   // ---------------------------------------------------------------------------
   /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-constraint */
 
-  async getLocal<L = any>(id: string, key?: string | never): Promise<L | null> {
+  async getLocal<L = any>(id: string, key?: string): Promise<L | null> {
     await this.ensureCollection();
     const doc = await this.collection.getLocal<L>(id);
     NgxRxdbUtils.logger.log('local document', doc);
@@ -367,7 +367,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     return key ? doc?.get(key) : doc?.toJSON().data;
   }
 
-  getLocal$<L = any>(id: string, key?: keyof L | never): Observable<L | null> {
+  getLocal$<L = any>(id: string, key?: keyof L): Observable<L | null> {
     return this.initialized$.pipe(
       switchMap(() => this.collection.getLocal$<L>(id)),
       map(doc => {
@@ -397,7 +397,6 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * @param id
    * @param prop
    * @param value
-   * @deprecated as of RxDB version 15.3.0, local doc method `set` is missing
    */
   async setLocal<L = any>(id: string, prop: keyof L, value: unknown): Promise<void> {
     await this.ensureCollection();
@@ -405,6 +404,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     if (!loc) {
       return;
     }
+    // INFO: as of RxDB version 15.3.0, local doc method `set` is missing
+    // so we update whole document
     const doc = await this.collection.upsertLocal<L>(id, {
       ...loc?.toJSON().data,
       [prop]: value,
@@ -420,7 +421,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   }
 
   async persistLocalToURL(doc: RxLocalDocument<any> | null): Promise<void> {
-    if (!doc || !doc.isLocal || !this.config.options?.persistLocalToURL) {
+    if (!doc?.isLocal || !this.config.options?.persistLocalToURL) {
       return;
     }
     const { data } = doc.toJSON();
