@@ -2,6 +2,15 @@
 
 This file was generated using [@jscutlery/semver](https://github.com/jscutlery/semver).
 
+# [5.1.0](https://github.com/voznik/ngx-odm/compare/v5.0.0...v5.1.0) (2024-01-17)
+
+
+### Bug Fixes
+
+* improve change detection & fix multi-tabs demo example ([#56](https://github.com/voznik/ngx-odm/issues/56)) ([312d197](https://github.com/voznik/ngx-odm/commit/312d19703af396a04972d7724264282ac04b7502))
+
+
+
 # [5.0.0](https://github.com/voznik/ngx-odm/compare/v4.0.0...v5.0.0) (2024-01-08)
 
 
