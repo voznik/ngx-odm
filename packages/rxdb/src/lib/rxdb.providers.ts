@@ -84,7 +84,7 @@ export function provideRxCollection(
     {
       provide: NgxRxdbCollectionService,
       useFactory: collectionServiceFactory(collectionConfig),
-      deps: [NgxRxdbService],
+      deps: [],
     },
   ];
 }

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */ // FIXME: Remove this
-import { Signal, computed, inject } from '@angular/core';
+import { Signal, computed } from '@angular/core';
 import {
   getCallStateKeys,
   setError,
@@ -20,9 +20,8 @@ import { NamedEntitySignals } from '@ngrx/signals/entities/src/models';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { SignalStoreFeatureResult } from '@ngrx/signals/src/signal-store-models';
 import { StateSignal } from '@ngrx/signals/src/state-signal';
-import { NgxRxdbCollection } from '@ngx-odm/rxdb/collection';
+import { DEFAULT_LOCAL_DOCUMENT_ID, NgxRxdbCollection } from '@ngx-odm/rxdb/collection';
 import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
-import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import type { MangoQuerySelector } from 'rxdb';
 import { firstValueFrom, pipe, switchMap } from 'rxjs';
 
@@ -51,6 +50,9 @@ function getCollectionServiceKeys(options: { collection?: string }) {
     ? `selected${capitalize(options.collection)}Entities`
     : 'selectedEntities';
 
+  const restoreFilterKey = options.collection
+    ? `restore${capitalize(options.collection)}Filter`
+    : 'restoreFilter';
   const updateFilterKey = options.collection
     ? `update${capitalize(options.collection)}Filter`
     : 'updateFilter';
@@ -95,6 +97,7 @@ function getCollectionServiceKeys(options: { collection?: string }) {
     filterKey,
     selectedIdsKey,
     selectedEntitiesKey,
+    restoreFilterKey,
     updateFilterKey,
     updateSelectedKey,
     findKey,
@@ -147,6 +150,8 @@ export type NamedCollectionServiceMethods<
   F extends Filter,
   CName extends string,
 > = {
+  [K in CName as `restore${Capitalize<K>}Filter`]: () => void;
+} & {
   [K in CName as `update${Capitalize<K>}Filter`]: (filter: F) => void;
 } & {
   [K in CName as `updateSelected${Capitalize<K>}Entities`]: (
@@ -175,6 +180,7 @@ export type NamedCollectionServiceMethods<
 };
 
 export type CollectionServiceMethods<E extends Entity, F extends Filter> = {
+  restoreFilter: () => void;
   updateFilter: (filter: F) => void;
   updateSelected: (id: EntityId, selected: boolean) => void;
   setCurrent(entity: E): void;
@@ -243,6 +249,7 @@ export function withCollectionService<
     filterKey,
     selectedEntitiesKey,
     selectedIdsKey,
+    restoreFilterKey,
     updateFilterKey,
     updateSelectedKey,
 
@@ -274,13 +281,22 @@ export function withCollectionService<
       };
     }),
     withMethods((store: Record<string, unknown> & StateSignal<object>) => {
-      const collection = new NgxRxdbCollection(
-        inject(NgxRxdbService),
-        options.collectionConfig
-      );
+      const collection = new NgxRxdbCollection<Entity>(options.collectionConfig);
 
       return {
-        [updateFilterKey]: (filter: F): void => {
+        [restoreFilterKey]: async (): Promise<void> => {
+          if (options.collectionConfig.options?.persistLocalToURL) {
+            await collection.restoreLocalFromURL(DEFAULT_LOCAL_DOCUMENT_ID);
+          }
+          const local = await collection.getLocal(DEFAULT_LOCAL_DOCUMENT_ID);
+          patchState(store, { [filterKey]: local[filterKey] });
+        },
+        [updateFilterKey]: async (filter: F): Promise<void> => {
+          if (typeof filter === 'string') {
+            await collection.setLocal(DEFAULT_LOCAL_DOCUMENT_ID, 'filter', filter);
+          } else {
+            await collection.upsertLocal(DEFAULT_LOCAL_DOCUMENT_ID, filter);
+          }
           patchState(store, { [filterKey]: filter });
         },
         [updateSelectedKey]: (id: EntityId, selected: boolean): void => {
@@ -297,7 +313,6 @@ export function withCollectionService<
               collection.docs({}).pipe(
                 tapResponse({
                   next: result => {
-                    // NgxRxdbUtils.logger.table(result);
                     store[callStateKey] && patchState(store, setLoading(prefix));
                     return patchState(
                       store,

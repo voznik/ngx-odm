@@ -1,4 +1,3 @@
-<!-- https://angular.io/guide/template-typecheck#disabling-type-checking-using-any -->
 <section
   class="todoapp"
   *ngrxLet="{
@@ -14,9 +13,8 @@
       placeholder="What needs to be done?"
       autofocus=""
       [(ngModel)]="todosService.newTodo"
-      (keyup)="todosService.newTodoChange($any($event.target).value)"
-      (keyup.enter)="todosService.add()"
-      (keyup.escape)="todosService.newTodoClear()"
+      (keyup.enter)="todosService.addTodo()"
+      (keyup.escape)="todosService.newTodo = ''"
     />
   </header>
   <main class="main">
@@ -33,30 +31,27 @@
       <li
         *ngFor="let todo of $.todos | byStatus: $.filter; trackBy: trackByFn"
         [class.completed]="todo.completed"
-        [class.editing]="todosService.isEditing === todo.id"
       >
         <div class="view">
           <input
             class="toggle"
-            [class.editing]="todosService.isEditing"
+            [class.editing]="todosService.current?.id === todo.id"
             type="checkbox"
             [checked]="todo.completed"
-            (change)="todosService.toggle(todo)"
+            (change)="todosService.toggleTodo(todo)"
           />
-          <label (dblclick)="todosService.editTodo(todo, editInput)">
+          <label
+            [class.editing]="todosService.current?.id === todo.id"
+            (dblclick)="todosService.setEditinigTodo(todo, $event, true)"
+            (blur)="todosService.setEditinigTodo(todo, $event, false)"
+            (keyup)="$event.preventDefault()"
+            (keydown.escape)="todosService.setEditinigTodo(todo, $event, false)"
+            (keydown.enter)="todosService.updateEditingTodo(todo, $event)"
+          >
             {{ todo.title }}
           </label>
           <button class="destroy" (click)="todosService.removeTodo(todo)"></button>
         </div>
-        <input
-          class="edit"
-          [hidden]="!todosService.isEditing"
-          [value]="todo.title"
-          #editInput
-          (blur)="todosService.stopEditing()"
-          (keyup.enter)="todosService.updateEditingTodo(todo, editInput.value)"
-          (keyup.escape)="todosService.stopEditing()"
-        />
       </li>
     </ul>
   </main>
@@ -103,11 +98,11 @@
     </ul>
     <button
       class="clear-completed"
-      [disabled]="!$.todos?.length || remainig === $.todos?.length"
+      [disabled]="!$.count || remainig === $.count"
       (click)="todosService.removeCompletedTodos()"
       style="z-index: 3"
     >
-      Clear completed ({{ $.todos?.length - remainig }})
+      Clear completed ({{ $.count - remainig }})
     </button>
   </footer>
 </section>

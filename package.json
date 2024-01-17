@@ -81,7 +81,7 @@
     "compare-versions": "^6.1.0",
     "normalize.css": "8.0.1",
     "reflect-metadata": "0.1.13",
-    "rxdb": "^15.0.0",
+    "rxdb": "^15.3.0",
     "rxjs": "7.8.1",
     "todomvc-app-css": "2.4.3",
     "todomvc-common": "1.0.5",

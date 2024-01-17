@@ -1,0 +1,19 @@
+.clear-completed:disabled {
+  color: #999;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.todo-list li label+.last-modified {
+  position: absolute;
+  bottom: 4px;
+  right: 24px;
+  display: none;
+  font-size: small;
+  color: #999;
+  text-decoration: none !important;
+}
+
+.todo-list li:hover label:not(.editing)+.last-modified {
+  display: block;
+}

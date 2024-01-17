@@ -1,14 +1,9 @@
 import { animate, query, stagger, style, transition, trigger } from '@angular/animations';
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  OnInit,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { Observable, tap } from 'rxjs';
-import { Todo } from '../../models';
-import { TodosService } from '../../services';
+import { Todo } from './todos.model';
+import { TodosService } from './todos.service';
 
 const listAnimation = trigger('listAnimation', [
   transition('* <=> *', [
@@ -33,22 +28,21 @@ const listAnimation = trigger('listAnimation', [
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [listAnimation],
 })
-export class TodosComponent implements OnInit {
-  private cdRef = inject(ChangeDetectorRef);
+export class TodosComponent {
+  private title = inject(Title);
   readonly todosService = inject(TodosService);
+
   filter$ = this.todosService.filter$;
   todos$: Observable<Todo[]> = this.todosService.todos$.pipe(
-    tap(() => {
-      // INFO: for `multiinstance` (multiple tabs) case - need to force change detection
-      if (this.todosService.dbOptions.multiInstance) {
-        this.cdRef.detectChanges();
-      }
+    tap(docs => {
+      const total = docs.length;
+      const remaining = docs.filter(doc => !doc.completed).length;
+      this.title.setTitle(`(${total - remaining}/${total}) Todos done`);
     })
   );
   count$ = this.todosService.count$;
-  trackByFn = (index: number, item: Todo) => item.id;
 
-  ngOnInit() {
-    this.todosService.restoreFilter();
-  }
+  trackByFn = (index: number, item: Todo) => {
+    return item.last_modified;
+  };
 }

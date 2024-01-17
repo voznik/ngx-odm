@@ -1,7 +1,8 @@
-import { ApplicationRef, Component, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
-import { filter, tap } from 'rxjs';
+import { RenderScheduler } from '@ngrx/component';
+import { filter } from 'rxjs';
 
 @Component({
   standalone: true,
@@ -10,10 +11,12 @@ import { filter, tap } from 'rxjs';
   template: `
     <router-outlet></router-outlet>
   `,
+  providers: [RenderScheduler],
 })
 export class AppComponent {
   private router = inject(Router);
-  private appRef = inject(ApplicationRef);
+  private renderScheduler = inject(RenderScheduler);
+
   constructor() {
     this.zonelessCD();
   }
@@ -22,11 +25,8 @@ export class AppComponent {
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
-        tap(() => {
-          this.appRef.tick();
-        }),
         takeUntilDestroyed()
       )
-      .subscribe();
+      .subscribe(() => this.renderScheduler.schedule());
   }
 }

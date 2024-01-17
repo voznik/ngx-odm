@@ -17,7 +17,9 @@ import type { Merge, SetOptional, SetRequired } from 'type-fest';
 export interface RxCollectionCreatorOptions {
   schemaUrl?: string;
   initialDocs?: any[];
+  /** @deprecated */
   recreate?: boolean;
+  persistLocalToURL?: boolean;
   replicationStateFactory?: (col: RxCollection) => RxReplicationState<any, any> | null;
 }
 
@@ -51,6 +53,19 @@ export interface RxDbMetadata {
   rev: number;
   isFirstTimeInstantiated: boolean;
 }
+
+/**
+ * RxCollection hooks names
+ * @see https://rxdb.info/middleware.html
+ */
+export type RxCollectionHooks =
+  | 'preInsert'
+  | 'preSave'
+  | 'preRemove'
+  | 'postInsert'
+  | 'postSave'
+  | 'postRemove'
+  | 'postCreate';
 
 /**
  * Instance of RxDatabaseCreator

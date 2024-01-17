@@ -3,7 +3,7 @@
   "private": false,
   "name": "@ngx-odm/rxdb",
   "version": "5.0.0",
-  "description": "Angular 10+ wrapper (module or standalone) for RxDB - A realtime Database for the Web",
+  "description": "Angular 14+ wrapper (module or standalone) for RxDB - A realtime Database for the Web",
   "keywords": [
     "angular",
     "ngrx",
@@ -40,12 +40,12 @@
     "npm": ">=8.x"
   },
   "peerDependencies": {
-    "@angular/common": ">=v10",
-    "@angular/core": ">=v10",
-    "rxjs": "^6.6.7"
+    "@angular/common": ">=v14",
+    "@angular/core": ">=v14",
+    "rxjs": "^6.6.7 || ^7.6.0"
   },
   "dependencies": {
-    "rxdb": "^15.0.0",
+    "rxdb": "^15.3.0",
     "tslib": "2.0.3"
   }
 }
