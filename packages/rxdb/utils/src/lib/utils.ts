@@ -57,10 +57,6 @@ export type IsKnownRecord<T> = IsRecord<T> extends true
 export namespace NgxRxdbUtils {
   /**
    * Creates a shallow clone of `value`.
-   *
-   * Contribution to minified bundle size, when it is the only function imported:
-   * - Lodash: 12,696 bytes
-   * - Micro-dash: 116 bytes
    * @param value
    */
   export function clone<T>(value: T): T {
@@ -79,9 +75,6 @@ export namespace NgxRxdbUtils {
    * Differences from lodash:
    * - does not give any special consideration for arguments objects, strings, or prototype objects (e.g. many will have `'length'` in the returned array)
    *
-   * Contribution to minified bundle size, when it is the only function imported:
-   * - Lodash: 3,473 bytes
-   * - Micro-dash: 184 bytes
    * @internal
    */
   export function keys<T>(object: Nil | T): Array<StringifiedKey<T>> {
@@ -92,7 +85,6 @@ export namespace NgxRxdbUtils {
     return val as any;
   }
 
-  /** @internal */
   export function keysOfNonArray<T>(object: Nil | T): Array<StringifiedKey<T>> {
     return object ? (Object.getOwnPropertyNames(object) as any) : [];
   }
@@ -102,20 +94,14 @@ export namespace NgxRxdbUtils {
    *
    * Differences from lodash:
    * - does not treat sparse arrays as dense
-   *
-   * Contribution to minified bundle size, when it is the only function imported:
-   * - Lodash: 3,744 bytes
-   * - Micro-dash: 283 bytes
    * @param object
    * @param iteratee
-   * @internal
    */
   export function forOwn<T>(object: T, iteratee: ObjectIteratee<T, boolean | void>): T {
     forEachOfArray(keys(object), key => iteratee(object[key as keyof T], key));
     return object;
   }
 
-  /** @internal */
   export function forOwnOfNonArray<T>(
     object: T,
     iteratee: ObjectIteratee<T, boolean | void>
@@ -126,13 +112,8 @@ export namespace NgxRxdbUtils {
 
   /**
    * Iterates over elements of `collection` and invokes `iteratee` for each element. Iteratee functions may exit iteration early by explicitly returning `false`.
-   *
-   * Contribution to minified bundle size, when it is the only function imported:
-   * - Lodash: 4,036 bytes
-   * - Micro-dash: 258 bytes
    * @param array
    * @param iteratee
-   * @internal
    */
   export function forEach<T extends Nil | readonly any[]>(
     array: T,
@@ -142,8 +123,6 @@ export namespace NgxRxdbUtils {
     object: T,
     iteratee: ObjectIteratee<NonNullable<T>, boolean | void>
   ): T;
-
-  /** @internal */
   export function forEach(collection: any, iteratee: any): any {
     if (Array.isArray(collection)) {
       forEachOfArray(collection, iteratee);
@@ -153,7 +132,6 @@ export namespace NgxRxdbUtils {
     return collection;
   }
 
-  /** @internal */
   export function forEachOfArray<T>(
     array: readonly T[],
     iteratee: ArrayIteratee<T, boolean | void>
@@ -175,13 +153,8 @@ export namespace NgxRxdbUtils {
    * - only supports arguments that are objects
    * - cannot handle circular references
    * - when merging an array onto a non-array, the result is a non-array
-   *
-   * Contribution to minified bundle size, when it is the only function imported:
-   * - Lodash: 10,882 bytes
-   * - Micro-dash: 438 bytes
    * @param object
    * @param source
-   * @internal
    */
   export function merge<A extends object, B extends object>(object: A, source: B): A & B;
   export function merge<A extends object, B extends object, C extends object>(
@@ -208,12 +181,7 @@ export namespace NgxRxdbUtils {
    * Objects are considered empty if they have no own enumerable string keyed properties.
    *
    * Arrays are considered empty if they have a `length` of `0`.
-   *
-   * Contribution to minified bundle size, when it is the only function imported:
-   * - Lodash: 4,406 bytes
-   * - Micro-dash: 148 bytes
    * @param value
-   * @internal
    */
   export function isEmpty(value: any): boolean {
     if (!Array.isArray(value)) {
@@ -222,20 +190,16 @@ export namespace NgxRxdbUtils {
     return value.length === 0;
   }
 
-  /** @internal */
   export const isFunction = (value: any): value is Function => typeof value === 'function';
 
-  /** @internal */
   export const isUndefined = (value: any): value is undefined =>
     value === undefined || value === 'undefined';
 
-  /** @internal */
   export function isNullOrUndefined(value: any): value is Nil {
     /* prettier-ignore */
     return value === undefined || value === null || value === 'undefined' || value === 'null';
   }
 
-  /** @internal */
   export const isObject = (x: any): x is object =>
     Object.prototype.toString.call(x) === '[object Object]';
 
@@ -243,25 +207,21 @@ export namespace NgxRxdbUtils {
     return zone instanceof NgZone;
   }
 
-  /** @internal */
   export function noop(): void {
     return void 0;
   }
 
-  /** @internal */
   export function identity<T>(value: T): T {
     return value;
   }
 
-  /** @internal */
   export function getMaybeId(entityOrId: any | string): string {
     if (isObject(entityOrId)) {
-      return entityOrId!['_id'];
+      return entityOrId['_id'];
     }
     return String(entityOrId);
   }
 
-  /** @internal */
   export function compact<T>(array: Array<T>): Array<Exclude<T, Falsy>> {
     return array.filter(identity) as Array<Exclude<T, Falsy>>;
   }
@@ -269,7 +229,6 @@ export namespace NgxRxdbUtils {
   /**
    * Creates an object with all empty values removed. The values [], `null`, `""`, `undefined`, and `NaN` are empty.
    * @param obj Object
-   * @internal
    */
   export function compactObject<T extends object>(obj: T): Partial<T> {
     if (isEmpty(obj)) {

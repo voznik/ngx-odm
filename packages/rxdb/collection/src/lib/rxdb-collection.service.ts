@@ -402,6 +402,9 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   async setLocal<L = any>(id: string, prop: keyof L, value: unknown): Promise<void> {
     await this.ensureCollection();
     const loc = await this.collection.getLocal<L>(id);
+    if (!loc) {
+      return;
+    }
     const doc = await this.collection.upsertLocal<L>(id, {
       ...loc?.toJSON().data,
       [prop]: value,

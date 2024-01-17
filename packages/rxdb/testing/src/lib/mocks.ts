@@ -62,6 +62,7 @@ export const TEST_DB_CONFIG_1: RxDatabaseCreator = {
   storage: getRxStorageMemory(),
   multiInstance: false,
   ignoreDuplicate: true,
+  localDocuments: true,
 };
 export const TEST_DB_CONFIG_2: RxDatabaseCreator = {
   name: 'test',
