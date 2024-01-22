@@ -16,6 +16,7 @@ import {
   withState,
 } from '@ngrx/signals';
 import { setAllEntities } from '@ngrx/signals/entities';
+// import { getEntityStateKeys } from '@ngrx/signals/entities/src/helpers';
 import { NamedEntitySignals } from '@ngrx/signals/entities/src/models';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { SignalStoreFeatureResult } from '@ngrx/signals/src/signal-store-models';
@@ -264,13 +265,16 @@ export function withCollectionService<
   } = getCollectionServiceKeys(options);
 
   const { callStateKey } = getCallStateKeys({ collection: prefix });
+  // const { entityMapKey } = getEntityStateKeys({ collection: prefix });
 
   return signalStoreFeature(
-    withState(() => ({
-      [filterKey]: filter,
-      [selectedIdsKey]: {} as Record<EntityId, boolean>,
-      [currentKey]: undefined as E | undefined,
-    })),
+    withState(() => {
+      return {
+        [filterKey]: filter,
+        [selectedIdsKey]: {} as Record<EntityId, boolean>,
+        [currentKey]: undefined as E | undefined,
+      };
+    }),
     withComputed((store: Record<string, unknown>) => {
       const entities = store[entitiesKey] as Signal<E[]>;
       const selectedIds = store[selectedIdsKey] as Signal<Record<EntityId, boolean>>;
@@ -281,6 +285,11 @@ export function withCollectionService<
       };
     }),
     withMethods((store: Record<string, unknown> & StateSignal<object>) => {
+      if (!(entitiesKey in store)) {
+        throw new Error(
+          `'withCollectionService' can only be used together with 'withEntities' from "@ngrx/singals/entities" signal store feature.`
+        );
+      }
       const collection = new NgxRxdbCollection<Entity>(options.collectionConfig);
 
       return {
@@ -309,8 +318,8 @@ export function withCollectionService<
         },
         findAllDocs: rxMethod(
           pipe(
-            switchMap(query =>
-              collection.docs({}).pipe(
+            switchMap(query => {
+              return collection.docs(query).pipe(
                 tapResponse({
                   next: result => {
                     store[callStateKey] && patchState(store, setLoading(prefix));
@@ -325,8 +334,8 @@ export function withCollectionService<
                   finalize: () =>
                     store[callStateKey] && patchState(store, setLoaded(prefix)),
                 })
-              )
-            )
+              );
+            })
           )
         ),
         [findByIdKey]: async (id: EntityId): Promise<void> => {
