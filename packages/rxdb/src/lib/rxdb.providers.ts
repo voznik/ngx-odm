@@ -80,7 +80,7 @@ export function provideRxCollection(
   collectionConfig: RxCollectionCreatorExtended
 ): Provider[] {
   return [
-    { provide: RXDB_CONFIG_COLLECTION, useValue: collectionConfig, multi: true },
+    { provide: RXDB_CONFIG_COLLECTION, useValue: collectionConfig },
     {
       provide: NgxRxdbCollectionService,
       useFactory: collectionServiceFactory(collectionConfig),

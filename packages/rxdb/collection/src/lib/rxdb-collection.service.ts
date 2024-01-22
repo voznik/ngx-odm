@@ -8,10 +8,11 @@ import type {
   RxCollectionHooks,
   RxDbMetadata,
 } from '@ngx-odm/rxdb/config';
-import { NgxRxdbService } from '@ngx-odm/rxdb/core';
+import { NgxRxdbService, afterCreateRxCollection } from '@ngx-odm/rxdb/core';
 import { NgxRxdbUtils, isValidRxReplicationState } from '@ngx-odm/rxdb/utils';
 import type {
   MangoQuery,
+  RxCollectionCreator,
   RxDatabase,
   RxDatabaseCreator,
   RxDocument,
@@ -89,7 +90,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   }
 
   constructor(public readonly config: RxCollectionCreatorExtended) {
-    this.init(this.dbService, this.config);
+    this.init(config);
   }
 
   /**
@@ -446,11 +447,23 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   }
   /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-constraint */
 
-  private async init(dbService: NgxRxdbService, config: RxCollectionCreatorExtended) {
+  private async init(config: RxCollectionCreatorExtended) {
     const { name } = config;
     try {
-      const collectionsOfDatabase = await dbService.initCollections({ [name]: config });
-      this._collection = collectionsOfDatabase[name] as RxCollection<T>;
+      await this.dbService.initCollections({
+        [name]: config,
+      });
+      this._collection = this.db.collections[name] as RxCollection<T>;
+      // INFO: moved from plugin hooks here, see reason in plugin description
+      /* await afterCreateRxCollection({
+        collection: this._collection as RxCollection,
+        creator: this.config as RxCollectionCreator,
+      }).catch(e => {
+        NgxRxdbUtils.logger.log(
+          'afterCreateRxCollection hook error during collection init',
+          e
+        );
+      }); */
       this._init$.next(true);
       this._init$.complete();
     } catch (e) {

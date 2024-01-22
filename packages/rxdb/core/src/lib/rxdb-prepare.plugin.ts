@@ -194,8 +194,11 @@ export const beforePreCreateRxSchema = async (maybeSchema: RxJsonSchema<any> | a
 
 /**
  * Preload data into collection if provided
+ *
+ * INFO: exported for now to be used in collection service directly
+ * because this HOOK runs syncronously and thus there's no way to wait for collection to finish import to mark then the collection as "initialized"
  */
-const beforeCreateRxCollection = async ({
+export const afterCreateRxCollection = async ({
   collection: col,
   creator,
 }: {
@@ -239,6 +242,8 @@ const beforeCreateRxCollection = async ({
   } catch (error) {
     NgxRxdbUtils.logger.log('prepare-plugin: imported dump error', error);
   }
+
+  return;
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async function removeAllDocs() {
@@ -301,9 +306,7 @@ export const RxDBPreparePlugin: RxPlugin = {
       before: beforePreCreateRxSchema,
     },
     createRxCollection: {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore // INFO: there's no way to fix type inheritance & rxdb typings
-      before: beforeCreateRxCollection,
+      // after: afterCreateRxCollection as any, // FIXME: brakes tests
     },
   },
 };

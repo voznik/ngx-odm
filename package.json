@@ -79,6 +79,7 @@
     "@ngrx/signals": "^17.0.1",
     "@nrwl/angular": "17.2.7",
     "compare-versions": "^6.1.0",
+    "ngxtension": "^1.12.0",
     "normalize.css": "8.0.1",
     "reflect-metadata": "0.1.13",
     "rxdb": "^15.3.0",

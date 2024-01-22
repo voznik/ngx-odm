@@ -14,13 +14,13 @@ import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 import type { Merge, SetOptional, SetRequired } from 'type-fest';
 
-export interface RxCollectionCreatorOptions {
+export interface RxCollectionCreatorOptions<T = any> {
   schemaUrl?: string;
-  initialDocs?: any[];
+  initialDocs?: T[];
   /** @deprecated */
   recreate?: boolean;
   persistLocalToURL?: boolean;
-  replicationStateFactory?: (col: RxCollection) => RxReplicationState<any, any> | null;
+  replicationStateFactory?: (col: RxCollection<T>) => RxReplicationState<T, any> | null;
 }
 
 export type RxCollectionCreatorExtended<T = any> = Merge<
@@ -28,7 +28,7 @@ export type RxCollectionCreatorExtended<T = any> = Merge<
   {
     schema: RxJsonSchema<T>;
     name: string;
-    options?: RxCollectionCreatorOptions;
+    options?: RxCollectionCreatorOptions<T>;
   }
 >;
 
@@ -75,7 +75,7 @@ export const RXDB_CONFIG = new InjectionToken<RxDatabaseCreator>('RxDatabaseCrea
  * Instance of RxCollectionCreator
  */
 /* prettier-ignore */
-export const RXDB_CONFIG_COLLECTION = new InjectionToken<RxCollectionCreator>('RxCollectionCreator');
+export const RXDB_CONFIG_COLLECTION = new InjectionToken<RxCollectionCreatorExtended>('RxCollectionCreator');
 
 /**
  * Custom options object for {@link RxDatabaseCreator}

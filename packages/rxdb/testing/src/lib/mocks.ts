@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /// <reference types="jest" />
 
+import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService, loadRxDBPlugins } from '@ngx-odm/rxdb/core';
 import {
   RxCollectionCreator,
   RxDatabaseCreator,
   RxJsonSchema,
   createRxDatabase,
+  randomCouchString,
 } from 'rxdb';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 
@@ -47,6 +49,32 @@ export const TEST_SCHEMA: RxJsonSchema<TestDocType> = {
   primaryKey: 'id',
 };
 
+export const MOCK_DATA: TestDocType[] = [
+  {
+    id: '1',
+    title: 'Test 1',
+    completed: false,
+    createdAt: 1546300800000,
+  },
+  {
+    id: '2',
+    title: 'Test 2',
+    completed: true,
+    createdAt: 1546300800100,
+  },
+  {
+    id: '3',
+    title: 'Test 3',
+    completed: true,
+    createdAt: 1546300800100,
+  },
+];
+
+export const MOCK_DATA_MAP = MOCK_DATA.reduce((acc, cur) => {
+  acc[cur.id] = cur;
+  return acc;
+}, {});
+
 export const TEST_FEATURE_CONFIG_1: RxCollectionCreator & { name: string } = {
   name: 'test',
   schema: TEST_SCHEMA,
@@ -77,11 +105,20 @@ export const TEST_DB_CONFIG_2: RxDatabaseCreator = {
   },
 };
 
-export const getMockRxCollection = async () => {
+export const getMockRxCollection = async (
+  colConfig: RxCollectionCreatorExtended = TEST_FEATURE_CONFIG_1,
+  randomName = false
+) => {
   await loadRxDBPlugins();
-  const database = await createRxDatabase(TEST_DB_CONFIG_1);
+  const database = await createRxDatabase({
+    name: randomName ? randomCouchString(6) : 'test',
+    storage: getRxStorageMemory(),
+    multiInstance: false,
+    ignoreDuplicate: true,
+    localDocuments: true,
+  });
   const { test: collection } = await database.addCollections({
-    ['test']: TEST_FEATURE_CONFIG_1,
+    [colConfig.name]: colConfig,
   });
   Object.getOwnPropertyNames((collection as any).__proto__).forEach(key => {
     if (typeof collection[key] === 'function') {
@@ -92,8 +129,11 @@ export const getMockRxCollection = async () => {
   return collection;
 };
 
-export const getMockRxdbService = async () => {
-  const collection = await getMockRxCollection();
+export const getMockRxdbService = async (
+  colConfig: RxCollectionCreatorExtended = TEST_FEATURE_CONFIG_1,
+  randomName = false
+) => {
+  const collection = await getMockRxCollection(colConfig, randomName);
   const service = {
     db: null,
     collections: {},
@@ -109,7 +149,8 @@ export const getMockRxdbService = async () => {
     service.db = null;
   });
   jest.spyOn(service, 'initCollections').mockImplementation(() => {
-    service.collections['test'] = collection;
+    (service as any).db = collection.database;
+    service.collections[colConfig.name] = collection;
     return Promise.resolve(service.collections);
   });
   Object.setPrototypeOf(service, NgxRxdbService.prototype);

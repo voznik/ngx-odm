@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */ // FIXME: Remove this
-import { Signal, computed } from '@angular/core';
+import { Injector, Signal, computed, inject } from '@angular/core';
 import {
   getCallStateKeys,
   setError,
@@ -12,19 +12,26 @@ import {
   patchState,
   signalStoreFeature,
   withComputed,
+  withHooks,
   withMethods,
   withState,
 } from '@ngrx/signals';
 import { setAllEntities } from '@ngrx/signals/entities';
-// import { getEntityStateKeys } from '@ngrx/signals/entities/src/helpers';
 import { NamedEntitySignals } from '@ngrx/signals/entities/src/models';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { SignalStoreFeatureResult } from '@ngrx/signals/src/signal-store-models';
 import { StateSignal } from '@ngrx/signals/src/state-signal';
-import { DEFAULT_LOCAL_DOCUMENT_ID, NgxRxdbCollection } from '@ngx-odm/rxdb/collection';
-import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
+import {
+  DEFAULT_LOCAL_DOCUMENT_ID,
+  NgxRxdbCollection,
+  NgxRxdbCollectionService,
+} from '@ngx-odm/rxdb/collection';
+import { RXDB_CONFIG_COLLECTION, RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
+import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
+import { assertInjector } from 'ngxtension/assert-injector';
+import { computedAsync } from 'ngxtension/computed-async';
 import type { MangoQuerySelector } from 'rxdb';
-import { firstValueFrom, pipe, switchMap } from 'rxjs';
+import { Subscribable, pipe, switchMap, tap } from 'rxjs';
 
 type EntityId = string;
 type Entity = { id: EntityId };
@@ -42,7 +49,7 @@ function capitalize(str: string): string {
   return str ? str[0].toUpperCase() + str.substring(1) : str;
 }
 
-function getCollectionServiceKeys(options: { collection?: string }) {
+export function getCollectionServiceKeys(options: { collection?: string }) {
   const filterKey = options.collection ? `${options.collection}Filter` : 'filter';
   const selectedIdsKey = options.collection
     ? `selected${capitalize(options.collection)}Ids`
@@ -67,9 +74,6 @@ function getCollectionServiceKeys(options: { collection?: string }) {
   const currentKey = options.collection
     ? `current${capitalize(options.collection)}`
     : 'current';
-  const findByIdKey = options.collection
-    ? `find${capitalize(options.collection)}ById`
-    : 'findById';
   const setCurrentKey = options.collection
     ? `setCurrent${capitalize(options.collection)}`
     : 'setCurrent';
@@ -107,7 +111,6 @@ function getCollectionServiceKeys(options: { collection?: string }) {
     idsKey,
 
     currentKey,
-    findByIdKey,
     setCurrentKey,
     insertKey,
     updateKey,
@@ -127,12 +130,15 @@ export type NamedCollectionServiceState<
   [K in CName as `selected${Capitalize<K>}Ids`]: Record<EntityId, boolean>;
 } & {
   [K in CName as `current${Capitalize<K>}`]: E;
+} & {
+  [K in CName as `docs`]: E[];
 };
 
 export type CollectionServiceState<E extends Entity, F extends Filter> = {
   filter: F;
   selectedIds: Record<EntityId, boolean>;
   current: E;
+  docs: E[];
 };
 
 export type NamedCollectionServiceSignals<E extends Entity, CName extends string> = {
@@ -162,7 +168,7 @@ export type NamedCollectionServiceMethods<
 } & {
   [K in CName as `setCurrent${Capitalize<K>}`]: (entity: E) => void;
 } & {
-  ['findAllDocs']: (query?: Query<E>) => void;
+  ['findAllDocs']: (query?: Query<E>) => Subscribable<any>;
 } & {
   [K in CName as `find${Capitalize<K>}ById`]: (id: EntityId) => Promise<void>;
 } & {
@@ -185,8 +191,7 @@ export type CollectionServiceMethods<E extends Entity, F extends Filter> = {
   updateFilter: (filter: F) => void;
   updateSelected: (id: EntityId, selected: boolean) => void;
   setCurrent(entity: E): void;
-  findAllDocs: (query?: Query<E>) => void;
-  findById(id: EntityId): Promise<void>;
+  findAllDocs: (query?: Query<E>) => Subscribable<any>;
   insert(entity: E): Promise<void>;
   update(entity: E): Promise<void>;
   updateAllBy(query: Query<E>, data: Partial<E>): Promise<void>;
@@ -198,11 +203,10 @@ export function withCollectionService<
   E extends Entity,
   F extends Filter,
   CName extends string,
-  Config extends RxCollectionCreatorExtended,
 >(options: {
-  filter: F;
   collection: CName;
-  collectionConfig: Config;
+  filter: F;
+  query?: Query<E>;
 }): SignalStoreFeature<
   {
     state: Record<string, never>;
@@ -219,13 +223,9 @@ export function withCollectionService<
     methods: NamedCollectionServiceMethods<E, F, CName>;
   }
 >;
-export function withCollectionService<
-  E extends Entity,
-  F extends Filter,
-  Config extends RxCollectionCreatorExtended,
->(options: {
+export function withCollectionService<E extends Entity, F extends Filter>(options: {
   filter: F;
-  collectionConfig: Config;
+  query?: Query<E>;
 }): SignalStoreFeature<
   SignalStoreFeatureResult,
   {
@@ -238,13 +238,15 @@ export function withCollectionService<
   E extends Entity,
   F extends Filter,
   CName extends string,
-  Config extends RxCollectionCreatorExtended,
 >(options: {
   collection?: CName;
   filter?: F;
-  collectionConfig: Config;
+  query?: Query<E>;
 }): SignalStoreFeature<any, any> {
-  const { collection: prefix, filter } = options;
+  let colService: NgxRxdbCollection<E>;
+  let colConfig: RxCollectionCreatorExtended<E>;
+
+  const { collection: prefix, filter, query } = options;
   const {
     entitiesKey,
     filterKey,
@@ -260,12 +262,26 @@ export function withCollectionService<
     updateAllByKey,
     removeKey,
     removeAllByKey,
-    findByIdKey,
     setCurrentKey,
   } = getCollectionServiceKeys(options);
 
   const { callStateKey } = getCallStateKeys({ collection: prefix });
-  // const { entityMapKey } = getEntityStateKeys({ collection: prefix });
+
+  const ensureWithEntities = (store: Record<string, unknown> & StateSignal<object>) => {
+    if (!(entitiesKey in store)) {
+      throw new Error(
+        `'withCollectionService' can only be used together with 'withEntities' from "@ngrx/singals/entities" signal store feature.`
+      );
+    }
+  };
+
+  const ensureCollection = () => {
+    if (colService) return;
+    // const injector = assertInjector(signalStoreFeature, undefined);
+    const injector = inject(Injector);
+    colService = injector.get(NgxRxdbCollectionService) as NgxRxdbCollection<any>;
+    colConfig = injector.get(RXDB_CONFIG_COLLECTION);
+  };
 
   return signalStoreFeature(
     withState(() => {
@@ -276,35 +292,44 @@ export function withCollectionService<
       };
     }),
     withComputed((store: Record<string, unknown>) => {
+      ensureWithEntities(store as any);
+      ensureCollection();
       const entities = store[entitiesKey] as Signal<E[]>;
       const selectedIds = store[selectedIdsKey] as Signal<Record<EntityId, boolean>>;
 
       return {
+        // TODO: decide if direct connection is needed
+        ['docs']: computedAsync(
+          () => {
+            const query: Query<E> = { selector: {} };
+            return colService.docs(query).pipe(
+              tap(docs => {
+                NgxRxdbUtils.logger.log('docs', docs);
+              })
+            );
+          },
+          { initialValue: [] }
+        ),
         [selectedEntitiesKey]: computed(() => entities().filter(e => selectedIds()[e.id])),
         ['count']: computed(() => entities().length),
       };
     }),
     withMethods((store: Record<string, unknown> & StateSignal<object>) => {
-      if (!(entitiesKey in store)) {
-        throw new Error(
-          `'withCollectionService' can only be used together with 'withEntities' from "@ngrx/singals/entities" signal store feature.`
-        );
-      }
-      const collection = new NgxRxdbCollection<Entity>(options.collectionConfig);
-
+      ensureWithEntities(store);
+      ensureCollection();
       return {
         [restoreFilterKey]: async (): Promise<void> => {
-          if (options.collectionConfig.options?.persistLocalToURL) {
-            await collection.restoreLocalFromURL(DEFAULT_LOCAL_DOCUMENT_ID);
+          if (colConfig?.options?.persistLocalToURL) {
+            await colService.restoreLocalFromURL(DEFAULT_LOCAL_DOCUMENT_ID);
           }
-          const local = await collection.getLocal(DEFAULT_LOCAL_DOCUMENT_ID);
+          const local = await colService.getLocal(DEFAULT_LOCAL_DOCUMENT_ID);
           patchState(store, { [filterKey]: local[filterKey] });
         },
         [updateFilterKey]: async (filter: F): Promise<void> => {
           if (typeof filter === 'string') {
-            await collection.setLocal(DEFAULT_LOCAL_DOCUMENT_ID, 'filter', filter);
+            await colService.setLocal(DEFAULT_LOCAL_DOCUMENT_ID, 'filter', filter);
           } else {
-            await collection.upsertLocal(DEFAULT_LOCAL_DOCUMENT_ID, filter);
+            await colService.upsertLocal(DEFAULT_LOCAL_DOCUMENT_ID, filter);
           }
           patchState(store, { [filterKey]: filter });
         },
@@ -319,7 +344,7 @@ export function withCollectionService<
         findAllDocs: rxMethod(
           pipe(
             switchMap(query => {
-              return collection.docs(query).pipe(
+              return colService.docs(query).pipe(
                 tapResponse({
                   next: result => {
                     store[callStateKey] && patchState(store, setLoading(prefix));
@@ -330,7 +355,7 @@ export function withCollectionService<
                         : setAllEntities(result)
                     );
                   },
-                  error: console.error,
+                  error: NgxRxdbUtils.logger.log,
                   finalize: () =>
                     store[callStateKey] && patchState(store, setLoaded(prefix)),
                 })
@@ -338,27 +363,14 @@ export function withCollectionService<
             })
           )
         ),
-        [findByIdKey]: async (id: EntityId): Promise<void> => {
-          store[callStateKey] && patchState(store, setLoading(prefix));
-
-          try {
-            const current = await firstValueFrom(collection.get(id));
-            store[callStateKey] && patchState(store, setLoaded(prefix));
-            patchState(store, { [currentKey]: current });
-          } catch (e) {
-            store[callStateKey] && patchState(store, setError(e, prefix));
-            throw e;
-          }
-        },
         [setCurrentKey]: (current: E): void => {
           patchState(store, { [currentKey]: current });
         },
         [insertKey]: async (entity: E): Promise<void> => {
-          // patchState(store, { [currentKey]: entity });
           store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
-            const insertd = (await collection.insert(entity)).toJSON();
+            await colService.insert(entity);
             // INFO: here we don't need to update entity store because
             // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
             store[callStateKey] && patchState(store, setLoaded(prefix));
@@ -372,7 +384,7 @@ export function withCollectionService<
           store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
-            const updated = (await collection.upsert(entity))?.toJSON();
+            await colService.upsert(entity);
             // INFO: here we don't need to update entity store because
             // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
             store[callStateKey] && patchState(store, setLoaded(prefix));
@@ -386,7 +398,7 @@ export function withCollectionService<
           store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
-            const result = await collection.updateBulk(query, data);
+            const result = await colService.updateBulk(query, data);
             // INFO: here we don't need to update entity store because
             // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
             store[callStateKey] && patchState(store, setLoaded(prefix));
@@ -399,7 +411,7 @@ export function withCollectionService<
           store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
-            await collection.remove(entity);
+            await colService.remove(entity);
             // INFO: here we don't need to update entity store because
             // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
             store[callStateKey] && patchState(store, setLoaded(prefix));
@@ -412,7 +424,7 @@ export function withCollectionService<
           store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
-            const { success, error } = await collection.removeBulk(query);
+            const { success, error } = await colService.removeBulk(query);
             // INFO: here we don't need to update entity store because
             // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
             store[callStateKey] && patchState(store, setLoaded(prefix));
@@ -422,6 +434,20 @@ export function withCollectionService<
           }
         },
       };
+    }),
+    withHooks({
+      /**
+       * Populate signals/entities with values
+       * @param store
+       */
+      onInit: async store => {
+        // TODO: now just for example that colService can be used onInit
+        // const local = await colService.getLocal(DEFAULT_LOCAL_DOCUMENT_ID);
+        store.findAllDocs(options.query);
+      },
+      onDestroy: () => {
+        colService.destroy();
+      },
     })
   );
 }

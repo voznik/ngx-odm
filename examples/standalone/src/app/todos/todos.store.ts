@@ -10,11 +10,8 @@ import {
   withState,
 } from '@ngrx/signals';
 import { withEntities } from '@ngrx/signals/entities';
-import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { withCollectionService } from '@ngx-odm/rxdb/signals';
-import { MangoQuery } from 'rxdb';
 import { v4 as uuid } from 'uuid';
-import { TodosCollectionConfig } from './todos.config';
 import { Todo, TodosFilter } from './todos.model';
 
 export const TodoStore = signalStore(
@@ -25,23 +22,22 @@ export const TodoStore = signalStore(
   }),
   withEntities<Todo>(),
   // INFO: an instance of RxCollection will be provided by this
-  withCollectionService<Todo, TodosFilter, RxCollectionCreatorExtended>({
+  withCollectionService<Todo, TodosFilter>({
     filter: 'ALL' as TodosFilter,
-    collectionConfig: TodosCollectionConfig,
   }),
   // INFO: Function calls in a template
   // Over the years, Angular developers have learned to avoid calling functions inside templates because a function re-runs every change detection and used pure pipes instead. This would cause expensive computations to run multiple times unnecessarily if the passed arguments did not change.
   // In a signal-based component, this idea no longer applies because the expressions will only re-evaluate as a result of a signal dependency change.
   // With signals, we no longer have to care about handling subscriptions. It is absolutely fine to call a signal function in the template since only the part that depends on that signal will be updated.
-  withComputed(({ count, entities, entityMap, newTodo, filter }) => {
+  withComputed(({ count, entities, docs, newTodo, filter }) => {
     return {
       isAddTodoDisabled: computed(() => newTodo().length < 4),
       filtered: computed(() => {
+        const filterValue = filter();
+        if (filterValue === 'ALL') {
+          return entities();
+        }
         return entities().filter(todo => {
-          const filterValue = filter();
-          if (filterValue === 'ALL') {
-            return todo;
-          }
           return todo.completed === (filterValue === 'COMPLETED');
         });
       }),
@@ -124,10 +120,8 @@ export const TodoStore = signalStore(
   }),
   withHooks({
     /** On init update filter from URL and fetch documents from RxDb */
-    onInit: ({ findAllDocs, filter, restoreFilter }) => {
-      const query: MangoQuery<Todo> = { selector: {}, sort: [{ createdAt: 'desc' }] };
+    onInit: ({ restoreFilter }) => {
       restoreFilter();
-      findAllDocs(query);
     },
   })
 );
