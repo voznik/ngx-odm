@@ -198,7 +198,7 @@ export const beforePreCreateRxSchema = async (maybeSchema: RxJsonSchema<any> | a
  * INFO: exported for now to be used in collection service directly
  * because this HOOK runs syncronously and thus there's no way to wait for collection to finish import to mark then the collection as "initialized"
  */
-export const afterCreateRxCollection = async ({
+const afterCreateRxCollection = async ({
   collection: col,
   creator,
 }: {
@@ -306,7 +306,7 @@ export const RxDBPreparePlugin: RxPlugin = {
       before: beforePreCreateRxSchema,
     },
     createRxCollection: {
-      // after: afterCreateRxCollection as any, // FIXME: brakes tests
+      after: afterCreateRxCollection as any, // FIXME: brakes tests
     },
   },
 };

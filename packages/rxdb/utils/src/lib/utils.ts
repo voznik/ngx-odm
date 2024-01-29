@@ -451,11 +451,3 @@ export function isValidRxReplicationState<T>(
 ): obj is RxReplicationState<T, unknown> {
   return obj && obj instanceof RxReplicationState;
 }
-
-/**
- * Function to sync local RxDB document property when URL query segment changes
- * @param document
- * @param queryParam
- * @param queryParamValue
- * @param property
- */

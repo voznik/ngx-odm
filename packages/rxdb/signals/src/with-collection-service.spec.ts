@@ -27,14 +27,6 @@ import {
   withCollectionService,
 } from './with-collection-service';
 
-const testCollectionConfig: RxCollectionCreatorExtended<TestDocType> = {
-  ...TEST_FEATURE_CONFIG_1,
-  options: {
-    ...TEST_FEATURE_CONFIG_1.options,
-    initialDocs: NgxRxdbUtils.clone(MOCK_DATA),
-  },
-};
-
 describe('withCollectionService', () => {
   describe('incorrect usage', () => {
     const TestStore = signalStore(
@@ -100,7 +92,7 @@ describe('withCollectionService', () => {
 
     beforeEach(async () => {
       const randomName = true;
-      dbService = await getMockRxdbService(testCollectionConfig, randomName);
+      dbService = await getMockRxdbService(TEST_FEATURE_CONFIG_1, randomName);
       const TestStore = signalStore(
         withEntities<TestDocType>(),
         withCollectionService({
@@ -112,7 +104,7 @@ describe('withCollectionService', () => {
         providers: [
           //
           { provide: NgxRxdbService, useValue: dbService },
-          provideRxCollection(testCollectionConfig),
+          provideRxCollection(TEST_FEATURE_CONFIG_1),
           TestStore,
         ],
         teardown: {
@@ -132,14 +124,14 @@ describe('withCollectionService', () => {
       expect(store).toBeDefined();
       expect(store[entitiesKey]).toBeDefined();
       expect(store.filter).toBeDefined();
-      expect(store.findAllDocs).toBeInstanceOf(Function);
+      expect(store.count).toBeInstanceOf(Function);
     });
-    it('should handle method "findAllDocs" without query', async () => {
+    it('should init subscription to docs when store inited', async () => {
       await ensureCollectionFind();
       const entities = store.entities();
       expect(entities).toEqual(MOCK_DATA);
     });
-    xit('should handle method "findAllDocs" with query', async () => {
+    xit('should init subscription to docs when store inited with custom query', async () => {
       const query: MangoQuery<TestDocType> = {
         selector: {
           title: { $regex: MOCK_DATA[0].title },

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */ // FIXME: Remove this
 import { Injector, Signal, computed, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   getCallStateKeys,
   setError,
@@ -18,20 +19,18 @@ import {
 } from '@ngrx/signals';
 import { setAllEntities } from '@ngrx/signals/entities';
 import { NamedEntitySignals } from '@ngrx/signals/entities/src/models';
-import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { SignalStoreFeatureResult } from '@ngrx/signals/src/signal-store-models';
 import { StateSignal } from '@ngrx/signals/src/state-signal';
+import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
 import {
   DEFAULT_LOCAL_DOCUMENT_ID,
-  NgxRxdbCollection,
-  NgxRxdbCollectionService,
-} from '@ngx-odm/rxdb/collection';
-import { RXDB_CONFIG_COLLECTION, RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
+  RXDB_CONFIG_COLLECTION,
+  RxCollectionCreatorExtended,
+} from '@ngx-odm/rxdb/config';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import { assertInjector } from 'ngxtension/assert-injector';
 import { computedAsync } from 'ngxtension/computed-async';
-import type { MangoQuerySelector } from 'rxdb';
-import { Subscribable, pipe, switchMap, tap } from 'rxjs';
+import type { MangoQuery, MangoQuerySelector } from 'rxdb';
+import { Subscribable, iif, map, of, switchMap, tap } from 'rxjs';
 
 type EntityId = string;
 type Entity = { id: EntityId };
@@ -43,6 +42,11 @@ export type Query<T = Entity> = {
    * that are not _removed=true.
    */
   selector?: MangoQuerySelector<T>;
+};
+type FindQuery<E = Entity> = MangoQuery<E>;
+type LocalDocument = {
+  filter: Filter;
+  query: string;
 };
 
 function capitalize(str: string): string {
@@ -206,7 +210,7 @@ export function withCollectionService<
 >(options: {
   collection: CName;
   filter: F;
-  query?: Query<E>;
+  query?: 'local' | FindQuery<E>;
 }): SignalStoreFeature<
   {
     state: Record<string, never>;
@@ -225,7 +229,7 @@ export function withCollectionService<
 >;
 export function withCollectionService<E extends Entity, F extends Filter>(options: {
   filter: F;
-  query?: Query<E>;
+  query?: 'local' | FindQuery<E>;
 }): SignalStoreFeature<
   SignalStoreFeatureResult,
   {
@@ -241,12 +245,12 @@ export function withCollectionService<
 >(options: {
   collection?: CName;
   filter?: F;
-  query?: Query<E>;
+  query?: 'local' | FindQuery<E>;
 }): SignalStoreFeature<any, any> {
   let colService: NgxRxdbCollection<E>;
   let colConfig: RxCollectionCreatorExtended<E>;
 
-  const { collection: prefix, filter, query } = options;
+  const { collection: prefix, filter } = options;
   const {
     entitiesKey,
     filterKey,
@@ -320,18 +324,26 @@ export function withCollectionService<
       return {
         [restoreFilterKey]: async (): Promise<void> => {
           if (colConfig?.options?.persistLocalToURL) {
-            await colService.restoreLocalFromURL(DEFAULT_LOCAL_DOCUMENT_ID);
+            // await colService.restoreLocalFromURL(DEFAULT_LOCAL_DOCUMENT_ID);
           }
           const local = await colService.getLocal(DEFAULT_LOCAL_DOCUMENT_ID);
-          patchState(store, { [filterKey]: local[filterKey] });
+          if (local) {
+            patchState(store, { [filterKey]: local[filterKey] });
+          }
         },
         [updateFilterKey]: async (filter: F): Promise<void> => {
+          store[callStateKey] && patchState(store, setLoading(prefix));
           if (typeof filter === 'string') {
-            await colService.setLocal(DEFAULT_LOCAL_DOCUMENT_ID, 'filter', filter);
+            await colService.setLocal<LocalDocument>(
+              DEFAULT_LOCAL_DOCUMENT_ID,
+              'filter',
+              filter
+            );
           } else {
             await colService.upsertLocal(DEFAULT_LOCAL_DOCUMENT_ID, filter);
           }
           patchState(store, { [filterKey]: filter });
+          store[callStateKey] && patchState(store, setLoaded(prefix));
         },
         [updateSelectedKey]: (id: EntityId, selected: boolean): void => {
           patchState(store, (state: Record<string, unknown>) => ({
@@ -341,28 +353,6 @@ export function withCollectionService<
             },
           }));
         },
-        findAllDocs: rxMethod(
-          pipe(
-            switchMap(query => {
-              return colService.docs(query).pipe(
-                tapResponse({
-                  next: result => {
-                    store[callStateKey] && patchState(store, setLoading(prefix));
-                    return patchState(
-                      store,
-                      prefix
-                        ? setAllEntities(result, { collection: prefix })
-                        : setAllEntities(result)
-                    );
-                  },
-                  error: NgxRxdbUtils.logger.log,
-                  finalize: () =>
-                    store[callStateKey] && patchState(store, setLoaded(prefix)),
-                })
-              );
-            })
-          )
-        ),
         [setCurrentKey]: (current: E): void => {
           patchState(store, { [currentKey]: current });
         },
@@ -441,9 +431,42 @@ export function withCollectionService<
        * @param store
        */
       onInit: async store => {
-        // TODO: now just for example that colService can be used onInit
-        // const local = await colService.getLocal(DEFAULT_LOCAL_DOCUMENT_ID);
-        store.findAllDocs(options.query);
+        iif(
+          () => options?.query === 'local',
+          colService.getLocal$<LocalDocument>(DEFAULT_LOCAL_DOCUMENT_ID).pipe(
+            map((data: any) => {
+              const { filter, selector, sort, limit, skip } = data;
+              return { selector, sort, limit, skip } as any; // FindQuery<E>;
+            })
+          ),
+          of(options?.query)
+        )
+          .pipe(
+            switchMap((query: FindQuery<E> | undefined) => {
+              store[callStateKey] && patchState(store, setLoading(prefix));
+              return colService.docs(query).pipe(
+                tapResponse({
+                  next: result => {
+                    store[callStateKey] && patchState(store, setLoaded(prefix));
+                    return patchState(
+                      store,
+                      prefix
+                        ? setAllEntities(result, { collection: prefix })
+                        : setAllEntities(result)
+                    );
+                  },
+                  error: e => {
+                    NgxRxdbUtils.logger.log(e);
+                    store[callStateKey] && patchState(store, setError(e, prefix));
+                  },
+                  finalize: () =>
+                    store[callStateKey] && patchState(store, setLoaded(prefix)),
+                })
+              );
+            })
+            // takeUntilDestroyed()
+          )
+          .subscribe();
       },
       onDestroy: () => {
         colService.destroy();

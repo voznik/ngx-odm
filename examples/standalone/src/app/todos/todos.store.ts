@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { computed } from '@angular/core';
-import { withDevtools } from '@angular-architects/ngrx-toolkit';
+import { withCallState, withDevtools } from '@angular-architects/ngrx-toolkit';
 import {
   patchState,
   signalStore,
@@ -21,9 +21,11 @@ export const TodoStore = signalStore(
     newTodo: '',
   }),
   withEntities<Todo>(),
+  withCallState(),
   // INFO: an instance of RxCollection will be provided by this
   withCollectionService<Todo, TodosFilter>({
     filter: 'ALL' as TodosFilter,
+    query: 'local',
   }),
   // INFO: Function calls in a template
   // Over the years, Angular developers have learned to avoid calling functions inside templates because a function re-runs every change detection and used pure pipes instead. This would cause expensive computations to run multiple times unnecessarily if the passed arguments did not change.
@@ -121,7 +123,7 @@ export const TodoStore = signalStore(
   withHooks({
     /** On init update filter from URL and fetch documents from RxDb */
     onInit: ({ restoreFilter }) => {
-      restoreFilter();
+      // restoreFilter();
     },
   })
 );

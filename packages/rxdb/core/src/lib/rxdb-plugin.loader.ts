@@ -8,6 +8,7 @@ import { RxDBLocalDocumentsPlugin } from 'rxdb/plugins/local-documents';
 import { RxDBMigrationPlugin } from 'rxdb/plugins/migration-schema';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { RxDBPreparePlugin } from './rxdb-prepare.plugin';
+import { RxDBPUseQueryParamsPlugin } from './use-query-params.plugin';
 
 /**
  * Loads all the necessary RxDB plugins for the application to work.
@@ -23,6 +24,7 @@ export async function loadRxDBPlugins(): Promise<void> {
     addRxPlugin(RxDBMigrationPlugin);
     addRxPlugin(RxDBUpdatePlugin);
     addRxPlugin(RxDBPreparePlugin);
+    addRxPlugin(RxDBPUseQueryParamsPlugin);
     addRxPlugin(RxDBCleanupPlugin);
 
     /** * to reduce the build-size, we use some plugins in dev-mode only */

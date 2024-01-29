@@ -41,6 +41,10 @@ export type RxCollectionExtended<T = any> = Merge<
     defaultPreparedQuery: PreparedQuery<any>;
     /** Get DB metadata */
     getMetadata: () => Promise<RxDbMetadata>;
+    /** Get persisted query params from local document */
+    queryParams: (updateLocationFn?: (queryParams: any) => Promise<any>) => Promise<any>;
+    // queryParamsGet: (path?: keyof LocalDocument) => any;
+    // queryParamsSet: (path: keyof LocalDocument, value: any) => Promise<void>;
   }
 >;
 
@@ -123,3 +127,5 @@ export function getRxDatabaseCreator(config: NgxRxdbConfig): RxDatabaseCreator {
 }
 
 export const DEFAULT_BACKOFF_FN = (delay: number) => (delay === 0 ? 2000 : delay * 3);
+
+export const DEFAULT_LOCAL_DOCUMENT_ID = 'local';
