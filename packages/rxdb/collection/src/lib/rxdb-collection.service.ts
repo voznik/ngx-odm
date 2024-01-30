@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { InjectionToken, NgZone, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { CURRENT_URL } from '@ngx-odm/rxdb';
 import type {
   RxCollectionExtended as RxCollection,
   RxCollectionCreatorExtended,
@@ -20,9 +21,11 @@ import {
   type RxLocalDocument,
   type RxStorageWriteError,
   type RxCollection as _RxCollection,
+  FilledMangoQuery,
 } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import {
+  EMPTY,
   Observable,
   ReplaySubject,
   distinctUntilChanged,
@@ -62,10 +65,12 @@ export function collectionServiceFactory(config: RxCollectionCreatorExtended) {
 export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   protected readonly dbService: NgxRxdbService = inject(NgxRxdbService);
   protected readonly ngZone: NgZone = inject(NgZone);
+  protected readonly currentUrl$ = inject(CURRENT_URL);
   protected readonly router: Router = inject(Router);
   private _collection!: RxCollection<T>;
   private _replicationState: RxReplicationState<T, unknown> | null = null;
   private _init$ = new ReplaySubject<boolean>();
+  private _queryParams$: Observable<unknown> = EMPTY;
 
   get initialized$(): Observable<boolean> {
     return this._init$.asObservable();
@@ -85,6 +90,10 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
 
   get replicationState(): RxReplicationState<T, unknown> | null {
     return this._replicationState;
+  }
+
+  get queryParams$(): Observable<FilledMangoQuery<T>> {
+    return this._queryParams$ as Observable<FilledMangoQuery<T>>;
   }
 
   constructor(public readonly config: RxCollectionCreatorExtended) {
@@ -439,31 +448,6 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     const doc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
     await doc?.remove();
   }
-
-  /* async persistLocalToURL(doc: RxLocalDocument<any> | null): Promise<void> {
-    if (!doc?.isLocal || !this.config.options?.persistLocalToURL) {
-      return;
-    }
-    const { data } = doc.toJSON();
-    await this.router.navigate([], {
-      queryParams: NgxRxdbUtils.compactObject(data),
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
-    NgxRxdbUtils.logger.log('persistLocalToURL', data, this.router.url);
-  }
-
-  async restoreLocalFromURL(id: string): Promise<void> {
-    if (!this.config.options?.persistLocalToURL) {
-      return;
-    }
-    const data = this.router.parseUrl(this.router.url).queryParams;
-    if (!data) {
-      return;
-    }
-    NgxRxdbUtils.logger.log('restoreLocalToURL', data);
-    await this.upsertLocal(id, data);
-  } */
   /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-constraint */
 
   private async init(config: RxCollectionCreatorExtended) {
@@ -473,9 +457,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
         [name]: config,
       });
       this._collection = this.db.collections[name] as RxCollection<T>;
-      this._init$.next(true);
-      this._init$.complete();
-      if (config.options?.persistLocalToURL) {
+      if (config.options?.useQueryParams) {
         const updateLocationFn = (queryParams: Record<string, unknown>) => {
           return this.router.navigate([], {
             queryParams,
@@ -483,8 +465,13 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
             replaceUrl: true,
           });
         };
-        await this.collection.queryParams(updateLocationFn);
+        this._queryParams$ = this.collection.useQueryParams(
+          this.currentUrl$,
+          updateLocationFn
+        ).$;
       }
+      this._init$.next(true);
+      this._init$.complete();
     } catch (e) {
       // @see rx-database-internal-store.ts:isDatabaseStateVersionCompatibleWithDatabaseCode
       // @see test/unit/data-migration.test.ts#L16

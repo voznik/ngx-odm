@@ -280,8 +280,7 @@ export function withCollectionService<
   };
 
   const ensureCollection = () => {
-    if (colService) return;
-    // const injector = assertInjector(signalStoreFeature, undefined);
+    if (colService instanceof NgxRxdbCollection) return;
     const injector = inject(Injector);
     colService = injector.get(NgxRxdbCollectionService) as NgxRxdbCollection<any>;
     colConfig = injector.get(RXDB_CONFIG_COLLECTION);
@@ -323,7 +322,7 @@ export function withCollectionService<
       ensureCollection();
       return {
         [restoreFilterKey]: async (): Promise<void> => {
-          if (colConfig?.options?.persistLocalToURL) {
+          if (colConfig?.options?.useQueryParams) {
             // await colService.restoreLocalFromURL(DEFAULT_LOCAL_DOCUMENT_ID);
           }
           const local = await colService.getLocal(DEFAULT_LOCAL_DOCUMENT_ID);
@@ -433,16 +432,12 @@ export function withCollectionService<
       onInit: async store => {
         iif(
           () => options?.query === 'local',
-          colService.getLocal$<LocalDocument>(DEFAULT_LOCAL_DOCUMENT_ID).pipe(
-            map((data: any) => {
-              const { filter, selector, sort, limit, skip } = data;
-              return { selector, sort, limit, skip } as any; // FindQuery<E>;
-            })
-          ),
-          of(options?.query)
+          colService.initialized$.pipe(switchMap(() => colService.queryParams$)),
+          of(options?.query as any)
         )
           .pipe(
             switchMap((query: FindQuery<E> | undefined) => {
+              NgxRxdbUtils.logger.log('withCollectionService:onInit:docs:query', query);
               store[callStateKey] && patchState(store, setLoading(prefix));
               return colService.docs(query).pipe(
                 tapResponse({

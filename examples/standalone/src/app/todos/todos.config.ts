@@ -14,7 +14,7 @@ export const TodosCollectionConfig: RxCollectionCreatorExtended = {
   options: {
     schemaUrl: 'assets/data/todo.schema.json', // load schema from remote url
     initialDocs: TODOS_INITIAL_STATE.items, // populate collection with initial data,
-    persistLocalToURL: true,
+    useQueryParams: true,
     replicationStateFactory: collection => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let replicationState: RxReplicationState<Todo, any> | null = null;

@@ -12,6 +12,7 @@ import type {
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
+import { Observable } from 'rxjs';
 import type { Merge, SetOptional, SetRequired } from 'type-fest';
 
 export interface RxCollectionCreatorOptions<T = any> {
@@ -19,7 +20,7 @@ export interface RxCollectionCreatorOptions<T = any> {
   initialDocs?: T[];
   /** @deprecated */
   recreate?: boolean;
-  persistLocalToURL?: boolean;
+  useQueryParams?: boolean;
   replicationStateFactory?: (col: RxCollection<T>) => RxReplicationState<T, any> | null;
 }
 
@@ -42,7 +43,12 @@ export type RxCollectionExtended<T = any> = Merge<
     /** Get DB metadata */
     getMetadata: () => Promise<RxDbMetadata>;
     /** Get persisted query params from local document */
-    queryParams: (updateLocationFn?: (queryParams: any) => Promise<any>) => Promise<any>;
+    useQueryParams: (
+      currentUrl$: Observable<string>,
+      updateLocationFn?: (queryParams: any) => Promise<any>
+    ) => {
+      $: Observable<FilledMangoQuery<any>>;
+    };
     // queryParamsGet: (path?: keyof LocalDocument) => any;
     // queryParamsSet: (path: keyof LocalDocument, value: any) => Promise<void>;
   }
@@ -89,6 +95,7 @@ interface NgxRxdbConfigOptions {
   storageType: 'dexie' | 'memory';
   storageOptions?: {};
   dumpPath?: string;
+  useQueryParams?: boolean;
 }
 
 type RxDatabaseCreatorPartialStorage = SetOptional<RxDatabaseCreator, 'storage'>;
