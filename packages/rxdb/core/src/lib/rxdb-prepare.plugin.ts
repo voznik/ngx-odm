@@ -25,6 +25,8 @@ import { getAllCollectionDocuments, isRxDatabaseFirstTimeInstantiated } from 'rx
 // TODO: use when stable
 // import { AfterMigrateBatchHandlerInput, migrateStorage, } from 'rxdb/plugins/migration-storage';
 
+const { logger, getDefaultPreparedQuery } = NgxRxdbUtils;
+
 const RXDB_STORAGE_TOKEN_ID = 'storage-token|storageToken';
 
 export const fetchSchema = async (
@@ -140,7 +142,7 @@ const migrateStorageVersion = async (
           rxdbVersion,
         },
       });
-      NgxRxdbUtils.logger.log('prepare-plugin: migrated internal storage to', rxdbVersion);
+      logger.log('prepare-plugin: migrated internal storage to', rxdbVersion);
     } catch (error) {
       throw new Error('prepare-plugin: unable to migrate internal storage');
     }
@@ -160,7 +162,7 @@ const afterCreateRxDatabase = async ({
   creator: RxDatabaseCreator<any, any>;
 }) => {
   const isFirstTimeInstantiated = await isRxDatabaseFirstTimeInstantiated(db);
-  NgxRxdbUtils.logger.log('prepare-plugin: hook:createRxDatabase:after');
+  logger.log('prepare-plugin: hook:createRxDatabase:after');
 
   const { storage, internalStore: storageInstance, rxdbVersion } = db;
   await migrateStorageVersion(storage, storageInstance, rxdbVersion); // TODO: remove or improve this hack
@@ -172,9 +174,9 @@ const afterCreateRxDatabase = async ({
   try {
     const dump = await prepareDbDump(creator.options.dumpPath, db.collections);
     await db.importJSON(dump);
-    NgxRxdbUtils.logger.log(`prepare-plugin: imported dump for db "${db.name}"`);
+    logger.log(`prepare-plugin: imported dump for db "${db.name}"`);
   } catch (error) {
-    NgxRxdbUtils.logger.log('prepare-plugin: imported dump error', error);
+    logger.log('prepare-plugin: imported dump error', error);
   }
 };
 
@@ -205,9 +207,9 @@ const afterCreateRxCollection = async ({
   collection: RxCollection;
   creator: RxCollectionCreator;
 }) => {
-  NgxRxdbUtils.logger.log('prepare-plugin: hook:createRxCollection:before');
+  logger.log('prepare-plugin: hook:createRxCollection:before');
   const meta = await col.getMetadata();
-  NgxRxdbUtils.logger.log('prepare-plugin: hook:createRxCollection:before', meta);
+  logger.log('prepare-plugin: hook:createRxCollection:before', meta);
   const initialDocs = creator.options?.initialDocs || [];
   const initialCount = await countDocs();
   if (!initialDocs.length) {
@@ -217,7 +219,7 @@ const afterCreateRxCollection = async ({
     if (!creator.options?.recreate || creator.options?.replication) {
       return;
     } else {
-      NgxRxdbUtils.logger.log(
+      logger.log(
         `prepare-plugin: collection "${col.name}" already has ${initialCount} docs (including _deleted), but recreate option is set`
       );
       // await removeAllDocs(); // TODO:
@@ -235,12 +237,12 @@ const afterCreateRxCollection = async ({
       error: any[];
     };
     const count = await countDocs();
-    NgxRxdbUtils.logger.log(
+    logger.log(
       `prepare-plugin: imported ${success.length} docs for collection "${col.name}", errors count ${error.length}, current docs count ${count}`
     );
-    NgxRxdbUtils.logger.table(success);
+    logger.table(success);
   } catch (error) {
-    NgxRxdbUtils.logger.log('prepare-plugin: imported dump error', error);
+    logger.log('prepare-plugin: imported dump error', error);
   }
 
   return;
@@ -253,7 +255,7 @@ const afterCreateRxCollection = async ({
 
   async function countDocs() {
     const { count } = await col.storageInstance
-      .count(col.defaultPreparedQuery)
+      .count(getDefaultPreparedQuery())
       .catch(() => ({ count: 0 }));
     return count;
   }
@@ -289,12 +291,8 @@ export const RxDBPreparePlugin: RxPlugin = {
           isFirstTimeInstantiated,
         };
       };
-      const defaultQuery = NgxRxdbUtils.getDefaultQuery();
-      const defaultPreparedQuery = NgxRxdbUtils.getDefaultPreparedQuery();
       Object.assign(proto, {
         getMetadata,
-        defaultQuery,
-        defaultPreparedQuery,
       });
     },
   },

@@ -3,7 +3,7 @@
 import { InjectionToken } from '@angular/core';
 import type {
   FilledMangoQuery,
-  PreparedQuery,
+  MangoQuery,
   RxCollection,
   RxCollectionCreator,
   RxDatabaseCreator,
@@ -33,26 +33,24 @@ export type RxCollectionCreatorExtended<T = any> = Merge<
   }
 >;
 
-export type RxCollectionExtended<T = any> = Merge<
-  RxCollection<T>,
-  {
-    /** Static empty query */
-    defaultQuery: FilledMangoQuery<any>;
-    /** Static empty query "prepared" (RxDb) */
-    defaultPreparedQuery: PreparedQuery<any>;
-    /** Get DB metadata */
-    getMetadata: () => Promise<RxDbMetadata>;
-    /** Get persisted query params from local document */
-    useQueryParams: (
-      currentUrl$: Observable<string>,
-      updateLocationFn?: (queryParams: any) => Promise<any>
-    ) => {
-      $: Observable<FilledMangoQuery<any>>;
-    };
-    // queryParamsGet: (path?: keyof LocalDocument) => any;
-    // queryParamsSet: (path: keyof LocalDocument, value: any) => Promise<void>;
-  }
->;
+export type RxCollectionExtended<T = any> = RxCollection<T> &
+  RxCollectionWithMetadata &
+  RxCollectionWiithQueryParams<T>;
+
+export type RxCollectionWiithQueryParams<T = any> = {
+  queryParamsInit: (
+    currentUrl$: Observable<string>,
+    updateQueryParamsInLocationFn: (queryParams: MangoQueryParams) => Promise<any>
+  ) => void;
+  queryParamsSet(query: MangoQuery<T>): void;
+  queryParamsPatch(query: MangoQuery<T>): void;
+  queryParams$: Observable<FilledMangoQuery<T>>;
+};
+
+export type RxCollectionWithMetadata = {
+  /** Get DB metadata */
+  getMetadata: () => Promise<RxDbMetadata>;
+};
 
 export interface RxDbMetadata {
   id: string;
@@ -76,6 +74,13 @@ export type RxCollectionHooks =
   | 'postSave'
   | 'postRemove'
   | 'postCreate';
+
+export type MangoQueryParams = {
+  selector?: string | undefined;
+  sort?: string | undefined;
+  skip?: number | undefined;
+  limit?: number | undefined;
+};
 
 /**
  * Instance of RxDatabaseCreator

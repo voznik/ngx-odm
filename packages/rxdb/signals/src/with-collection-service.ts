@@ -432,7 +432,7 @@ export function withCollectionService<
       onInit: async store => {
         iif(
           () => options?.query === 'local',
-          colService.initialized$.pipe(switchMap(() => colService.queryParams$)),
+          colService.queryParams$,
           of(options?.query as any)
         )
           .pipe(

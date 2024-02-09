@@ -1,5 +1,4 @@
-import { Location } from '@angular/common';
-import { APP_INITIALIZER, InjectionToken, Provider, inject } from '@angular/core';
+import { APP_INITIALIZER, Provider } from '@angular/core';
 import {
   NgxRxdbCollectionService,
   collectionServiceFactory,
@@ -11,7 +10,6 @@ import {
 } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import { RxDatabaseCreator } from 'rxdb';
-import { BehaviorSubject, Observable, defer, distinctUntilChanged } from 'rxjs';
 
 /**
  * Initializes DB at `APP_INITIALIZER` cycle
@@ -55,7 +53,6 @@ export function provideRxDatabase(config: RxDatabaseCreator): Provider[] {
       deps: [NgxRxdbService, RXDB_CONFIG],
       multi: true,
     },
-    // { provide: CURRENT_URL, useValue: '' },
   ];
 }
 
@@ -91,16 +88,3 @@ export function provideRxCollection(
     },
   ];
 }
-
-export const CURRENT_URL = new InjectionToken<Observable<string>>('CURRENT_URL', {
-  providedIn: 'root',
-  factory: () => {
-    const location = inject(Location);
-    const subject = new BehaviorSubject(location.path());
-
-    location.onUrlChange(url => {
-      subject.next(url);
-    });
-    return defer(() => subject).pipe(distinctUntilChanged());
-  },
-});

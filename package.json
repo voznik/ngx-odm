@@ -85,7 +85,6 @@
     "reflect-metadata": "0.1.13",
     "rxdb": "^15.3.0",
     "rxjs": "7.8.1",
-    "serialize-query-params": "^2.0.2",
     "todomvc-app-css": "2.4.3",
     "todomvc-common": "1.0.5",
     "tslib": "^2.6.2",

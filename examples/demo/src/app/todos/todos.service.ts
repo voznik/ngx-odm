@@ -1,10 +1,7 @@
 /* eslint-disable no-console */
 import { Injectable, inject } from '@angular/core';
-import {
-  DEFAULT_LOCAL_DOCUMENT_ID,
-  NgxRxdbCollection,
-  NgxRxdbCollectionService,
-} from '@ngx-odm/rxdb/collection';
+import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
+import { DEFAULT_LOCAL_DOCUMENT_ID } from '@ngx-odm/rxdb/config';
 import type { RxDatabaseCreator } from 'rxdb';
 import { Observable, distinctUntilChanged, startWith } from 'rxjs';
 import { v4 as uuid } from 'uuid';
@@ -24,7 +21,9 @@ export class TodosService {
 
   count$ = this.collectionService.count();
 
-  todos$: Observable<Todo[]> = this.collectionService.docs();
+  todos$: Observable<Todo[]> = this.collectionService.docs(
+    this.collectionService.queryParams$
+  );
 
   get dbOptions(): Readonly<RxDatabaseCreator> {
     return this.collectionService.dbOptions;
@@ -32,14 +31,6 @@ export class TodosService {
 
   get isAddTodoDisabled() {
     return this.newTodo.length < 4;
-  }
-
-  constructor() {
-    this.collectionService.addHook('postSave', function (plainData, rxDocument) {
-      console.log('postSave', plainData, rxDocument);
-      return new Promise(res => setTimeout(res, 100));
-    });
-    this.restoreFilter();
   }
 
   addTodo(): void {
@@ -107,11 +98,9 @@ export class TodosService {
     this.filterTodos('ALL');
   }
 
-  restoreFilter(): void {
-    this.collectionService.restoreLocalFromURL(DEFAULT_LOCAL_DOCUMENT_ID);
-  }
-
   filterTodos(filter: TodosFilter): void {
+    const selector = filter === 'ALL' ? {} : { completed: { $eq: filter === 'COMPLETED' } };
+    this.collectionService.patchQueryParams({ selector });
     this.collectionService.setLocal<TodosLocalState>(
       DEFAULT_LOCAL_DOCUMENT_ID,
       'filter',

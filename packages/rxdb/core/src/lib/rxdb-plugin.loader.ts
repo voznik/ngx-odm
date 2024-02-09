@@ -1,4 +1,5 @@
 import { isDevMode } from '@angular/core';
+import { RxDBPUseQueryParamsPlugin } from '@ngx-odm/rxdb/query-params';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import { addRxPlugin } from 'rxdb';
 import { RxDBCleanupPlugin } from 'rxdb/plugins/cleanup';
@@ -8,7 +9,6 @@ import { RxDBLocalDocumentsPlugin } from 'rxdb/plugins/local-documents';
 import { RxDBMigrationPlugin } from 'rxdb/plugins/migration-schema';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { RxDBPreparePlugin } from './rxdb-prepare.plugin';
-import { RxDBPUseQueryParamsPlugin } from './use-query-params.plugin';
 
 /**
  * Loads all the necessary RxDB plugins for the application to work.

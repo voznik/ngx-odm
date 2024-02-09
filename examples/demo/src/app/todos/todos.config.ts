@@ -18,7 +18,7 @@ export const TODOS_COLLECTION_CONFIG: RxCollectionCreatorExtended = {
   options: {
     schemaUrl: 'assets/data/todo.schema.json', // load schema from remote url
     initialDocs: TODOS_INITIAL_ITEMS, // populate collection with initial data,
-    persistLocalToURL: true, // bind `local` doc data to URL query params
+    useQueryParams: true, // bind `local` doc data to URL query params
   },
   statics: collectionMethods,
   // in this example we have 3 migrations, since the beginning of development

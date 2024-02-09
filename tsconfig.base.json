@@ -35,6 +35,7 @@
         "packages/rxdb/config/src/index.ts"
       ],
       "@ngx-odm/rxdb/core": ["dist/packages/rxdb/core", "packages/rxdb/core/src/index.ts"],
+      "@ngx-odm/rxdb/query-params": ["packages/rxdb/query-params/src/index.ts"],
       "@ngx-odm/rxdb/replication-kinto": ["packages/rxdb/replication-kinto/src/index.ts"],
       "@ngx-odm/rxdb/signals": ["packages/rxdb/signals/src/index.ts"],
       "@ngx-odm/rxdb/testing": ["packages/rxdb/testing/src/index.ts"],

@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any */
 import { NgZone, isDevMode } from '@angular/core';
-import type { FilledMangoQuery, PreparedQuery, RxJsonSchema } from 'rxdb';
+import type { FilledMangoQuery, PreparedQuery, RxDocument, RxJsonSchema } from 'rxdb';
 import { prepareQuery } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
-import { Observable, OperatorFunction, retry, tap, timer } from 'rxjs';
+import { Observable, OperatorFunction, map, retry, tap, timer } from 'rxjs';
 
 /** @internal */
 export type AnyObject = Record<string, any>;
@@ -62,7 +62,7 @@ export namespace NgxRxdbUtils {
   export function clone<T>(value: T): T {
     if (Array.isArray(value)) {
       return value.slice() as any;
-    } else if (value instanceof Object) {
+    } else if (isObject(value)) {
       return { ...value };
     } else {
       return value;
@@ -298,6 +298,9 @@ export namespace NgxRxdbUtils {
     );
   }
 
+  /**
+   * Internal logger for debugging
+   */
   export const logger = {
     log: (function () {
       const bgColor = '#8d2089';
@@ -450,4 +453,21 @@ export function isValidRxReplicationState<T>(
   obj: any
 ): obj is RxReplicationState<T, unknown> {
   return obj && obj instanceof RxReplicationState;
+}
+
+export function mapFindResultToJsonArray(
+  withRevAndAttachments = false // INFO: rxdb typings somehow are wrong (tru|false)
+): OperatorFunction<any[] | Map<string, any>, any[]> {
+  return map<RxDocument[] | Map<string, RxDocument>, any[]>(docs => {
+    return (Array.isArray(docs) ? docs : [...docs.values()]).map(d => {
+      const data: any = { ...d._data };
+      if (!withRevAndAttachments) {
+        delete data._rev;
+        delete data._attachments;
+        delete data._deleted;
+        delete data._meta;
+      }
+      return data;
+    });
+  });
 }
