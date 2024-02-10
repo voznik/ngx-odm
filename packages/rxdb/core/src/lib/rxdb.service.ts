@@ -51,7 +51,7 @@ export class NgxRxdbService {
    */
   async initDb(config: RxDatabaseCreator): Promise<void> {
     try {
-      await loadRxDBPlugins();
+      await loadRxDBPlugins(config.options?.plugins);
       this.dbInstance = await createRxDatabase(config).catch(e => {
         throw new Error(e.message ?? e);
       });

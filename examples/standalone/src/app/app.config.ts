@@ -5,6 +5,8 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { provideRouter, withRouterConfig } from '@angular/router';
 import { provideRxDatabase } from '@ngx-odm/rxdb';
 import { getRxDatabaseCreator } from '@ngx-odm/rxdb/config';
+import { RxDBAttachmentsPlugin } from 'rxdb/plugins/attachments';
+import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
 import { appRoutes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -21,6 +23,11 @@ export const appConfig: ApplicationConfig = {
         ignoreDuplicate: false,
         // storage: getRxStorageDexie(), // INFO: can be ommited, will be provide by `storageType` string
         options: {
+          plugins: [
+            // will be loaded by together with core plugins
+            RxDBAttachmentsPlugin,
+            RxDBLeaderElectionPlugin,
+          ],
           storageType: localStorage['_ngx_rxdb_storage'] ?? 'dexie',
           dumpPath: 'assets/data/db.dump.json',
         },

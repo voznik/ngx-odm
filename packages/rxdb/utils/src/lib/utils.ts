@@ -74,8 +74,7 @@ export namespace NgxRxdbUtils {
    *
    * Differences from lodash:
    * - does not give any special consideration for arguments objects, strings, or prototype objects (e.g. many will have `'length'` in the returned array)
-   *
-   * @internal
+   * @param object
    */
   export function keys<T>(object: Nil | T): Array<StringifiedKey<T>> {
     let val = keysOfNonArray(object);

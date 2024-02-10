@@ -35,5 +35,8 @@
     }
   },
   "__indexes": ["createdAt"],
-  "primaryKey": "id"
+  "primaryKey": "id",
+  "attachments": {
+    "encrypted": false
+  }
 }

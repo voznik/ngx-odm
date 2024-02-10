@@ -4,6 +4,7 @@ export interface Todo {
   completed: boolean;
   createdAt: string;
   last_modified: number;
+  _attachments?: any[];
 }
 
 export type TodosFilter = 'ALL' | 'COMPLETED' | 'ACTIVE';

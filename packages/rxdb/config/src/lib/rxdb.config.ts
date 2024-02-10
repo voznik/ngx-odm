@@ -8,6 +8,7 @@ import type {
   RxCollectionCreator,
   RxDatabaseCreator,
   RxJsonSchema,
+  RxPlugin,
 } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
@@ -102,6 +103,7 @@ interface NgxRxdbConfigOptions {
   storageOptions?: {};
   dumpPath?: string;
   useQueryParams?: boolean;
+  plugins?: RxPlugin[];
 }
 
 type RxDatabaseCreatorPartialStorage = SetOptional<RxDatabaseCreator, 'storage'>;
@@ -134,6 +136,7 @@ export function getRxDatabaseCreator(config: NgxRxdbConfig): RxDatabaseCreator {
   const dbConfig: RxDatabaseCreator = {
     name,
     storage,
+    options,
     ...rest,
   };
   return dbConfig;

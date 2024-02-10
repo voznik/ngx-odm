@@ -2,10 +2,12 @@
 import { Injectable, inject } from '@angular/core';
 import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
 import { DEFAULT_LOCAL_DOCUMENT_ID } from '@ngx-odm/rxdb/config';
-import type { RxDatabaseCreator } from 'rxdb';
+import { RxAttachment, type RxDatabaseCreator } from 'rxdb';
 import { Observable, distinctUntilChanged, startWith } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { Todo, TodosFilter, TodosLocalState } from './todos.model';
+
+const withAttachments = true;
 
 @Injectable()
 export class TodosService {
@@ -22,7 +24,8 @@ export class TodosService {
   count$ = this.collectionService.count();
 
   todos$: Observable<Todo[]> = this.collectionService.docs(
-    this.collectionService.queryParams$
+    this.collectionService.queryParams$,
+    withAttachments
   );
 
   get dbOptions(): Readonly<RxDatabaseCreator> {
@@ -106,5 +109,28 @@ export class TodosService {
       'filter',
       filter
     );
+  }
+
+  async uploadAttachment(id: string, file: File) {
+    await this.collectionService.putAttachment(id, {
+      id: file.name, // (string) name of the attachment
+      data: file, // createBlob('meowmeow', 'text/plain'), // (string|Blob) data of the attachment
+      type: 'text/plain', // (string) type of the attachment-data like 'image/jpeg'
+    });
+  }
+
+  async downloadAttachment(id: string, a_id: string) {
+    const data = await this.collectionService.getAttachmentById(id, a_id);
+    const url = URL.createObjectURL(data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = a_id;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  async removeAttachment(id: string, a_id: string) {
+    await this.collectionService.removeAttachment(id, a_id);
   }
 }

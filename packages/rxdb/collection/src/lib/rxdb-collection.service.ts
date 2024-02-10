@@ -25,6 +25,8 @@ import {
   type RxLocalDocument,
   type RxStorageWriteError,
   type RxCollection as _RxCollection,
+  RxAttachment,
+  RxAttachmentCreator,
 } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import {
@@ -365,6 +367,51 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   async clear(): Promise<void> {
     await this.ensureCollection();
     return this.collection.remove();
+  }
+
+  async getAttachments(docId: string): Promise<Blob[] | null> {
+    await this.ensureCollection();
+    const doc = await this.collection.findOne(docId).exec();
+    if (!doc) {
+      return null;
+    }
+    const attachmentsData = doc.allAttachments().map(a => a.getData());
+    return Promise.all(attachmentsData);
+  }
+
+  async getAttachmentById(docId: string, attachmentId: string): Promise<Blob | null> {
+    await this.ensureCollection();
+    const doc = await this.collection.findOne(docId).exec();
+    if (!doc) {
+      return null;
+    }
+    const attachment = doc.getAttachment(attachmentId);
+    if (!attachment) {
+      return null;
+    }
+    return attachment.getData();
+  }
+
+  async putAttachment(docId: string, attachment: RxAttachmentCreator): Promise<void> {
+    await this.ensureCollection();
+    const doc = await this.collection.findOne(docId).exec();
+    if (!doc) {
+      throw new Error(`Document with id "${docId}" not found.`);
+    }
+    await doc.putAttachment(attachment);
+  }
+
+  async removeAttachment(docId: string, attachmentId: string): Promise<void> {
+    await this.ensureCollection();
+    const doc = await this.collection.findOne(docId).exec();
+    if (!doc) {
+      throw new Error(`Document with id "${docId}" not found.`);
+    }
+    const attachment = doc.getAttachment(attachmentId);
+    if (!attachment) {
+      throw new Error(`Attachment with id "${attachmentId}" not found.`);
+    }
+    await attachment.remove();
   }
 
   /**

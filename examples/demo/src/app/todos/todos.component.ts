@@ -42,7 +42,17 @@ export class TodosComponent {
   );
   count$ = this.todosService.count$;
 
+  isDialogOpen = false;
+  selectedTodo: Todo = undefined;
+
   trackByFn = (index: number, item: Todo) => {
     return item.last_modified;
   };
+
+  showContextMenu(event: Event, todo: Todo) {
+    event.preventDefault();
+    this.selectedTodo = todo;
+    this.isDialogOpen = true;
+    console.log('showContextMenu', todo);
+  }
 }

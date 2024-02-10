@@ -31,6 +31,7 @@
       <li
         *ngFor="let todo of $.todos | byStatus: $.filter; trackBy: trackByFn"
         [class.completed]="todo.completed"
+        (contextmenu)="showContextMenu($event, todo)"
       >
         <div class="view">
           <input
@@ -106,3 +107,37 @@
     </button>
   </footer>
 </section>
+
+<dialog [open]="isDialogOpen">
+  Attachments:
+  <ul *ngIf="selectedTodo?._attachments">
+    <li *ngFor="let attachment of selectedTodo._attachments | keyvalue">
+      <a
+        href="javascript:void(0);"
+        (click)="todosService.downloadAttachment(selectedTodo.id, attachment.key)"
+      >
+        {{ attachment.key }} - {{ attachment.value.type }}
+      </a>
+      &nbsp;
+      <button
+        type="button"
+        (click)="todosService.removeAttachment(selectedTodo.id, attachment.key)"
+      >
+        ❌
+      </button>
+    </li>
+  </ul>
+  <form method="dialog" (ngSubmit)="selectedTodo = undefined; isDialogOpen = false">
+    <button type="button" (click)="fileInput.click()">Upload txt attachment</button>
+    <input
+      type="file"
+      accept=".txt"
+      #fileInput
+      style="display: none"
+      (change)="
+        todosService.uploadAttachment(selectedTodo.id, $any($event.target).files[0])
+      "
+    />
+    <button>OK</button>
+  </form>
+</dialog>
