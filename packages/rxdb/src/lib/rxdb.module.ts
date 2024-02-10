@@ -13,7 +13,6 @@ import { RXDB_CONFIG, RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import type { RxDatabaseCreator } from 'rxdb';
-import { ROUTER_HISTORY_STATE } from './router.history';
 import { provideRxCollection, provideRxDatabase } from './rxdb.providers';
 
 /**
@@ -97,14 +96,12 @@ export class NgxRxdbModule {
    * running {@link https://v7.angular.io/api/core/APP_INITIALIZER|APP_INITIALIZER}s.
    * @param ngxRxdbConfig - The configuration of the `NgxRxdbModule`
    * @param trueNgxRxdbConfig
-   * @param routerHistoryState
    * @param injector
    */
   public constructor(
     appInitStatus: ApplicationInitStatus,
     @Optional() @SkipSelf() @Inject(RXDB_CONFIG) ngxRxdbConfig: RxDatabaseCreator,
     @Optional() @Self() @Inject(RXDB_CONFIG) trueNgxRxdbConfig: RxDatabaseCreator,
-    @Inject(ROUTER_HISTORY_STATE) routerHistoryState: unknown,
     injector: Injector
   ) {
     if (!trueNgxRxdbConfig && !ngxRxdbConfig) {

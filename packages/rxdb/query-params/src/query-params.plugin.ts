@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   MangoQueryParams,
   RxCollectionExtended as RxCollection,
@@ -16,12 +16,9 @@ import {
   takeWhile,
   tap,
 } from 'rxjs';
-import { parseUrlToMangoQuery } from './utils';
+import { parseUrlToMangoQuery, stringifyParam } from './utils';
 
-const DEFAULT_SELECTOR = `{}`; // `{"_deleted":{"$eq":false}}`
-const DEFAULT_SORT = `[]`; // [{"createdAt":"desc"}]`;
-
-const { debug } = NgxRxdbUtils;
+const { debug, compactObject } = NgxRxdbUtils;
 
 const _queryParams$ = new BehaviorSubject<MangoQuery<any>>({} as any);
 
@@ -51,12 +48,12 @@ export const RxDBPUseQueryParamsPlugin: RxPlugin = {
             distinctUntilChanged(),
             tap(url => (currentUrl = url)),
             map(url => parseUrlToMangoQuery(url, this.schema)),
-            catchError(err =>
+            catchError(() =>
               of({
-                selector: JSON.parse(DEFAULT_SELECTOR),
-                sort: JSON.parse(DEFAULT_SORT),
+                selector: undefined,
+                sort: undefined,
                 limit: undefined,
-                skip: 0,
+                skip: undefined,
               })
             ),
             debug('queryParams:'),
@@ -71,10 +68,10 @@ export const RxDBPUseQueryParamsPlugin: RxPlugin = {
         const { selector, sort, limit, skip } = query;
         const queryParams: MangoQueryParams = { limit, skip };
         if (selector) {
-          queryParams.selector = JSON.stringify(query.selector);
+          queryParams.selector = stringifyParam(query.selector);
         }
         if (sort) {
-          queryParams.sort = JSON.stringify(query.sort);
+          queryParams.sort = stringifyParam(query.sort);
         }
         updateQueryParamsInLocationFn(queryParams);
       }
@@ -82,12 +79,12 @@ export const RxDBPUseQueryParamsPlugin: RxPlugin = {
         if (!this.options?.useQueryParams) return;
         const parsed = parseUrlToMangoQuery(currentUrl, this.schema);
         const queryParams: MangoQueryParams = {
-          selector: JSON.stringify(query.selector || parsed.selector),
-          sort: JSON.stringify(query.sort || parsed.sort),
+          selector: stringifyParam(query.selector || parsed.selector),
+          sort: stringifyParam(query.sort || parsed.sort),
           limit: query.limit || parsed.limit,
           skip: query.skip || parsed.skip,
         };
-        updateQueryParamsInLocationFn(queryParams);
+        updateQueryParamsInLocationFn(compactObject(queryParams));
       }
 
       Object.assign(proto, {

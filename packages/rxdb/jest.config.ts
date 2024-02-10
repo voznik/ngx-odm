@@ -2,6 +2,13 @@
 import { workspaceRoot } from '@nrwl/tao/src/utils/app-root';
 import type { Config } from 'jest';
 
+const ignoredModules = [
+  'query-string',
+  'decode-uri-component',
+  'split-on-first',
+  'filter-obj',
+];
+
 const config: Config = {
   displayName: '@ngx-odm/rxdb',
   preset: '../../jest.preset.js',
@@ -20,7 +27,10 @@ const config: Config = {
       },
     ],
   },
-  transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
+  transformIgnorePatterns: [
+    //
+    `node_modules/(?!.*\\.mjs$|${ignoredModules.join('|')})`,
+  ],
   collectCoverage: process.env.CI ? true : false,
   coverageDirectory: `${workspaceRoot}/coverage/packages`,
   collectCoverageFrom: [

@@ -35,8 +35,9 @@
       "url": "https://github.com/voznik"
     }
   ],
-  "engines": {
-    "node": ">=16.x",
+  "sideEffects": false,
+	"engines": {
+		"node": ">=14.16",
     "npm": ">=8.x"
   },
   "peerDependencies": {
