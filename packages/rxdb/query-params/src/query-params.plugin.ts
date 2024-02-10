@@ -12,13 +12,12 @@ import {
   catchError,
   distinctUntilChanged,
   map,
-  of,
   takeWhile,
   tap,
 } from 'rxjs';
 import { parseUrlToMangoQuery, stringifyParam } from './utils';
 
-const { debug, compactObject } = NgxRxdbUtils;
+const { logger, compactObject } = NgxRxdbUtils;
 
 const _queryParams$ = new BehaviorSubject<MangoQuery<any>>({} as any);
 
@@ -29,34 +28,32 @@ export const RxDBPUseQueryParamsPlugin: RxPlugin = {
     RxCollection: (proto: _RxCollection) => {
       let initDone = false;
       let currentUrl = '';
-      let currentUrl$: Observable<string> = EMPTY;
       let updateQueryParamsInLocationFn: (
         queryParams: MangoQueryParams
       ) => Promise<boolean> = () => Promise.resolve(false);
       //
       function init(
         this: RxCollection,
-        _currentUrl$: Observable<string>,
+        currentUrl$: Observable<string> = EMPTY,
         _updateQueryParamsInLocationFn: (queryParams: MangoQueryParams) => Promise<any>
       ): void {
         if (!this.options?.useQueryParams || initDone) return;
-        currentUrl$ = _currentUrl$;
         updateQueryParamsInLocationFn = _updateQueryParamsInLocationFn;
 
         currentUrl$
           .pipe(
             distinctUntilChanged(),
-            tap(url => (currentUrl = url)),
+            tap(url => {
+              currentUrl = url;
+            }),
             map(url => parseUrlToMangoQuery(url, this.schema)),
-            catchError(() =>
-              of({
-                selector: undefined,
-                sort: undefined,
-                limit: undefined,
-                skip: undefined,
-              })
-            ),
-            debug('queryParams:'),
+            catchError(err => {
+              logger.log('Error in parsing url to mango query', err);
+              return _queryParams$;
+            }),
+            tap(queryParams => {
+              logger.log('queryParams', queryParams);
+            }),
             takeWhile(() => !this.destroyed)
           )
           .subscribe(_queryParams$);
@@ -90,6 +87,7 @@ export const RxDBPUseQueryParamsPlugin: RxPlugin = {
       Object.assign(proto, {
         queryParams$: _queryParams$.asObservable(),
         queryParamsInit: init,
+        queryParamsGet: () => _queryParams$.getValue(),
         queryParamsSet: set,
         queryParamsPatch: patch,
       });
