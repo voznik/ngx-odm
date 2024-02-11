@@ -1,3 +1,5 @@
+/* @import "https://unpkg.com/open-props"; */
+
 .clear-completed:disabled {
   color: #999;
   cursor: not-allowed;
@@ -16,4 +18,38 @@
 
 .todo-list li:hover label:not(.editing) + .last-modified {
   display: block;
+}
+
+dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  width: 80%;
+  max-width: 500px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  box-shadow:
+    0 2px 4px 0 rgba(0, 0, 0, 0.2),
+    0 25px 50px 0 rgba(0, 0, 0, 0.1);
+  background: white;
+  color: #111111;
+  font-family: unset;
+}
+
+dialog > form {
+  padding-top: 1em;
+  border-top: 1px solid #ccc;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+dialog > form > button {
+  display: block;
+}
+
+dialog::backdrop {
+  /* make the backdrop a semi-transparent black */
+  background-color: rgba(0, 0, 0, 0.4);
 }

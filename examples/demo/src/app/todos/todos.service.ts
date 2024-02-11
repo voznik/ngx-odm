@@ -2,7 +2,6 @@
 import { Injectable, inject } from '@angular/core';
 import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
 import { DEFAULT_LOCAL_DOCUMENT_ID } from '@ngx-odm/rxdb/config';
-import { RxAttachment, type RxDatabaseCreator } from 'rxdb';
 import { Observable, distinctUntilChanged, startWith } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { Todo, TodosFilter, TodosLocalState } from './todos.model';
@@ -27,10 +26,6 @@ export class TodosService {
     this.collectionService.queryParams$,
     withAttachments
   );
-
-  get dbOptions(): Readonly<RxDatabaseCreator> {
-    return this.collectionService.dbOptions;
-  }
 
   get isAddTodoDisabled() {
     return this.newTodo.length < 4;
@@ -111,11 +106,15 @@ export class TodosService {
     );
   }
 
+  sortTodos(dir: 'asc' | 'desc'): void {
+    this.collectionService.patchQueryParams({ sort: [{ last_modified: dir }] });
+  }
+
   async uploadAttachment(id: string, file: File) {
     await this.collectionService.putAttachment(id, {
-      id: file.name, // (string) name of the attachment
-      data: file, // createBlob('meowmeow', 'text/plain'), // (string|Blob) data of the attachment
-      type: 'text/plain', // (string) type of the attachment-data like 'image/jpeg'
+      id: file.name,
+      data: file,
+      type: 'text/plain',
     });
   }
 

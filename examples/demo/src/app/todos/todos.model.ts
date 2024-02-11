@@ -4,7 +4,8 @@ export interface Todo {
   completed: boolean;
   createdAt: string;
   last_modified: number;
-  _attachments?: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _attachments?: Record<string, any>;
 }
 
 export type TodosFilter = 'ALL' | 'COMPLETED' | 'ACTIVE';

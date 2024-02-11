@@ -13,23 +13,23 @@ import {
   isValidRxReplicationState,
   mapFindResultToJsonArray,
 } from '@ngx-odm/rxdb/utils';
-import {
+import type {
   FilledMangoQuery,
-  RXJS_SHARE_REPLAY_DEFAULTS,
-  type MangoQuery,
-  type RxDatabase,
-  type RxDatabaseCreator,
-  type RxDocument,
-  type RxDumpCollection,
-  type RxDumpCollectionAny,
-  type RxLocalDocument,
-  type RxStorageWriteError,
-  type RxCollection as _RxCollection,
-  RxAttachment,
+  MangoQuery,
   RxAttachmentCreator,
+  RxDatabase,
+  RxDatabaseCreator,
+  RxDocument,
+  RxDumpCollection,
+  RxDumpCollectionAny,
+  RxLocalDocument,
+  RxStorageWriteError,
+  RxCollection as _RxCollection,
 } from 'rxdb';
+import { RXJS_SHARE_REPLAY_DEFAULTS, RxError, removeRxDatabase } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import {
+  NEVER,
   Observable,
   ReplaySubject,
   distinctUntilChanged,
@@ -100,7 +100,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   }
 
   get queryParams$(): Observable<FilledMangoQuery<T>> {
-    return this.initialized$.pipe(switchMap(() => this.collection.queryParams$));
+    return this.initialized$.pipe(switchMap(() => this.collection.queryParams$ || NEVER));
   }
 
   constructor(public readonly config: RxCollectionCreatorExtended) {
@@ -115,11 +115,11 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   }
 
   setQueryParams(query: MangoQuery<T>): void {
-    this.collection.queryParamsSet(query);
+    this.collection.queryParamsSet?.(query);
   }
 
   patchQueryParams(query: MangoQuery<T>): void {
-    this.collection.queryParamsPatch(query);
+    this.collection.queryParamsPatch?.(query);
   }
 
   async sync(): Promise<void> {
@@ -369,6 +369,10 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     return this.collection.remove();
   }
 
+  /**
+   * Returns an array of Blobs of all attachments of the RxDocument.
+   * @param docId
+   */
   async getAttachments(docId: string): Promise<Blob[] | null> {
     await this.ensureCollection();
     const doc = await this.collection.findOne(docId).exec();
@@ -379,6 +383,11 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     return Promise.all(attachmentsData);
   }
 
+  /**
+   * Returns data of an RxAttachment by its id. Returns null when the attachment does not exist.
+   * @param docId
+   * @param attachmentId
+   */
   async getAttachmentById(docId: string, attachmentId: string): Promise<Blob | null> {
     await this.ensureCollection();
     const doc = await this.collection.findOne(docId).exec();
@@ -392,24 +401,37 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     return attachment.getData();
   }
 
+  /**
+   * Adds an attachment to a RxDocumen
+   * @param docId
+   * @param attachment
+   */
   async putAttachment(docId: string, attachment: RxAttachmentCreator): Promise<void> {
     await this.ensureCollection();
     const doc = await this.collection.findOne(docId).exec();
     if (!doc) {
-      throw new Error(`Document with id "${docId}" not found.`);
+      logger.log(`document with id "${docId}" not found.`);
+      return;
     }
     await doc.putAttachment(attachment);
   }
 
+  /**
+   * Removes the attachment
+   * @param docId
+   * @param attachmentId
+   */
   async removeAttachment(docId: string, attachmentId: string): Promise<void> {
     await this.ensureCollection();
     const doc = await this.collection.findOne(docId).exec();
     if (!doc) {
-      throw new Error(`Document with id "${docId}" not found.`);
+      logger.log(`document with id "${docId}" not found.`);
+      return;
     }
     const attachment = doc.getAttachment(attachmentId);
     if (!attachment) {
-      throw new Error(`Attachment with id "${attachmentId}" not found.`);
+      logger.log(`attachment with id "${attachmentId}" not found.`);
+      return;
     }
     await attachment.remove();
   }
@@ -528,23 +550,27 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
       this._collection = this.db.collections[name] as RxCollection<T>;
       // Init query params plugin
       if (this.config.options?.useQueryParams) {
-        this.collection.queryParamsInit(this.currentUrl$, this.updateQueryParamsFn);
+        this.collection.queryParamsInit!(this.currentUrl$, this.updateQueryParamsFn);
       }
       this._init$.next(true);
       this._init$.complete();
-    } catch (e) {
+    } catch (err) {
       // @see rx-database-internal-store.ts:isDatabaseStateVersionCompatibleWithDatabaseCode
       // @see test/unit/data-migration.test.ts#L16
-      if (e.message.includes('DM5')) {
+      if (
+        err.message.includes('DM5') ||
+        (err.message.includes('DB6') &&
+          (err as RxError).parameters.previousSchema?.version ===
+            (err as RxError).parameters.schema?.version)
+      ) {
         logger.log(
-          `Database version conflict.
-          Opening an older RxDB database state with a new major version should throw an error`
+          'Reload the page to fix the issue. The database is in a state where it can not be used.'
         );
-        // await dbService.db.destroy();
-        throw new Error(e);
+        await removeRxDatabase(this.db.name, this.db.storage);
+        window?.location?.reload?.();
       } else {
         this._init$.complete();
-        throw new Error(e.message ?? e);
+        throw err;
       }
     }
   }

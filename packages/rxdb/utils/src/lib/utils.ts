@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, no-console */
 import { NgZone, isDevMode } from '@angular/core';
 import type { FilledMangoQuery, PreparedQuery, RxDocument, RxJsonSchema } from 'rxdb';
 import { prepareQuery } from 'rxdb';
@@ -243,38 +243,6 @@ export namespace NgxRxdbUtils {
       .reduce((acc: Partial<T>, [key, val]: [string, any]) => ({ ...acc, [key]: val }), {});
   }
 
-  /**
-   * Transforms an object into an URL query string, stripping out any undefined
-   * values.
-   * @param  {object} obj
-   * @param prefix
-   * @returns {string}
-   * @internal
-   */
-  export function qsify(obj: any, prefix = ''): string {
-    const encode = (v: any): string =>
-      encodeURIComponent(typeof v === 'boolean' ? String(v) : v);
-    const result: string[] = [];
-    forEach(obj, (value, k) => {
-      if (isUndefined(value)) return;
-
-      let ks = encode(prefix + k) + '=';
-      if (Array.isArray(value)) {
-        const values: string[] = [];
-        forEach(value, v => {
-          if (isUndefined(v)) return;
-
-          values.push(encode(v));
-        });
-        ks += values.join(',');
-      } else {
-        ks += encode(value);
-      }
-      result.push(ks);
-    });
-    return result.length ? result.join('&') : '';
-  }
-
   export function isDevModeForced(): boolean {
     return localStorage['debug']?.includes(`@ngx-odm/rxdb`);
   }
@@ -306,10 +274,9 @@ export namespace NgxRxdbUtils {
       if (isTestEnvironment() || !isDevMode() || !isDevModeForced()) {
         return noop;
       }
-      // eslint-disable-next-line no-console
       return console.log.bind(
         console,
-        `%c[${new Date().toISOString()}::DEBUG::@ngx-odm/rxdb]`,
+        `%c[DEBUG::@ngx-odm/rxdb]`, // ${new Date().toISOString()}
         `background:${bgColor};color:#fff;padding:2px;font-size:normal;`
       );
     })(),
@@ -317,7 +284,6 @@ export namespace NgxRxdbUtils {
       if (isTestEnvironment() || !isDevMode() || !isDevModeForced()) {
         return noop;
       }
-      // eslint-disable-next-line no-console
       return console.table.bind(console);
     })(),
   };

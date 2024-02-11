@@ -50,11 +50,10 @@ export class NgxRxdbService {
    * @param config
    */
   async initDb(config: RxDatabaseCreator): Promise<void> {
+    // eslint-disable-next-line no-useless-catch
     try {
       await loadRxDBPlugins(config.options?.plugins);
-      this.dbInstance = await createRxDatabase(config).catch(e => {
-        throw new Error(e.message ?? e);
-      });
+      this.dbInstance = await createRxDatabase(config);
       this.options = config;
       NgxRxdbUtils.logger.log(
         `created database "${this.db.name}" with config "${JSON.stringify(config)}"`
@@ -68,7 +67,7 @@ export class NgxRxdbService {
         );
       }
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   }
 
@@ -79,11 +78,12 @@ export class NgxRxdbService {
   async initCollections(colConfigs: {
     [name: string]: RxCollectionCreatorExtended;
   }): Promise<CollectionsOfDatabase> {
+    // eslint-disable-next-line no-useless-catch
     try {
       const colCreators = await prepareCollections(colConfigs);
       return await this.db.addCollections(colCreators);
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   }
 }

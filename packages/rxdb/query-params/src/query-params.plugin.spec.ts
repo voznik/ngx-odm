@@ -34,7 +34,7 @@ describe('RxDBPUseQueryParamsPlugin', () => {
     it('should properly intialize usage of query-params', async () => {
       const startUrl =
         'http://localhost:4200/todos?limit=1&selector=%7B%22completed%22:%7B%22$eq%22:true%7D%7D&sort=%5B%7B%22createdAt%22:%22desc%22%7D%5D';
-      collection.queryParamsInit(mockUrlStream$, jest.fn());
+      collection.queryParamsInit!(mockUrlStream$, jest.fn());
       mockUrlStream$.next(startUrl);
       const expectedQueryParams = {
         selector: {
@@ -46,37 +46,37 @@ describe('RxDBPUseQueryParamsPlugin', () => {
         limit: 1,
         skip: undefined,
       };
-      const queryParamsValue = await collection.queryParams$.pipe(take(1)).toPromise();
+      const queryParamsValue = await collection.queryParams$!.pipe(take(1)).toPromise();
       expect(queryParamsValue).toEqual(expectedQueryParams);
     });
     it('should properly set query-params', async () => {
       const nextUrl =
         'http://localhost:4200/todos?limit=2&sort=%5B%7B%22createdAt%22:%22asc%22%7D%5D&skip=0';
 
-      collection.queryParamsInit(mockUrlStream$, jest.fn());
+      collection.queryParamsInit!(mockUrlStream$, jest.fn());
       const newQueryParams: MangoQuery<TestDocType> = {
         selector: undefined,
         sort: [{ createdAt: 'asc' }],
         limit: 2,
         skip: 0,
       };
-      collection.queryParamsSet(newQueryParams);
+      collection.queryParamsSet!(newQueryParams);
       mockUrlStream$.next(nextUrl);
-      const queryParamsValue = await collection.queryParams$.pipe(take(1)).toPromise();
+      const queryParamsValue = await collection.queryParams$!.pipe(take(1)).toPromise();
       expect(queryParamsValue).toEqual(newQueryParams);
     });
     it('should properly patch query-params', async () => {
       const startUrl = 'http://localhost:4200/todos?limit=0';
       const nextUrl = 'http://localhost:4200/todos?limit=1&skip=1';
       mockUrlStream$.next(startUrl);
-      collection.queryParamsInit(mockUrlStream$, jest.fn());
+      collection.queryParamsInit!(mockUrlStream$, jest.fn());
       const newQueryParams: MangoQuery<TestDocType> = {
         limit: 1,
         skip: 1,
       };
-      collection.queryParamsPatch(newQueryParams);
+      collection.queryParamsPatch!(newQueryParams);
       mockUrlStream$.next(nextUrl);
-      const queryParamsValue = await collection.queryParams$.pipe(take(1)).toPromise();
+      const queryParamsValue = await collection.queryParams$!.pipe(take(1)).toPromise();
       expect(queryParamsValue).toMatchObject(newQueryParams);
     });
   });
