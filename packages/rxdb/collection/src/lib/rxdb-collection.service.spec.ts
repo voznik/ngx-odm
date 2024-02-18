@@ -230,7 +230,6 @@ describe(`NgxRxdbCollectionService`, () => {
 
     it('should set doc', async () => {
       const id = '0';
-      // const rxDoc: RxDocument = createNewRxDocument(service.collection, { id: '0', title: 'test0', _rev: '0-x', } as any);
       const rxQ = {
         update: jest.fn().mockResolvedValue({}),
       } as unknown as RxQuery;
@@ -343,6 +342,22 @@ describe(`NgxRxdbCollectionService`, () => {
       jest.spyOn(service.collection, 'getLocal').mockResolvedValueOnce(mockLocalDoc);
       await service.removeLocal(id);
       expect(mockLocalDoc.remove).toHaveBeenCalled();
+    });
+
+    it('should get attachments of a doc', async () => {
+      const id = '0';
+      const blob = new Blob(['test'], { type: 'text/plain' });
+      await service.collection.insert({
+        id,
+        title: 'test0',
+      } as any);
+      const doc0 = await service.collection.findOne(id).exec();
+      const spy = jest
+        .spyOn(doc0!, 'allAttachments')
+        .mockReturnValue([{ getData: () => Promise.resolve(blob) } as any]);
+      const result = await service.getAttachments(id);
+      expect(spy).toHaveBeenCalled();
+      expect(result).toEqual([blob]);
     });
   });
 });

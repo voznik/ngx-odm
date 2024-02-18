@@ -62,6 +62,12 @@
     </ng-container>
     <ul class="filters">
       <li>
+        <a href="javascript:void(0);" (click)="todoStore.sortTodos('desc')">&#8675;</a>
+      </li>
+      <li>
+        <a href="javascript:void(0);" (click)="todoStore.sortTodos('asc')">&#8673;</a>
+      </li>
+      <li>
         <a
           href="javascript:void(0);"
           (click)="todoStore.filterTodos('ALL')"

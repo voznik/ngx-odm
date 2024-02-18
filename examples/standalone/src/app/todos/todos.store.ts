@@ -11,8 +11,11 @@ import {
 } from '@ngrx/signals';
 import { withEntities } from '@ngrx/signals/entities';
 import { withCollectionService } from '@ngx-odm/rxdb/signals';
+import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import { v4 as uuid } from 'uuid';
 import { Todo, TodosFilter } from './todos.model';
+
+const { isEmpty } = NgxRxdbUtils;
 
 export const TodoStore = signalStore(
   { providedIn: 'root' },
@@ -25,16 +28,20 @@ export const TodoStore = signalStore(
   // INFO: an instance of RxCollection will be provided by this
   withCollectionService<Todo, TodosFilter>({
     filter: 'ALL' as TodosFilter,
-    query: 'local',
+    query: {},
   }),
   // INFO: Function calls in a template
   // Over the years, Angular developers have learned to avoid calling functions inside templates because a function re-runs every change detection and used pure pipes instead. This would cause expensive computations to run multiple times unnecessarily if the passed arguments did not change.
   // In a signal-based component, this idea no longer applies because the expressions will only re-evaluate as a result of a signal dependency change.
   // With signals, we no longer have to care about handling subscriptions. It is absolutely fine to call a signal function in the template since only the part that depends on that signal will be updated.
-  withComputed(({ count, entities, docs, newTodo, filter }) => {
+  withComputed(({ count, entities, query, newTodo, filter }) => {
     return {
       isAddTodoDisabled: computed(() => newTodo().length < 4),
       filtered: computed(() => {
+        const queryValue = query();
+        if (!isEmpty(queryValue)) {
+          return entities();
+        }
         const filterValue = filter();
         if (filterValue === 'ALL') {
           return entities();
@@ -116,14 +123,20 @@ export const TodoStore = signalStore(
         store.removeAllBy({ selector: { completed: { $eq: true } } });
       },
       filterTodos(filter: TodosFilter): void {
+        const selector =
+          filter === 'ALL' ? {} : { completed: { $eq: filter === 'COMPLETED' } };
+        store.updateQueryParams({ selector });
         store.updateFilter(filter);
+      },
+      sortTodos(dir: 'asc' | 'desc'): void {
+        store.updateQueryParams({ sort: [{ last_modified: dir }] });
       },
     };
   }),
   withHooks({
-    /** On init update filter from URL and fetch documents from RxDb */
-    onInit: ({ restoreFilter }) => {
-      // restoreFilter();
+    onInit: store => {
+      store.sync(); // INFO: sync with remote
+      //
     },
   })
 );

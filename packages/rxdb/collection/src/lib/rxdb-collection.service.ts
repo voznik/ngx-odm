@@ -9,12 +9,13 @@ import type {
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import { CURRENT_URL, updateQueryParams } from '@ngx-odm/rxdb/query-params';
 import {
+  Entity,
+  EntityId,
   NgxRxdbUtils,
   isValidRxReplicationState,
   mapFindResultToJsonArray,
 } from '@ngx-odm/rxdb/utils';
 import type {
-  FilledMangoQuery,
   MangoQuery,
   RxAttachmentCreator,
   RxDatabase,
@@ -29,7 +30,6 @@ import type {
 import { RXJS_SHARE_REPLAY_DEFAULTS, RxError, removeRxDatabase } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import {
-  NEVER,
   Observable,
   ReplaySubject,
   distinctUntilChanged,
@@ -46,9 +46,6 @@ import {
 } from 'rxjs';
 
 const { getMaybeId, logger, debug, runInZone } = NgxRxdbUtils;
-
-type EntityId = string;
-type Entity = { id: EntityId };
 
 /**
  * Injection token for Service for interacting with a RxDB {@link RxCollection}.
@@ -99,12 +96,19 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     return this._replicationState;
   }
 
-  get queryParams$(): Observable<FilledMangoQuery<T>> {
-    return this.initialized$.pipe(switchMap(() => this.collection.queryParams$ || NEVER));
+  get queryParams$(): Observable<MangoQuery<T>> {
+    return this.initialized$.pipe(switchMap(() => this.collection.queryParams$ || of({})));
   }
 
   constructor(public readonly config: RxCollectionCreatorExtended) {
     this.init(config);
+
+    this.replicationState?.error$.subscribe(err => {
+      logger.log('replicationState error:', err);
+    });
+    this.replicationState?.received$.subscribe(received => {
+      logger.log('replicationState received:', received);
+    });
   }
 
   /**
@@ -206,7 +210,9 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   ): Observable<T[]> {
     return this.initialized$.pipe(
       switchMap(() => (isObservable(query) ? query : of(query))),
-      switchMap(q => this.collection.find(q).$),
+      switchMap(q => {
+        return this.collection.find(q).$;
+      }),
       mapFindResultToJsonArray(withRevAndAttachments),
       runInZone(this.ngZone),
       debug('docs'),

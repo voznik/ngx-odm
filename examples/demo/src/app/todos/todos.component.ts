@@ -53,6 +53,5 @@ export class TodosComponent {
     event.preventDefault();
     this.selectedTodo = todo;
     this.isDialogOpen = true;
-    console.log('showContextMenu', todo);
   }
 }

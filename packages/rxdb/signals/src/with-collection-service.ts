@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */ // FIXME: Remove this
 import { Injector, Signal, computed, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   getCallStateKeys,
   setError,
@@ -22,28 +21,19 @@ import { NamedEntitySignals } from '@ngrx/signals/entities/src/models';
 import { SignalStoreFeatureResult } from '@ngrx/signals/src/signal-store-models';
 import { StateSignal } from '@ngrx/signals/src/state-signal';
 import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
-import {
-  DEFAULT_LOCAL_DOCUMENT_ID,
-  RXDB_CONFIG_COLLECTION,
-  RxCollectionCreatorExtended,
-} from '@ngx-odm/rxdb/config';
-import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import { computedAsync } from 'ngxtension/computed-async';
+import { DEFAULT_LOCAL_DOCUMENT_ID } from '@ngx-odm/rxdb/config';
+import { Entity, EntityId, NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
+// import { computedAsync } from 'ngxtension/computed-async';
+// import { computedFrom } from 'ngxtension/computed-from';
+// import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import type { MangoQuery, MangoQuerySelector } from 'rxdb';
-import { Subscribable, iif, map, of, switchMap, tap } from 'rxjs';
 
-type EntityId = string;
-type Entity = { id: EntityId };
+const { isEmpty, logger, tapOnce } = NgxRxdbUtils;
+
 export type Filter = string | Record<string, unknown>;
-export type Query<T = Entity> = {
-  /**
-   * Selector is optional,
-   * if not given, the query matches all documents
-   * that are not _removed=true.
-   */
+export type QuerySelect<T = Entity> = {
   selector?: MangoQuerySelector<T>;
 };
-type FindQuery<E = Entity> = MangoQuery<E>;
 type LocalDocument = {
   filter: Filter;
   query: string;
@@ -101,9 +91,13 @@ export function getCollectionServiceKeys(options: { collection?: string }) {
   const entitiesKey = options.collection ? `${options.collection}Entities` : 'entities';
   const entityMapKey = options.collection ? `${options.collection}EntityMap` : 'entityMap';
   const idsKey = options.collection ? `${options.collection}Ids` : 'ids';
+  const setQueryParamsKey = 'setQueryParams';
+  const updateQueryParamsKey = 'updateQueryParams';
 
   return {
     filterKey,
+    setQueryParamsKey,
+    updateQueryParamsKey,
     selectedIdsKey,
     selectedEntitiesKey,
     restoreFilterKey,
@@ -131,6 +125,8 @@ export type NamedCollectionServiceState<
 > = {
   [K in CName as `${K}Filter`]: F;
 } & {
+  [`query`]: MangoQuery<E>;
+} & {
   [K in CName as `selected${Capitalize<K>}Ids`]: Record<EntityId, boolean>;
 } & {
   [K in CName as `current${Capitalize<K>}`]: E;
@@ -140,6 +136,7 @@ export type NamedCollectionServiceState<
 
 export type CollectionServiceState<E extends Entity, F extends Filter> = {
   filter: F;
+  query: MangoQuery<E>;
   selectedIds: Record<EntityId, boolean>;
   current: E;
   docs: E[];
@@ -161,9 +158,13 @@ export type NamedCollectionServiceMethods<
   F extends Filter,
   CName extends string,
 > = {
-  [K in CName as `restore${Capitalize<K>}Filter`]: () => void;
+  [`sync`]: () => void;
 } & {
   [K in CName as `update${Capitalize<K>}Filter`]: (filter: F) => void;
+} & {
+  [K in CName as `setQueryParams`]: (filter: F) => void;
+} & {
+  [K in CName as `updateQueryParams`]: (filter: F) => void;
 } & {
   [K in CName as `updateSelected${Capitalize<K>}Entities`]: (
     id: EntityId,
@@ -172,8 +173,6 @@ export type NamedCollectionServiceMethods<
 } & {
   [K in CName as `setCurrent${Capitalize<K>}`]: (entity: E) => void;
 } & {
-  ['findAllDocs']: (query?: Query<E>) => Subscribable<any>;
-} & {
   [K in CName as `find${Capitalize<K>}ById`]: (id: EntityId) => Promise<void>;
 } & {
   [K in CName as `insert${Capitalize<K>}`]: (entity: E) => Promise<void>;
@@ -181,26 +180,27 @@ export type NamedCollectionServiceMethods<
   [K in CName as `update${Capitalize<K>}`]: (entity: E) => Promise<void>;
 } & {
   [K in CName as `updateAll${Capitalize<K>}By`]: (
-    query: Query<E>,
+    query: QuerySelect<E>,
     data: Partial<E>
   ) => Promise<void>;
 } & {
   [K in CName as `remove${Capitalize<K>}`]: (entity: E) => Promise<void>;
 } & {
-  [K in CName as `removeAll${Capitalize<K>}By`]: (query: Query<E>) => Promise<void>;
+  [K in CName as `removeAll${Capitalize<K>}By`]: (query: QuerySelect<E>) => Promise<void>;
 };
 
 export type CollectionServiceMethods<E extends Entity, F extends Filter> = {
-  restoreFilter: () => void;
+  sync: () => Promise<void>;
   updateFilter: (filter: F) => void;
+  setQueryParams(query: MangoQuery<E>): void;
+  updateQueryParams(query: MangoQuery<E>): void;
   updateSelected: (id: EntityId, selected: boolean) => void;
   setCurrent(entity: E): void;
-  findAllDocs: (query?: Query<E>) => Subscribable<any>;
   insert(entity: E): Promise<void>;
   update(entity: E): Promise<void>;
-  updateAllBy(query: Query<E>, data: Partial<E>): Promise<void>;
+  updateAllBy(query: QuerySelect<E>, data: Partial<E>): Promise<void>;
   remove(entity: E): Promise<void>;
-  removeAllBy(query: Query<E>): Promise<void>;
+  removeAllBy(query: QuerySelect<E>): Promise<void>;
 };
 
 export function withCollectionService<
@@ -210,7 +210,7 @@ export function withCollectionService<
 >(options: {
   collection: CName;
   filter: F;
-  query?: 'local' | FindQuery<E>;
+  query?: MangoQuery<E>;
 }): SignalStoreFeature<
   {
     state: Record<string, never>;
@@ -229,7 +229,7 @@ export function withCollectionService<
 >;
 export function withCollectionService<E extends Entity, F extends Filter>(options: {
   filter: F;
-  query?: 'local' | FindQuery<E>;
+  query?: MangoQuery<E>;
 }): SignalStoreFeature<
   SignalStoreFeatureResult,
   {
@@ -245,18 +245,19 @@ export function withCollectionService<
 >(options: {
   collection?: CName;
   filter?: F;
-  query?: 'local' | FindQuery<E>;
+  query?: MangoQuery<E>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }): SignalStoreFeature<any, any> {
   let colService: NgxRxdbCollection<E>;
-  let colConfig: RxCollectionCreatorExtended<E>;
 
-  const { collection: prefix, filter } = options;
+  const { collection: prefix, filter, query } = options;
   const {
     entitiesKey,
     filterKey,
     selectedEntitiesKey,
     selectedIdsKey,
-    restoreFilterKey,
+    setQueryParamsKey,
+    updateQueryParamsKey,
     updateFilterKey,
     updateSelectedKey,
 
@@ -271,7 +272,7 @@ export function withCollectionService<
 
   const { callStateKey } = getCallStateKeys({ collection: prefix });
 
-  const ensureWithEntities = (store: Record<string, unknown> & StateSignal<object>) => {
+  const ensureWithEntities = (store: Record<string, unknown>) => {
     if (!(entitiesKey in store)) {
       throw new Error(
         `'withCollectionService' can only be used together with 'withEntities' from "@ngrx/singals/entities" signal store feature.`
@@ -282,8 +283,8 @@ export function withCollectionService<
   const ensureCollection = () => {
     if (colService instanceof NgxRxdbCollection) return;
     const injector = inject(Injector);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     colService = injector.get(NgxRxdbCollectionService) as NgxRxdbCollection<any>;
-    colConfig = injector.get(RXDB_CONFIG_COLLECTION);
   };
 
   return signalStoreFeature(
@@ -295,40 +296,35 @@ export function withCollectionService<
       };
     }),
     withComputed((store: Record<string, unknown>) => {
-      ensureWithEntities(store as any);
+      ensureWithEntities(store);
       ensureCollection();
       const entities = store[entitiesKey] as Signal<E[]>;
       const selectedIds = store[selectedIdsKey] as Signal<Record<EntityId, boolean>>;
 
       return {
-        // TODO: decide if direct connection is needed
-        ['docs']: computedAsync(
-          () => {
-            const query: Query<E> = { selector: {} };
-            return colService.docs(query).pipe(
-              tap(docs => {
-                NgxRxdbUtils.logger.log('docs', docs);
-              })
-            );
-          },
-          { initialValue: [] }
-        ),
         [selectedEntitiesKey]: computed(() => entities().filter(e => selectedIds()[e.id])),
         ['count']: computed(() => entities().length),
+        ['query']: toSignal(colService.queryParams$), // computedFrom([colService.queryParams$])
       };
     }),
     withMethods((store: Record<string, unknown> & StateSignal<object>) => {
       ensureWithEntities(store);
       ensureCollection();
       return {
-        [restoreFilterKey]: async (): Promise<void> => {
-          if (colConfig?.options?.useQueryParams) {
-            // await colService.restoreLocalFromURL(DEFAULT_LOCAL_DOCUMENT_ID);
-          }
-          const local = await colService.getLocal(DEFAULT_LOCAL_DOCUMENT_ID);
-          if (local) {
-            patchState(store, { [filterKey]: local[filterKey] });
-          }
+        ['sync']: async (): Promise<void> => {
+          store[callStateKey] && patchState(store, setLoading(prefix));
+          await colService.sync();
+          store[callStateKey] && patchState(store, setLoaded(prefix));
+        },
+        [setQueryParamsKey]: async (q: MangoQuery<E>): Promise<void> => {
+          store[callStateKey] && patchState(store, setLoading(prefix));
+          colService.setQueryParams(q);
+          store[callStateKey] && patchState(store, setLoaded(prefix));
+        },
+        [updateQueryParamsKey]: async (q: MangoQuery<E>): Promise<void> => {
+          store[callStateKey] && patchState(store, setLoading(prefix));
+          colService.patchQueryParams(q);
+          store[callStateKey] && patchState(store, setLoaded(prefix));
         },
         [updateFilterKey]: async (filter: F): Promise<void> => {
           store[callStateKey] && patchState(store, setLoading(prefix));
@@ -383,11 +379,14 @@ export function withCollectionService<
             throw e;
           }
         },
-        [updateAllByKey]: async (query: Query<E>, data: Partial<E>): Promise<void> => {
+        [updateAllByKey]: async (
+          query: QuerySelect<E>,
+          data: Partial<E>
+        ): Promise<void> => {
           store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
-            const result = await colService.updateBulk(query, data);
+            await colService.updateBulk(query, data);
             // INFO: here we don't need to update entity store because
             // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
             store[callStateKey] && patchState(store, setLoaded(prefix));
@@ -409,11 +408,11 @@ export function withCollectionService<
             throw e;
           }
         },
-        [removeAllByKey]: async (query: Query<E>): Promise<void> => {
+        [removeAllByKey]: async (query: QuerySelect<E>): Promise<void> => {
           store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
-            const { success, error } = await colService.removeBulk(query);
+            await colService.removeBulk(query);
             // INFO: here we don't need to update entity store because
             // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
             store[callStateKey] && patchState(store, setLoaded(prefix));
@@ -426,40 +425,36 @@ export function withCollectionService<
     }),
     withHooks({
       /**
-       * Populate signals/entities with values
+       * Subscribe to RxDB documents to set signals/entities store
        * @param store
        */
       onInit: async store => {
-        iif(
-          () => options?.query === 'local',
-          colService.queryParams$,
-          of(options?.query as any)
-        )
+        logger.log('withCollectionService:onInit:docs:query', query);
+        store[callStateKey] && patchState(store, setLoading(prefix));
+        colService
+          .docs(colService.queryParams$)
           .pipe(
-            switchMap((query: FindQuery<E> | undefined) => {
-              NgxRxdbUtils.logger.log('withCollectionService:onInit:docs:query', query);
-              store[callStateKey] && patchState(store, setLoading(prefix));
-              return colService.docs(query).pipe(
-                tapResponse({
-                  next: result => {
-                    store[callStateKey] && patchState(store, setLoaded(prefix));
-                    return patchState(
-                      store,
-                      prefix
-                        ? setAllEntities(result, { collection: prefix })
-                        : setAllEntities(result)
-                    );
-                  },
-                  error: e => {
-                    NgxRxdbUtils.logger.log(e);
-                    store[callStateKey] && patchState(store, setError(e, prefix));
-                  },
-                  finalize: () =>
-                    store[callStateKey] && patchState(store, setLoaded(prefix)),
-                })
-              );
+            tapOnce(() => {
+              if (!isEmpty(query)) {
+                colService.setQueryParams(query!);
+              }
+            }),
+            tapResponse({
+              next: result => {
+                store[callStateKey] && patchState(store, setLoaded(prefix));
+                return patchState(
+                  store,
+                  prefix
+                    ? setAllEntities(result, { collection: prefix })
+                    : setAllEntities(result)
+                );
+              },
+              error: e => {
+                logger.log(e);
+                store[callStateKey] && patchState(store, setError(e, prefix));
+              },
+              finalize: () => store[callStateKey] && patchState(store, setLoaded(prefix)),
             })
-            // takeUntilDestroyed()
           )
           .subscribe();
       },

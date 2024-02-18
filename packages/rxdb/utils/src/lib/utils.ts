@@ -3,7 +3,7 @@ import { NgZone, isDevMode } from '@angular/core';
 import type { FilledMangoQuery, PreparedQuery, RxDocument, RxJsonSchema } from 'rxdb';
 import { prepareQuery } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
-import { Observable, OperatorFunction, map, retry, tap, timer } from 'rxjs';
+import { Observable, OperatorFunction, defer, map, retry, tap, timer } from 'rxjs';
 
 /** @internal */
 export type AnyObject = Record<string, any>;
@@ -53,6 +53,8 @@ export type IsKnownRecord<T> = IsRecord<T> extends true
     ? false
     : true
   : false;
+export type EntityId = string;
+export type Entity = { id: EntityId };
 
 export namespace NgxRxdbUtils {
   /**
@@ -349,6 +351,18 @@ export namespace NgxRxdbUtils {
       );
   }
 
+  /**
+   * Operator to act as a tap, but only once
+   * @param callback AnyFn
+   */
+  export const tapOnce = <T>(callback: () => void) => {
+    return (source: Observable<T>): Observable<T> =>
+      defer(() => {
+        callback();
+        return source;
+      });
+  };
+
   export const getDefaultQuery: () => FilledMangoQuery<any> = () => ({
     selector: { _deleted: { $eq: false } },
     skip: 0,
@@ -397,11 +411,11 @@ export const getDefaultFetch = () => {
  */
 export function getDefaultFetchWithHeaders(headers: Record<string, string> = {}) {
   const fetch = getDefaultFetch();
-  const ret = (url: string, options: Record<string, any>) => {
+  const ret = (url: string, options: Record<string, any> = {}) => {
     Object.assign(options, {
       headers: {
-        ...options.headers,
-        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+        // 'Content-Type': 'application/json',
         ...headers,
       },
     });
