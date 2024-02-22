@@ -22,10 +22,7 @@
     />
     <label for="toggle-all" title="Mark all as complete">Mark all as complete</label>
     <ul [@listAnimation]="todoStore.filter()" class="todo-list">
-      <li
-        *ngFor="let todo of todoStore.filtered(); trackBy: trackByFn"
-        [class.completed]="todo.completed"
-      >
+      <li *ngFor="let todo of todos; trackBy: trackByFn" [class.completed]="todo.completed">
         <div class="view">
           <input
             class="toggle"
@@ -62,10 +59,22 @@
     </ng-container>
     <ul class="filters">
       <li>
-        <a href="javascript:void(0);" (click)="todoStore.sortTodos('desc')">&#8675;</a>
+        <a
+          href="javascript:void(0);"
+          (click)="todoStore.sortTodos('desc')"
+          [ngClass]="{ selected: todoStore.sortDir() === 'desc' }"
+        >
+          &#8675;
+        </a>
       </li>
       <li>
-        <a href="javascript:void(0);" (click)="todoStore.sortTodos('asc')">&#8673;</a>
+        <a
+          href="javascript:void(0);"
+          (click)="todoStore.sortTodos('asc')"
+          [ngClass]="{ selected: todoStore.sortDir() === 'asc' }"
+        >
+          &#8673;
+        </a>
       </li>
       <li>
         <a
@@ -101,7 +110,7 @@
       (click)="todoStore.removeCompletedTodos()"
       style="z-index: 3"
     >
-      Clear completed ({{ todoStore.count() - todoStore.remaining() }})
+      Clear completed ({{ todoStore.countAll() - todoStore.remaining() }})
     </button>
   </footer>
 </section>

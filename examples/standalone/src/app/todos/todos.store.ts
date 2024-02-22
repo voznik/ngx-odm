@@ -12,10 +12,13 @@ import {
 import { withEntities } from '@ngrx/signals/entities';
 import { withCollectionService } from '@ngx-odm/rxdb/signals';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
+import { computedFrom } from 'ngxtension/computed-from';
+import { firstPropertyValueOfObject } from 'rxdb/plugins/utils';
+import { map, pipe, filter as filterOp } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { Todo, TodosFilter } from './todos.model';
 
-const { isEmpty } = NgxRxdbUtils;
+const { isEmpty, isValidNumber } = NgxRxdbUtils;
 
 export const TodoStore = signalStore(
   { providedIn: 'root' },
@@ -29,35 +32,58 @@ export const TodoStore = signalStore(
   withCollectionService<Todo, TodosFilter>({
     filter: 'ALL' as TodosFilter,
     query: {},
+    countQuery: { selector: { completed: { $eq: false } } }, // count all remaining todos
   }),
   // INFO: Function calls in a template
   // Over the years, Angular developers have learned to avoid calling functions inside templates because a function re-runs every change detection and used pure pipes instead. This would cause expensive computations to run multiple times unnecessarily if the passed arguments did not change.
   // In a signal-based component, this idea no longer applies because the expressions will only re-evaluate as a result of a signal dependency change.
   // With signals, we no longer have to care about handling subscriptions. It is absolutely fine to call a signal function in the template since only the part that depends on that signal will be updated.
-  withComputed(({ count, entities, query, newTodo, filter }) => {
+  withComputed(({ count, countAll, countFiltered, entities, query, newTodo, filter }) => {
+    const isAddTodoDisabled = computed(() => newTodo().length < 4);
+
+    const filtered = computed(() => {
+      const all = entities();
+      const queryValue = query();
+      if (!isEmpty(queryValue)) {
+        return all;
+      }
+      const filterValue = filter();
+      if (filterValue === 'ALL') {
+        return all;
+      }
+      return all.filter(todo => {
+        return todo.completed === (filterValue === 'COMPLETED');
+      });
+    });
+
+    const remaining = computed(() => countFiltered());
+
+    const title = computedFrom(
+      [countAll, remaining],
+      pipe(
+        map(([all, rem]) => {
+          if (!isValidNumber(all) || !isValidNumber(rem)) {
+            return '';
+          }
+          return `(${all - rem}/${all}) Todos done`;
+        })
+      )
+    );
+
+    const sortDir = computed(() => {
+      const curQuery = query();
+      if (isEmpty(curQuery?.sort)) {
+        return undefined;
+      }
+      return firstPropertyValueOfObject(curQuery?.sort?.[0]);
+    });
+
     return {
-      isAddTodoDisabled: computed(() => newTodo().length < 4),
-      filtered: computed(() => {
-        const queryValue = query();
-        if (!isEmpty(queryValue)) {
-          return entities();
-        }
-        const filterValue = filter();
-        if (filterValue === 'ALL') {
-          return entities();
-        }
-        return entities().filter(todo => {
-          return todo.completed === (filterValue === 'COMPLETED');
-        });
-      }),
-      remaining: computed(() => {
-        return count() - entities().filter(todo => !todo.completed).length;
-      }),
-      title: computed(() => {
-        const all = count(),
-          remaining = entities().filter(todo => !todo.completed).length;
-        return `(${all - remaining}/${all}) Todos done`;
-      }),
+      isAddTodoDisabled,
+      filtered,
+      remaining,
+      title,
+      sortDir,
     };
   }),
   withMethods(store => {

@@ -208,6 +208,10 @@ export namespace NgxRxdbUtils {
     return zone instanceof NgZone;
   }
 
+  export function isValidNumber(value: any): value is number {
+    return typeof value === 'number' && !isNaN(value);
+  }
+
   export function noop(): void {
     return void 0;
   }

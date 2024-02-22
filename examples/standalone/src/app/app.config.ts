@@ -21,6 +21,7 @@ export const appConfig: ApplicationConfig = {
         localDocuments: true,
         multiInstance: true,
         ignoreDuplicate: false,
+        allowSlowCount: true,
         // storage: getRxStorageDexie(), // INFO: can be ommited, will be provide by `storageType` string
         options: {
           plugins: [

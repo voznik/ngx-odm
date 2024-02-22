@@ -38,14 +38,17 @@ export class TodosComponent {
   private renderScheduler = inject(RenderScheduler);
   private titleService = inject(Title);
   readonly todoStore = inject(TodoStore);
+  // INFO: Copy todos from store inside effect to properly trigger zoneless change detection
+  todos: Todo[] = [];
 
   trackByFn = (index: number, item: Todo) => {
-    return item.last_modified;
+    return item.id + item.last_modified;
   };
 
   constructor() {
     effect(() => {
-      const { title } = this.todoStore;
+      const { filtered, title } = this.todoStore;
+      this.todos = filtered();
       const titleString = title();
       this.titleService.setTitle(titleString);
 

@@ -1,5 +1,4 @@
 import { Injector, Signal, computed, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import {
   getCallStateKeys,
   setError,
@@ -23,10 +22,11 @@ import { StateSignal } from '@ngrx/signals/src/state-signal';
 import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
 import { DEFAULT_LOCAL_DOCUMENT_ID } from '@ngx-odm/rxdb/config';
 import { Entity, EntityId, NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-// import { computedAsync } from 'ngxtension/computed-async';
+import { computedAsync } from 'ngxtension/computed-async';
 // import { computedFrom } from 'ngxtension/computed-from';
 // import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import type { MangoQuery, MangoQuerySelector } from 'rxdb';
+import type { MangoQuery, MangoQuerySelector, MangoQuerySelectorAndIndex } from 'rxdb';
+import { switchMap, tap } from 'rxjs';
 
 const { isEmpty, logger, tapOnce } = NgxRxdbUtils;
 
@@ -42,6 +42,10 @@ type LocalDocument = {
 function capitalize(str: string): string {
   return str ? str[0].toUpperCase() + str.substring(1) : str;
 }
+
+const queryKey = 'query';
+const countKey = 'count';
+const countAllKey = 'countAll';
 
 export function getCollectionServiceKeys(options: { collection?: string }) {
   const filterKey = options.collection ? `${options.collection}Filter` : 'filter';
@@ -130,8 +134,6 @@ export type NamedCollectionServiceState<
   [K in CName as `selected${Capitalize<K>}Ids`]: Record<EntityId, boolean>;
 } & {
   [K in CName as `current${Capitalize<K>}`]: E;
-} & {
-  [K in CName as `docs`]: E[];
 };
 
 export type CollectionServiceState<E extends Entity, F extends Filter> = {
@@ -139,18 +141,23 @@ export type CollectionServiceState<E extends Entity, F extends Filter> = {
   query: MangoQuery<E>;
   selectedIds: Record<EntityId, boolean>;
   current: E;
-  docs: E[];
 };
 
 export type NamedCollectionServiceSignals<E extends Entity, CName extends string> = {
   [K in CName as `selected${Capitalize<K>}Entities`]: Signal<E[]>;
 } & {
   [K in CName as `count${Capitalize<K>}Entities`]: Signal<number>;
+} & {
+  [K in CName as `countAll`]: Signal<number>;
+} & {
+  [K in CName as `countFiltered`]: Signal<number>;
 };
 
 export type CollectionServiceSignals<E extends Entity> = {
   selectedEntities: Signal<E[]>;
   count: Signal<number>;
+  countAll: Signal<number>;
+  countFiltered: Signal<number>;
 };
 
 export type NamedCollectionServiceMethods<
@@ -211,6 +218,7 @@ export function withCollectionService<
   collection: CName;
   filter: F;
   query?: MangoQuery<E>;
+  countQuery?: MangoQuerySelectorAndIndex<E>;
 }): SignalStoreFeature<
   {
     state: Record<string, never>;
@@ -230,6 +238,7 @@ export function withCollectionService<
 export function withCollectionService<E extends Entity, F extends Filter>(options: {
   filter: F;
   query?: MangoQuery<E>;
+  countQuery?: MangoQuerySelectorAndIndex<E>;
 }): SignalStoreFeature<
   SignalStoreFeatureResult,
   {
@@ -246,14 +255,15 @@ export function withCollectionService<
   collection?: CName;
   filter?: F;
   query?: MangoQuery<E>;
+  countQuery?: MangoQuerySelectorAndIndex<E>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }): SignalStoreFeature<any, any> {
   let colService: NgxRxdbCollection<E>;
 
-  const { collection: prefix, filter, query } = options;
+  const { collection: prefix, filter, query, countQuery } = options;
   const {
-    entitiesKey,
     filterKey,
+    entitiesKey,
     selectedEntitiesKey,
     selectedIdsKey,
     setQueryParamsKey,
@@ -293,6 +303,7 @@ export function withCollectionService<
         [filterKey]: filter,
         [selectedIdsKey]: {} as Record<EntityId, boolean>,
         [currentKey]: undefined as E | undefined,
+        [queryKey]: query || {},
       };
     }),
     withComputed((store: Record<string, unknown>) => {
@@ -303,8 +314,9 @@ export function withCollectionService<
 
       return {
         [selectedEntitiesKey]: computed(() => entities().filter(e => selectedIds()[e.id])),
-        ['count']: computed(() => entities().length),
-        ['query']: toSignal(colService.queryParams$), // computedFrom([colService.queryParams$])
+        [countKey]: computed(() => entities().length),
+        [countAllKey]: computedAsync(() => colService.count()),
+        [`countFiltered`]: computedAsync(() => colService.count(countQuery)),
       };
     }),
     withMethods((store: Record<string, unknown> & StateSignal<object>) => {
@@ -316,15 +328,11 @@ export function withCollectionService<
           await colService.sync();
           store[callStateKey] && patchState(store, setLoaded(prefix));
         },
-        [setQueryParamsKey]: async (q: MangoQuery<E>): Promise<void> => {
-          store[callStateKey] && patchState(store, setLoading(prefix));
+        [setQueryParamsKey]: (q: MangoQuery<E>): void => {
           colService.setQueryParams(q);
-          store[callStateKey] && patchState(store, setLoaded(prefix));
         },
-        [updateQueryParamsKey]: async (q: MangoQuery<E>): Promise<void> => {
-          store[callStateKey] && patchState(store, setLoading(prefix));
+        [updateQueryParamsKey]: (q: MangoQuery<E>): void => {
           colService.patchQueryParams(q);
-          store[callStateKey] && patchState(store, setLoaded(prefix));
         },
         [updateFilterKey]: async (filter: F): Promise<void> => {
           store[callStateKey] && patchState(store, setLoading(prefix));
@@ -429,16 +437,20 @@ export function withCollectionService<
        * @param store
        */
       onInit: async store => {
-        logger.log('withCollectionService:onInit:docs:query', query);
         store[callStateKey] && patchState(store, setLoading(prefix));
-        colService
-          .docs(colService.queryParams$)
+        colService.queryParams$
           .pipe(
             tapOnce(() => {
+              // set initial query if provided with options
               if (!isEmpty(query)) {
                 colService.setQueryParams(query!);
               }
             }),
+            tap(queryParams => {
+              patchState(store, { query: queryParams }); // sync query to store
+              store[callStateKey] && patchState(store, setLoaded(prefix));
+            }),
+            switchMap(queryParams => colService.docs(queryParams)),
             tapResponse({
               next: result => {
                 store[callStateKey] && patchState(store, setLoaded(prefix));

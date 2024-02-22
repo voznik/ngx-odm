@@ -13,15 +13,15 @@ import { replicateCouchDB } from 'rxdb/plugins/replication-couchdb';
 import { environment } from '../../environments/environment';
 import { TODOS_INITIAL_STATE, Todo } from './todos.model';
 
-export const defaultConflictHandler: RxConflictHandler<any> = function (
+export const defaultConflictHandler: RxConflictHandler<Todo> = function (
   /**
    * The conflict handler gets 3 input properties:
    * - assumedMasterState: The state of the document that is assumed to be on the master branch
    * - newDocumentState: The new document state of the fork branch (=client) that RxDB want to write to the master
    * - realMasterState: The real master state of the document
    */
-  i: RxConflictHandlerInput<any>
-): Promise<RxConflictHandlerOutput<any>> {
+  i: RxConflictHandlerInput<Todo>
+): Promise<RxConflictHandlerOutput<Todo>> {
   /**
    * Here we detect if a conflict exists in the first place.
    * If there is no conflict, we return isEqual=true.

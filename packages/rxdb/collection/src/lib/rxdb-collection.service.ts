@@ -37,10 +37,8 @@ import {
   isObservable,
   lastValueFrom,
   map,
-  merge,
   of,
   shareReplay,
-  startWith,
   switchMap,
   takeWhile,
 } from 'rxjs';
@@ -246,10 +244,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    */
   count(query?: MangoQuery<T>): Observable<number> {
     return this.initialized$.pipe(
-      switchMap(() =>
-        merge(this.collection.insert$, this.collection.remove$).pipe(startWith(null))
-      ),
-      switchMap(() => this.collection.count(query).exec()),
+      switchMap(() => this.collection.count(query).$),
       runInZone(this.ngZone),
       debug('count'),
       shareReplay(RXJS_SHARE_REPLAY_DEFAULTS)
