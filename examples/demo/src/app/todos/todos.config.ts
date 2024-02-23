@@ -1,7 +1,32 @@
 import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
-import { conflictHandlerKinto } from '@ngx-odm/rxdb/replication-kinto';
-import type { RxCollection } from 'rxdb';
-import { TODOS_INITIAL_ITEMS } from './todos.model';
+import { deepEqual } from 'rxdb';
+import type {
+  RxConflictHandler,
+  RxConflictHandlerInput,
+  RxConflictHandlerOutput,
+  RxCollection,
+} from 'rxdb';
+import { TODOS_INITIAL_ITEMS, Todo } from './todos.model';
+
+/**
+ * The default conflict handler is a function that gets called when a conflict is detected.
+ * In your custom conflict handler you likely want to merge properties of the realMasterState and the newDocumentState instead.
+ * @param i
+ * @see https://rxdb.info/replication.html#conflict-handling
+ */
+const defaultConflictHandler: RxConflictHandler<Todo> = function (
+  i: RxConflictHandlerInput<Todo>
+): Promise<RxConflictHandlerOutput<Todo>> {
+  if (deepEqual(i.newDocumentState, i.realMasterState)) {
+    return Promise.resolve({
+      isEqual: true,
+    });
+  }
+  return Promise.resolve({
+    isEqual: false,
+    documentData: i.realMasterState,
+  });
+};
 
 export async function percentageCompletedFn() {
   const allDocs = await (this as RxCollection).find().exec();
@@ -39,5 +64,5 @@ export const TODOS_COLLECTION_CONFIG: RxCollectionCreatorExtended = {
     },
     3: d => d,
   },
-  conflictHandler: conflictHandlerKinto, // don't need custom for CouchDb example
+  conflictHandler: defaultConflictHandler, // don't need custom for CouchDb example
 };

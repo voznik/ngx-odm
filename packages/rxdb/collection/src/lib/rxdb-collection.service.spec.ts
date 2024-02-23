@@ -344,20 +344,49 @@ describe(`NgxRxdbCollectionService`, () => {
       expect(mockLocalDoc.remove).toHaveBeenCalled();
     });
 
-    it('should get attachments of a doc', async () => {
-      const id = '0';
-      const blob = new Blob(['test'], { type: 'text/plain' });
-      await service.collection.insert({
-        id,
-        title: 'test0',
+    it('should return all attachments of a doc as array of blob', async () => {
+      const id = '10';
+      const data = new Blob(['test'], { type: 'text/plain' });
+      const spy = jest.spyOn(service.collection, 'findOne').mockReturnValue({
+        exec: jest.fn().mockResolvedValue({
+          allAttachments: jest.fn().mockReturnValue([
+            {
+              getData: () => Promise.resolve(data),
+            },
+          ]),
+        }),
       } as any);
-      const doc0 = await service.collection.findOne(id).exec();
-      const spy = jest
-        .spyOn(doc0!, 'allAttachments')
-        .mockReturnValue([{ getData: () => Promise.resolve(blob) } as any]);
       const result = await service.getAttachments(id);
       expect(spy).toHaveBeenCalled();
-      expect(result).toEqual([blob]);
+      expect(result).toEqual([data]);
+    });
+
+    it('should return one attachment by its id of a doc as blob', async () => {
+      const id = '11';
+      const data = new Blob(['test'], { type: 'text/plain' });
+      const spy = jest.spyOn(service.collection, 'findOne').mockReturnValue({
+        exec: jest.fn().mockResolvedValue({
+          getAttachment: jest.fn().mockReturnValue({
+            getData: () => Promise.resolve(data),
+          }),
+        }),
+      } as any);
+      const result = await service.getAttachmentById(id, 'test');
+      expect(spy).toHaveBeenCalled();
+      expect(result).toEqual(data);
+    });
+
+    it(' should use plugin to set QueryParams ', () => {
+      const query = { selector: { id: { $eq: '0' } } };
+      const spy = jest.spyOn(service.collection, 'queryParamsSet');
+      service.setQueryParams(query);
+      expect(spy).toHaveBeenCalledWith(query);
+    });
+    it(' should use plugin to patch QueryParams ', () => {
+      const query = { limit: 1 };
+      const spy = jest.spyOn(service.collection, 'queryParamsPatch');
+      service.patchQueryParams(query);
+      expect(spy).toHaveBeenCalledWith(query);
     });
   });
 });

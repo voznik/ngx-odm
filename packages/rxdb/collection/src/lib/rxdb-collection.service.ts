@@ -100,13 +100,6 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
 
   constructor(public readonly config: RxCollectionCreatorExtended) {
     this.init(config);
-
-    this.replicationState?.error$.subscribe(err => {
-      logger.log('replicationState error:', err);
-    });
-    this.replicationState?.received$.subscribe(received => {
-      logger.log('replicationState received:', received);
-    });
   }
 
   /**

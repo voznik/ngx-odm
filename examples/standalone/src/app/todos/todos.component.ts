@@ -4,7 +4,7 @@ import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/cor
 import { Title } from '@angular/platform-browser';
 import { RenderScheduler } from '@ngrx/component';
 import { provideRxCollection } from '@ngx-odm/rxdb';
-import { TodosCollectionConfig } from './todos.config';
+import { TODOS_CONFIG } from './todos.config';
 import { Todo } from './todos.model';
 import { TodoStore } from './todos.store';
 
@@ -32,14 +32,17 @@ const listAnimation = trigger('listAnimation', [
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [listAnimation],
   imports: [CommonModule],
-  providers: [RenderScheduler, TodoStore, provideRxCollection(TodosCollectionConfig)],
+  providers: [
+    provideRxCollection(TODOS_CONFIG), // Collection will be created via this injection
+    TodoStore,
+    RenderScheduler,
+  ],
 })
 export class TodosComponent {
   private renderScheduler = inject(RenderScheduler);
   private titleService = inject(Title);
   readonly todoStore = inject(TodoStore);
-  // INFO: Copy todos from store inside effect to properly trigger zoneless change detection
-  todos: Todo[] = [];
+  todos: Todo[] = []; // Copy todos from store inside effect to properly trigger zoneless change detection
 
   trackByFn = (index: number, item: Todo) => {
     return item.id + item.last_modified;
@@ -48,7 +51,7 @@ export class TodosComponent {
   constructor() {
     effect(() => {
       const { filtered, title } = this.todoStore;
-      this.todos = filtered();
+      this.todos = filtered(); // Copy todos from store inside effect to properly trigger zoneless change detection
       const titleString = title();
       this.titleService.setTitle(titleString);
 
