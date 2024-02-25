@@ -25,6 +25,7 @@
       document.addEventListener('DOMContentLoaded', event => {
         const selectStorage = document.getElementById('storage');
         const selectReplication = document.getElementById('replication');
+        const useQueryParams = document.getElementById('queryParams');
         selectStorage.value = localStorage['_ngx_rxdb_storage'] =
           localStorage['_ngx_rxdb_storage'] ?? 'dexie';
         selectReplication.value = localStorage['_ngx_rxdb_replication'] =
@@ -35,6 +36,10 @@
         });
         selectReplication.addEventListener('change', function () {
           localStorage.setItem('_ngx_rxdb_replication', this.value);
+          window.location.reload();
+        });
+        useQueryParams.addEventListener('change', function () {
+          localStorage.setItem('_ngx_rxdb_queryparams', this.value);
           window.location.reload();
         });
       });
@@ -53,6 +58,10 @@
           <option value="" selected>none</option>
           <option value="couchdb">couchdb</option>
           <option value="kinto">kinto</option>
+        </select>
+        <select name="queryParams" id="queryParams">
+          <option value="" selected>filter locally</option>
+          <option value="true">use QueryParams</option>
         </select>
       </div>
       <div>

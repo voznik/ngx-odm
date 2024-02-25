@@ -11,11 +11,11 @@ import {
 import { withEntities } from '@ngrx/signals/entities';
 import { withCollectionService } from '@ngx-odm/rxdb/signals';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
+import { Todo, TodosFilter } from '@shared';
 import { computedFrom } from 'ngxtension/computed-from';
 import { firstPropertyValueOfObject } from 'rxdb/plugins/utils';
 import { map, pipe } from 'rxjs';
 import { v4 as uuid } from 'uuid';
-import { Todo, TodosFilter } from './todos.model';
 
 const { isEmpty, isValidNumber } = NgxRxdbUtils;
 

@@ -4,7 +4,7 @@
 
 ## Demo
 
-![Example Screencast](screencast.gif)
+![Example Screencast](https://github.com/voznik/ngx-odm/blob/master/examples/screencast.gif?raw=true)
 
 [demo](https://voznik.github.io/ngx-odm/) - based on TodoMVC
 

@@ -4,6 +4,7 @@
     "types": ["node"]
   },
   "files": [],
+  "include": ["../../shared/*.ts"],
   "references": [
     {
       "path": "./tsconfig.app.json"

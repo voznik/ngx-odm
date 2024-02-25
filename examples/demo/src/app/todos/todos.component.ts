@@ -1,32 +1,15 @@
-import { animate, query, stagger, style, transition, trigger } from '@angular/animations';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
+import { Todo, todosListAnimation } from '@shared';
 import { Observable, tap } from 'rxjs';
-import { Todo } from './todos.model';
 import { TodosService } from './todos.service';
-
-const listAnimation = trigger('listAnimation', [
-  transition('* <=> *', [
-    query(
-      ':enter',
-      [
-        style({ opacity: 0 }),
-        stagger('50ms', animate('60ms ease-in', style({ opacity: 1 }))),
-      ],
-      { optional: true }
-    ),
-    query(':leave', stagger('10ms', animate('50ms ease-out', style({ opacity: 0 }))), {
-      optional: true,
-    }),
-  ]),
-]);
 
 @Component({
   selector: 'demo-todos',
   templateUrl: './todos.component.html',
   styleUrls: ['./todos.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [listAnimation],
+  animations: [todosListAnimation],
 })
 export class TodosComponent {
   private title = inject(Title);

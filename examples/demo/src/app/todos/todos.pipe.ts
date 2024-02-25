@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
 import { RXDB_CONFIG_COLLECTION } from '@ngx-odm/rxdb/config';
-import { Todo, TodosFilter } from './todos.model';
+import { Todo, TodosFilter } from '@shared';
 
 @Pipe({ name: 'byStatus' })
 export class TodosPipe implements PipeTransform {

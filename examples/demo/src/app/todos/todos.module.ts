@@ -5,14 +5,10 @@ import { RouterModule } from '@angular/router';
 import { LetDirective, PushPipe } from '@ngrx/component';
 import { NgxRxdbModule } from '@ngx-odm/rxdb';
 import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
+import { TODOS_COLLECTION_CONFIG, Todo } from '@shared';
 import { TodosComponent } from './todos.component';
-import { TODOS_COLLECTION_CONFIG } from './todos.config';
-import { Todo } from './todos.model';
 import { TodosPipe } from './todos.pipe';
-import { todosReplicationStateFactory } from './todos.replication';
 import { TodosService } from './todos.service';
-
-TODOS_COLLECTION_CONFIG.options.replicationStateFactory = todosReplicationStateFactory;
 
 @NgModule({
   imports: [

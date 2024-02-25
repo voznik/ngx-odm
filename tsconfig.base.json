@@ -55,7 +55,8 @@
         "dist/packages/rxdb/utils",
         "packages/rxdb/utils/src/index.ts"
       ],
-      "@package": ["packages/rxdb/package.json"]
+      "@package": ["packages/rxdb/package.json"],
+      "@shared": ["examples/shared/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

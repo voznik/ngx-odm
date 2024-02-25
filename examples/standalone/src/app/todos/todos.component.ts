@@ -1,28 +1,10 @@
-import { animate, query, stagger, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { RenderScheduler } from '@ngrx/component';
 import { provideRxCollection } from '@ngx-odm/rxdb';
-import { TODOS_CONFIG } from './todos.config';
-import { Todo } from './todos.model';
+import { Todo, TODOS_COLLECTION_CONFIG, todosListAnimation } from '@shared';
 import { TodoStore } from './todos.store';
-
-const listAnimation = trigger('listAnimation', [
-  transition('* <=> *', [
-    query(
-      ':enter',
-      [
-        style({ opacity: 0 }),
-        stagger('50ms', animate('60ms ease-in', style({ opacity: 1 }))),
-      ],
-      { optional: true }
-    ),
-    query(':leave', stagger('10ms', animate('50ms ease-out', style({ opacity: 0 }))), {
-      optional: true,
-    }),
-  ]),
-]);
 
 @Component({
   standalone: true,
@@ -30,10 +12,10 @@ const listAnimation = trigger('listAnimation', [
   templateUrl: './todos.component.html',
   styleUrls: ['./todos.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [listAnimation],
+  animations: [todosListAnimation],
   imports: [CommonModule],
   providers: [
-    provideRxCollection(TODOS_CONFIG), // Collection will be created via this injection
+    provideRxCollection(TODOS_COLLECTION_CONFIG), // Collection will be created via this injection
     TodoStore,
     RenderScheduler,
   ],

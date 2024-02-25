@@ -2,9 +2,9 @@
 import { Injectable, inject } from '@angular/core';
 import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
 import { DEFAULT_LOCAL_DOCUMENT_ID } from '@ngx-odm/rxdb/config';
+import { Todo, TodosFilter, TodosLocalState } from '@shared';
 import { Observable, distinctUntilChanged, startWith } from 'rxjs';
 import { v4 as uuid } from 'uuid';
-import { Todo, TodosFilter, TodosLocalState } from './todos.model';
 
 const withAttachments = true;
 
@@ -99,11 +99,7 @@ export class TodosService {
   filterTodos(filter: TodosFilter): void {
     const selector = filter === 'ALL' ? {} : { completed: { $eq: filter === 'COMPLETED' } };
     this.collectionService.patchQueryParams({ selector });
-    this.collectionService.setLocal<TodosLocalState>(
-      DEFAULT_LOCAL_DOCUMENT_ID,
-      'filter',
-      filter
-    );
+    this.collectionService.upsertLocal(DEFAULT_LOCAL_DOCUMENT_ID, { filter });
   }
 
   sortTodos(dir: 'asc' | 'desc'): void {
