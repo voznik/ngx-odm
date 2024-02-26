@@ -20,7 +20,7 @@ export const TODOS_COLLECTION_CONFIG: RxCollectionCreatorExtended = {
   options: {
     schemaUrl: 'assets/data/todo.schema.json', // load schema from remote url
     initialDocs: TODOS_INITIAL_ITEMS, // populate collection with initial data,
-    useQueryParams: localStorage['_ngx_rxdb_queryparams'], // bind collection filtering/sorting to URL query params,
+    useQueryParams: localStorage['_ngx_rxdb_queryparams'] === 'true', // bind collection filtering/sorting to URL query params,
     replicationStateFactory: todosReplicationStateFactory, // create replication state for collection
   },
   statics: collectionMethods,

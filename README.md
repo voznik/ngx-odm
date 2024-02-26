@@ -247,7 +247,14 @@ By using this module you can simplify your work with RxDB in Angular application
   - optionally provide syncronization with remote db (CouchDB, Kinto etc.) as DB options
 - Automatically initialize RxCollection for each _lazy-loaded Feature module / standalone component_ with config
 - Work with documents via _NgxRxdbCollectionService_ with unified methods instead of using _RxCollection_ directly (though you still have access to _RxCollection_ and _RxDatabase_ instance)
+  - simple methods to work database & documents (with queries)
+  - simple methods to work with local documents
+  - simple methods to work with attachments
+  - simple replication sync initialization
 - Work with signals and entities with `@ngrx/signals` and `@ngrx/entity` (optionally _zoneless_) (see [example](examples/standalone/src/app/todos/todos.store.ts))
+- Persist collection query ([mango-query-syntax](https://github.com/cloudant/mango)) in URL with new plugin `query-params-plugin` (in demo, set localStorage `_ngx_rxdb_queryparams` )
+  - provide Observable of current URL (automatically for Angular)
+  - simple methods to set or patch filter, sort, limit, skip
 
 <!-- ## Diagrams
 
