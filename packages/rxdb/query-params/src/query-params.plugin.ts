@@ -4,7 +4,7 @@ import {
   RxCollectionExtended as RxCollection,
 } from '@ngx-odm/rxdb/config';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import type { MangoQuery, RxPlugin, RxCollection as _RxCollection } from 'rxdb';
+import type { MangoQuery, RxPlugin, RxSchema, RxCollection as _RxCollection } from 'rxdb';
 import {
   BehaviorSubject,
   EMPTY,
@@ -19,13 +19,14 @@ import { parseUrlToMangoQuery, stringifyParam } from './utils';
 
 const { logger, compactObject } = NgxRxdbUtils;
 
-const _queryParams$ = new BehaviorSubject<MangoQuery<any>>({} as any);
-
 export const RxDBPUseQueryParamsPlugin: RxPlugin = {
   name: 'query-params-plugin',
   rxdb: true,
   prototypes: {
     RxCollection: (proto: _RxCollection) => {
+      const _queryParams$ = new BehaviorSubject<MangoQuery<any>>({} as any);
+      let useQueryParams = false;
+      let schema: RxSchema;
       let initDone = false;
       let currentUrl = '';
       let updateQueryParamsInLocationFn: (
@@ -37,7 +38,10 @@ export const RxDBPUseQueryParamsPlugin: RxPlugin = {
         currentUrl$: Observable<string> = EMPTY,
         _updateQueryParamsInLocationFn: (queryParams: MangoQueryParams) => Promise<any>
       ): void {
-        if (!this.options?.useQueryParams || initDone) return;
+        useQueryParams = !!this.options?.useQueryParams;
+        schema = this.schema;
+
+        if (!useQueryParams || initDone) return;
         updateQueryParamsInLocationFn = _updateQueryParamsInLocationFn;
 
         currentUrl$
@@ -46,7 +50,7 @@ export const RxDBPUseQueryParamsPlugin: RxPlugin = {
             tap(url => {
               currentUrl = url;
             }),
-            map(url => parseUrlToMangoQuery(url, this.schema)),
+            map(url => parseUrlToMangoQuery(url, schema)),
             catchError(err => {
               logger.log('Error in parsing url to mango query', err);
               return _queryParams$;
@@ -60,8 +64,8 @@ export const RxDBPUseQueryParamsPlugin: RxPlugin = {
 
         initDone = true;
       }
-      function set(this: RxCollection, query: MangoQuery): void {
-        if (!this.options?.useQueryParams) return;
+      function set(query: MangoQuery): void {
+        if (!useQueryParams) return;
         const { selector, sort, limit, skip } = query;
         const queryParams: MangoQueryParams = { limit, skip };
         if (selector) {
@@ -72,9 +76,9 @@ export const RxDBPUseQueryParamsPlugin: RxPlugin = {
         }
         updateQueryParamsInLocationFn(queryParams);
       }
-      function patch(this: RxCollection, query: MangoQuery): void {
-        if (!this.options?.useQueryParams) return;
-        const parsed = parseUrlToMangoQuery(currentUrl, this.schema);
+      function patch(query: MangoQuery): void {
+        if (!useQueryParams) return;
+        const parsed = parseUrlToMangoQuery(currentUrl, schema);
         const queryParams: MangoQueryParams = {
           selector: stringifyParam(query.selector || parsed.selector),
           sort: stringifyParam(query.sort || parsed.sort),
@@ -84,13 +88,20 @@ export const RxDBPUseQueryParamsPlugin: RxPlugin = {
         updateQueryParamsInLocationFn(compactObject(queryParams));
       }
 
-      Object.assign(proto, {
-        queryParams$: _queryParams$.asObservable(),
-        queryParamsInit: init,
-        queryParamsGet: () => _queryParams$.getValue(),
-        queryParamsSet: set,
-        queryParamsPatch: patch,
-      });
+      Object.assign(
+        proto,
+        {
+          queryParams: {
+            $: _queryParams$.asObservable(),
+            get: () => _queryParams$.getValue(),
+            set,
+            patch,
+          },
+        },
+        {
+          queryParamsInit: init,
+        }
+      );
     },
   },
   hooks: {

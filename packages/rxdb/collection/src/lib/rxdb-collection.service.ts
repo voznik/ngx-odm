@@ -95,7 +95,9 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   }
 
   get queryParams$(): Observable<MangoQuery<T>> {
-    return this.initialized$.pipe(switchMap(() => this.collection.queryParams$ || of({})));
+    return this.initialized$.pipe(
+      switchMap(() => this.collection.queryParams?.$ || of({}))
+    );
   }
 
   constructor(public readonly config: RxCollectionCreatorExtended) {
@@ -109,14 +111,30 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     this.collection?.destroy();
   }
 
+  /**
+   * Sets stored query for the collection.
+   * @param query The Mango query object.
+   */
   setQueryParams(query: MangoQuery<T>): void {
-    this.collection.queryParamsSet?.(query);
+    this.collection.queryParams?.set(query);
   }
 
+  /**
+   * Patch stored query of the collection.
+   * @param query The query parameters to patch.
+   */
   patchQueryParams(query: MangoQuery<T>): void {
-    this.collection.queryParamsPatch?.(query);
+    this.collection.queryParams?.patch(query);
   }
 
+  /**
+   * Synchronizes the collection with a remote database.
+   * If a replication state factory is provided in the configuration options, a new replication state will be created.
+   * If a replication state already exists, it will be re-synced.
+   * The replication will automatically start if the autoStart option is enabled.
+   * The replication will also re-sync when the device goes back online.
+   * @returns A promise that resolves when the synchronization is complete.
+   */
   async sync(): Promise<void> {
     await this.ensureCollection();
     if (isValidRxReplicationState(this.replicationState)) {
@@ -246,7 +264,6 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
 
   /**
    * This does basically what find() does, but it returns only a single document.
-   * You can pass a primary value to find a single document more easily.
    * @param id
    * @param withRevAndAttachments
    */
@@ -495,17 +512,28 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     );
   }
 
+  /**
+   * Inserts a local document with the specified id and data into the collection's local documents
+   * @param id
+   * @param data
+   */
   async insertLocal<L extends object>(id: string, data: L): Promise<void> {
     await this.ensureCollection();
     await this.collection.insertLocal<L>(id, data);
   }
 
+  /**
+   * Upserts a local document with the given id and data
+   * @param id
+   * @param data
+   */
   async upsertLocal<L extends object>(id: string, data: L): Promise<void> {
     await this.ensureCollection();
     await this.collection.upsertLocal<L>(id, data);
   }
 
   /**
+   * Sets a local property value for a document in the collection.
    * @param id
    * @param prop
    * @param value
@@ -517,17 +545,18 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   ): Promise<void> {
     await this.ensureCollection();
     const loc = await this.collection.getLocal<L>(id);
-    if (!loc) {
-      return;
-    }
     // INFO: as of RxDB version 15.3.0, local doc method `set` is missing
     // so we update whole document
     await this.collection.upsertLocal<L>(id, {
-      ...loc?.toJSON().data,
+      ...(loc?.toJSON?.()?.data || {}),
       [prop as string]: value,
     } as L);
   }
 
+  /**
+   * Removes a local document from the collection.
+   * @param id
+   */
   async removeLocal(id: string): Promise<void> {
     await this.ensureCollection();
     const doc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
@@ -536,14 +565,14 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-constraint */
 
   private async init(config: RxCollectionCreatorExtended) {
-    const { name } = config;
+    const { name, options } = config;
     try {
       await this.dbService.initCollections({
         [name]: config,
       });
       this._collection = this.db.collections[name] as RxCollection<T>;
       // Init query params plugin
-      if (this.config.options?.useQueryParams) {
+      if (options?.useQueryParams) {
         this.collection.queryParamsInit!(this.currentUrl$, this.updateQueryParamsFn);
       }
       this._init$.next(true);

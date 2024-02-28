@@ -7,7 +7,7 @@ import {
   getMockRxCollection,
 } from '@ngx-odm/rxdb/testing';
 import type { MangoQuery, RxCollectionCreator, RxPlugin, RxQuery } from 'rxdb';
-import { Observable, Subject, firstValueFrom, of, take } from 'rxjs';
+import { Observable, Subject, take } from 'rxjs';
 import { RxDBPUseQueryParamsPlugin } from './query-params.plugin';
 
 describe('RxDBPUseQueryParamsPlugin', () => {
@@ -25,10 +25,10 @@ describe('RxDBPUseQueryParamsPlugin', () => {
     });
 
     it('should add properties & methods for query-params', async () => {
-      expect(collection.queryParams$).toBeInstanceOf(Observable);
       expect(collection.queryParamsInit).toBeDefined();
-      expect(collection.queryParamsSet).toBeDefined();
-      expect(collection.queryParamsPatch).toBeDefined();
+      expect(collection.queryParams!.$).toBeInstanceOf(Observable);
+      expect(collection.queryParams!.set).toBeDefined();
+      expect(collection.queryParams!.patch).toBeDefined();
     });
 
     it('should properly intialize usage of query-params', async () => {
@@ -46,7 +46,7 @@ describe('RxDBPUseQueryParamsPlugin', () => {
         limit: 1,
         skip: undefined,
       };
-      const queryParamsValue = await collection.queryParams$!.pipe(take(1)).toPromise();
+      const queryParamsValue = await collection.queryParams!.$.pipe(take(1)).toPromise();
       expect(queryParamsValue).toEqual(expectedQueryParams);
     });
     it('should properly set query-params', async () => {
@@ -60,9 +60,9 @@ describe('RxDBPUseQueryParamsPlugin', () => {
         limit: 2,
         skip: 0,
       };
-      collection.queryParamsSet!(newQueryParams);
+      collection.queryParams!.set(newQueryParams);
       mockUrlStream$.next(nextUrl);
-      const queryParamsValue = await collection.queryParams$!.pipe(take(1)).toPromise();
+      const queryParamsValue = await collection.queryParams!.$.pipe(take(1)).toPromise();
       expect(queryParamsValue).toEqual(newQueryParams);
     });
     it('should properly patch query-params', async () => {
@@ -74,9 +74,9 @@ describe('RxDBPUseQueryParamsPlugin', () => {
         limit: 1,
         skip: 1,
       };
-      collection.queryParamsPatch!(newQueryParams);
+      collection.queryParams!.patch(newQueryParams);
       mockUrlStream$.next(nextUrl);
-      const queryParamsValue = await collection.queryParams$!.pipe(take(1)).toPromise();
+      const queryParamsValue = await collection.queryParams!.$.pipe(take(1)).toPromise();
       expect(queryParamsValue).toMatchObject(newQueryParams);
     });
   });

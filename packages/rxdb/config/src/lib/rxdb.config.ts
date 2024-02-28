@@ -43,10 +43,12 @@ export type RxCollectionWiithQueryParams<T = any> = {
     currentUrl$: Observable<string>,
     updateQueryParamsInLocationFn: (queryParams: MangoQueryParams) => Promise<any>
   ) => void;
-  queryParamsGet?(): MangoQuery<T>;
-  queryParamsSet?(query: MangoQuery<T>): void;
-  queryParamsPatch?(query: MangoQuery<T>): void;
-  queryParams$?: Observable<FilledMangoQuery<T>>;
+  queryParams?: {
+    $: Observable<FilledMangoQuery<T>>;
+    get(): MangoQuery<T>;
+    set(query: MangoQuery<T>): void;
+    patch(query: MangoQuery<T>): void;
+  };
 };
 
 export type RxCollectionWithMetadata = {

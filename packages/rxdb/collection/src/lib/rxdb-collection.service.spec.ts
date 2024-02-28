@@ -326,13 +326,13 @@ describe(`NgxRxdbCollectionService`, () => {
       expect(result).toEqual({ [prop]: value });
     });
 
-    it('should not update local doc if not found', async () => {
+    it('should insert local doc if not found', async () => {
       const id = '1';
       const prop = 'name';
       const value = 'updated';
       jest.spyOn(service.collection, 'getLocal').mockResolvedValueOnce(null);
       await service.setLocal(id, prop, value);
-      expect(service.collection.upsertLocal).not.toHaveBeenCalled();
+      expect(service.collection.upsertLocal).toHaveBeenCalled();
     });
 
     it('should remove local doc', async () => {
@@ -378,13 +378,14 @@ describe(`NgxRxdbCollectionService`, () => {
 
     it(' should use plugin to set QueryParams ', () => {
       const query = { selector: { id: { $eq: '0' } } };
-      const spy = jest.spyOn(service.collection, 'queryParamsSet');
+      const spy = jest.spyOn(service.collection.queryParams!, 'set');
       service.setQueryParams(query);
       expect(spy).toHaveBeenCalledWith(query);
     });
+
     it(' should use plugin to patch QueryParams ', () => {
       const query = { limit: 1 };
-      const spy = jest.spyOn(service.collection, 'queryParamsPatch');
+      const spy = jest.spyOn(service.collection.queryParams!, 'patch');
       service.patchQueryParams(query);
       expect(spy).toHaveBeenCalledWith(query);
     });
