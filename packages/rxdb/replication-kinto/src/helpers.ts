@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NgxRxdbUtils, getDefaultFetch } from '@ngx-odm/rxdb/utils';
-// import { deepEqual, type RxConflictHandlerInput, type RxConflictHandlerOutput } from 'rxdb';
 import {
   KintInfoResponse,
   KintoAggregateResponse,

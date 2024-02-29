@@ -10,6 +10,8 @@ import {
 import { loadRxDBPlugins } from './rxdb-plugin.loader';
 import { prepareCollections } from './rxdb-prepare.plugin';
 
+const { logger } = NgxRxdbUtils;
+
 /**
  * Service for managing a RxDB database instance.
  */
@@ -38,9 +40,9 @@ export class NgxRxdbService {
       await this.db.remove();
       await this.db.destroy();
       (this.dbInstance as unknown) = null;
-      NgxRxdbUtils.logger.log(`database destroy`);
+      logger.log(`database destroy`);
     } catch {
-      NgxRxdbUtils.logger.log(`database destroy error`);
+      logger.log(`database destroy error`);
     }
   }
 
@@ -55,18 +57,19 @@ export class NgxRxdbService {
       await loadRxDBPlugins(config.options?.plugins);
       this.dbInstance = await createRxDatabase(config);
       this.options = config;
-      NgxRxdbUtils.logger.log(
+      logger.log(
         `created database "${this.db.name}" with config "${JSON.stringify(config)}"`
       );
 
       // optional: can create collections from root config
       if (config?.options?.schemas) {
         const bulk = await this.initCollections(config.options.schemas);
-        NgxRxdbUtils.logger.log(
+        logger.log(
           `created ${Object.keys(bulk).length} collections bulk: ${Object.keys(bulk)}`
         );
       }
     } catch (error) {
+      logger.log('Error initializing the database:', error);
       throw error;
     }
   }
@@ -83,6 +86,7 @@ export class NgxRxdbService {
       const colCreators = await prepareCollections(colConfigs);
       return await this.db.addCollections(colCreators);
     } catch (error) {
+      logger.log('Error initializing collection(s)', error);
       throw error;
     }
   }

@@ -304,7 +304,7 @@ export const RxDBPreparePlugin: RxPlugin = {
       before: beforePreCreateRxSchema,
     },
     createRxCollection: {
-      after: afterCreateRxCollection as any, // FIXME: brakes tests
+      after: afterCreateRxCollection as any, // INFO: complex RxDB hook typing workaround
     },
   },
 };

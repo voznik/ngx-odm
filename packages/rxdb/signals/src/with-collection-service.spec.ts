@@ -1,24 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { TestBed } from '@angular/core/testing';
 import { getState, signalStore } from '@ngrx/signals';
-import { EntityState, withEntities } from '@ngrx/signals/entities';
-// import { STATE_SIGNAL } from '@ngrx/signals/src/state-signal';
+import { withEntities } from '@ngrx/signals/entities';
 import { EntitySignals } from '@ngrx/signals/entities/src/models';
 import { provideRxCollection } from '@ngx-odm/rxdb';
 import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
-import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import {
   MOCK_DATA,
-  MOCK_DATA_MAP,
   TEST_FEATURE_CONFIG_1,
   TestDocType,
   getMockRxdbService,
 } from '@ngx-odm/rxdb/testing';
-import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import { injectAutoEffect } from 'ngxtension/auto-effect';
 import { MangoQuery, RxCollection } from 'rxdb';
-import { Subscription, firstValueFrom, take } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import {
   CollectionServiceMethods,
   CollectionServiceSignals,
