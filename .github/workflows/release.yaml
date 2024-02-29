@@ -94,7 +94,7 @@ jobs:
       # Publish version to public repository
       - name: Publish release version
         if: startsWith(github.event.inputs.release-type, 'pre') != true
-        working-directory: packages/rxdb
+        working-directory: dist/packages/rxdb
         run: |
           npm pack
           npm publish --access public --non-interactive --no-git-tag-version --tag latest
@@ -104,7 +104,7 @@ jobs:
       # Publish version to public repository
       - name: Publish pre-release version
         if: startsWith(github.event.inputs.release-type, 'pre')
-        working-directory: packages/rxdb
+        working-directory: dist/packages/rxdb
         run: |
           npm pack
           npm publish --access public --non-interactive --no-git-tag-version --tag dev
