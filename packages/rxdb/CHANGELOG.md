@@ -2,6 +2,15 @@
 
 This file was generated using [@jscutlery/semver](https://github.com/jscutlery/semver).
 
+# [5.2.0-dev.0](https://github.com/voznik/ngx-odm/compare/v5.1.0...v5.2.0-dev.0) (2024-02-29)
+
+
+### Features
+
+* attachments, query-params plugin & test coverage ([#62](https://github.com/voznik/ngx-odm/issues/62)) ([1398283](https://github.com/voznik/ngx-odm/commit/13982836c927a2f06874f057f6f47b23c60a2fb1))
+
+
+
 # [5.1.0](https://github.com/voznik/ngx-odm/compare/v5.0.0...v5.1.0) (2024-01-17)
 
 ### Bug Fixes
