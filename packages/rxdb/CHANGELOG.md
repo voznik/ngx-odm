@@ -2,6 +2,12 @@
 
 This file was generated using [@jscutlery/semver](https://github.com/jscutlery/semver).
 
+## 5.2.0 (2024-02-29)
+
+* chore: proper dist folder for npm release pipeline ([98d1c71](https://github.com/voznik/ngx-odm/commit/98d1c71))
+
+
+
 ## 5.2.0-dev.0 (2024-02-29)
 
 * feat: attachments, query-params plugin & test coverage (#62) ([1398283](https://github.com/voznik/ngx-odm/commit/1398283)), closes [#62](https://github.com/voznik/ngx-odm/issues/62)
@@ -124,6 +130,3 @@ This file was generated using [@jscutlery/semver](https://github.com/jscutlery/s
 * v2.0.4-alpha ([1668f25](https://github.com/voznik/ngx-odm/commit/1668f25))
 * v2.4.0-alpha ([e4978ff](https://github.com/voznik/ngx-odm/commit/e4978ff))
 * fix(rxdb): add `RxDBUpdatePlugin`\nfix(rxdb): fix db & collection import \nfix(rxdb) log only if env ([60b5edc](https://github.com/voznik/ngx-odm/commit/60b5edc))
-
-
-
