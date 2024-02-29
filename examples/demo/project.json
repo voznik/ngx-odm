@@ -26,8 +26,8 @@
         "production": {
           "fileReplacements": [
             {
-              "replace": "examples/demo/src/environments/environment.ts",
-              "with": "examples/demo/src/environments/environment.prod.ts"
+              "replace": "examples/shared/environment.ts",
+              "with": "examples/shared/environment.prod.ts"
             }
           ],
           "budgets": [

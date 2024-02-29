@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { Location } from '@angular/common';
 import { InjectionToken, NgZone, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import type {
   RxCollectionExtended as RxCollection,
   RxCollectionCreatorExtended,
@@ -9,9 +7,17 @@ import type {
   RxDbMetadata,
 } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
-import { NgxRxdbUtils, isValidRxReplicationState } from '@ngx-odm/rxdb/utils';
+import { CURRENT_URL, updateQueryParams } from '@ngx-odm/rxdb/query-params';
+import {
+  Entity,
+  EntityId,
+  NgxRxdbUtils,
+  isValidRxReplicationState,
+  mapFindResultToJsonArray,
+} from '@ngx-odm/rxdb/utils';
 import type {
   MangoQuery,
+  RxAttachmentCreator,
   RxDatabase,
   RxDatabaseCreator,
   RxDocument,
@@ -21,23 +27,23 @@ import type {
   RxStorageWriteError,
   RxCollection as _RxCollection,
 } from 'rxdb';
+import { RXJS_SHARE_REPLAY_DEFAULTS, RxError, removeRxDatabase } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import {
   Observable,
   ReplaySubject,
+  distinctUntilChanged,
   fromEvent,
+  isObservable,
   lastValueFrom,
   map,
-  merge,
-  startWith,
+  of,
+  shareReplay,
   switchMap,
   takeWhile,
 } from 'rxjs';
 
-type EntityId = string;
-type Entity = { id: EntityId };
-
-export const DEFAULT_LOCAL_DOCUMENT_ID = 'local';
+const { getMaybeId, logger, debug, runInZone } = NgxRxdbUtils;
 
 /**
  * Injection token for Service for interacting with a RxDB {@link RxCollection}.
@@ -62,8 +68,8 @@ export function collectionServiceFactory(config: RxCollectionCreatorExtended) {
 export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   protected readonly dbService: NgxRxdbService = inject(NgxRxdbService);
   protected readonly ngZone: NgZone = inject(NgZone);
-  protected readonly location: Location = inject(Location);
-  protected readonly router: Router = inject(Router);
+  protected readonly currentUrl$ = inject(CURRENT_URL);
+  protected readonly updateQueryParamsFn = inject(updateQueryParams);
   private _collection!: RxCollection<T>;
   private _replicationState: RxReplicationState<T, unknown> | null = null;
   private _init$ = new ReplaySubject<boolean>();
@@ -88,8 +94,14 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     return this._replicationState;
   }
 
+  get queryParams$(): Observable<MangoQuery<T>> {
+    return this.initialized$.pipe(
+      switchMap(() => this.collection.queryParams?.$ || of({}))
+    );
+  }
+
   constructor(public readonly config: RxCollectionCreatorExtended) {
-    this.init(this.dbService, this.config);
+    this.init(config);
   }
 
   /**
@@ -99,6 +111,30 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     this.collection?.destroy();
   }
 
+  /**
+   * Sets stored query for the collection.
+   * @param query The Mango query object.
+   */
+  setQueryParams(query: MangoQuery<T>): void {
+    this.collection.queryParams?.set(query);
+  }
+
+  /**
+   * Patch stored query of the collection.
+   * @param query The query parameters to patch.
+   */
+  patchQueryParams(query: MangoQuery<T>): void {
+    this.collection.queryParams?.patch(query);
+  }
+
+  /**
+   * Synchronizes the collection with a remote database.
+   * If a replication state factory is provided in the configuration options, a new replication state will be created.
+   * If a replication state already exists, it will be re-synced.
+   * The replication will automatically start if the autoStart option is enabled.
+   * The replication will also re-sync when the device goes back online.
+   * @returns A promise that resolves when the synchronization is complete.
+   */
   async sync(): Promise<void> {
     await this.ensureCollection();
     if (isValidRxReplicationState(this.replicationState)) {
@@ -115,8 +151,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
         this.collection as _RxCollection<T>
       ) as RxReplicationState<T, unknown>;
     } catch (error) {
-      NgxRxdbUtils.logger.log('replicationState has error, ignore replication');
-      NgxRxdbUtils.logger.log(error.message);
+      logger.log('replicationState has error, ignore replication');
+      logger.log(error.message);
     }
 
     if (isValidRxReplicationState(this.replicationState)) {
@@ -126,9 +162,11 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
 
       // Re-sync replication when back online
       fromEvent(window, 'online')
-        .pipe(takeWhile(() => !this.replicationState!.isStopped()))
+        .pipe(
+          debug('online'),
+          takeWhile(() => !this.replicationState!.isStopped())
+        )
         .subscribe(() => {
-          NgxRxdbUtils.logger.log('online');
           this._replicationState!.reSync();
         });
 
@@ -142,7 +180,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   async info(): Promise<RxDbMetadata> {
     await this.ensureCollection();
     const meta = await this.collection.getMetadata();
-    NgxRxdbUtils.logger.log({ meta });
+    logger.log('metadata:', { meta });
     return meta;
   }
 
@@ -173,13 +211,21 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * Finds documents in your collection
    * Calling this will return an rxjs-Observable which streams every change to data of this collection.
    * @param query
+   * @param withRevAndAttachments
    */
-  docs(query?: MangoQuery<T>): Observable<T[]> {
+  docs(
+    query?: MangoQuery<T> | Observable<MangoQuery<T>>,
+    withRevAndAttachments = false
+  ): Observable<T[]> {
     return this.initialized$.pipe(
-      switchMap(() => this.collection.find(query).$),
-      map((docs = []) => docs.map(d => d.toMutableJSON())),
-      NgxRxdbUtils.runInZone(this.ngZone),
-      NgxRxdbUtils.debug('docs')
+      switchMap(() => (isObservable(query) ? query : of(query))),
+      switchMap(q => {
+        return this.collection.find(q).$;
+      }),
+      mapFindResultToJsonArray(withRevAndAttachments),
+      runInZone(this.ngZone),
+      debug('docs'),
+      shareReplay(RXJS_SHARE_REPLAY_DEFAULTS)
     );
   }
 
@@ -190,13 +236,15 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * Calling this will return an rxjs-Observable which streams every change to data of this collection.
    * Documents that do not exist or are deleted, will be skipped
    * @param ids
+   * @param withRevAndAttachments
    */
-  docsByIds(ids: string[]): Observable<T[]> {
+  docsByIds(ids: string[], withRevAndAttachments = false): Observable<T[]> {
     return this.initialized$.pipe(
       switchMap(() => this.collection.findByIds(ids).$),
-      map(result => [...result.values()].map(d => d.toMutableJSON())),
-      NgxRxdbUtils.runInZone(this.ngZone),
-      NgxRxdbUtils.debug('docsByIds')
+      mapFindResultToJsonArray(withRevAndAttachments),
+      runInZone(this.ngZone),
+      debug('docsByIds'),
+      shareReplay(RXJS_SHARE_REPLAY_DEFAULTS)
     );
   }
 
@@ -207,26 +255,25 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    */
   count(query?: MangoQuery<T>): Observable<number> {
     return this.initialized$.pipe(
-      switchMap(() =>
-        merge(this.collection.insert$, this.collection.remove$).pipe(startWith(null))
-      ),
-      switchMap(() => this.collection.count(query).exec()),
-      NgxRxdbUtils.runInZone(this.ngZone),
-      NgxRxdbUtils.debug('count')
+      switchMap(() => this.collection.count(query).$),
+      runInZone(this.ngZone),
+      debug('count'),
+      shareReplay(RXJS_SHARE_REPLAY_DEFAULTS)
     );
   }
 
   /**
    * This does basically what find() does, but it returns only a single document.
-   * You can pass a primary value to find a single document more easily.
    * @param id
+   * @param withRevAndAttachments
    */
-  get(id: string): Observable<T | null> {
+  get(id: string, withRevAndAttachments = false): Observable<T | null> {
     return this.initialized$.pipe(
       switchMap(() => this.collection.findOne(id).$),
-      map(doc => (doc ? doc.toMutableJSON() : null)),
-      NgxRxdbUtils.runInZone(this.ngZone),
-      NgxRxdbUtils.debug('get one')
+      map(doc => (doc ? doc.toMutableJSON(withRevAndAttachments as true) : null)),
+      runInZone(this.ngZone),
+      debug('get one'),
+      shareReplay(RXJS_SHARE_REPLAY_DEFAULTS)
     );
   }
 
@@ -299,7 +346,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    */
   async remove(entityOrId: T | string): Promise<RxDocument<T> | null> {
     await this.ensureCollection();
-    const id = NgxRxdbUtils.getMaybeId(entityOrId);
+    const id = getMaybeId(entityOrId);
     return this.collection.findOne(id).remove();
   }
 
@@ -334,6 +381,73 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   }
 
   /**
+   * Returns an array of Blobs of all attachments of the RxDocument.
+   * @param docId
+   */
+  async getAttachments(docId: string): Promise<Blob[] | null> {
+    await this.ensureCollection();
+    const doc = await this.collection.findOne(docId).exec();
+    if (!doc) {
+      return null;
+    }
+    const attachmentsData = doc.allAttachments().map(a => a.getData());
+    return Promise.all(attachmentsData);
+  }
+
+  /**
+   * Returns data of an RxAttachment by its id. Returns null when the attachment does not exist.
+   * @param docId
+   * @param attachmentId
+   */
+  async getAttachmentById(docId: string, attachmentId: string): Promise<Blob | null> {
+    await this.ensureCollection();
+    const doc = await this.collection.findOne(docId).exec();
+    if (!doc) {
+      return null;
+    }
+    const attachment = doc.getAttachment(attachmentId);
+    if (!attachment) {
+      return null;
+    }
+    return attachment.getData();
+  }
+
+  /**
+   * Adds an attachment to a RxDocumen
+   * @param docId
+   * @param attachment
+   */
+  async putAttachment(docId: string, attachment: RxAttachmentCreator): Promise<void> {
+    await this.ensureCollection();
+    const doc = await this.collection.findOne(docId).exec();
+    if (!doc) {
+      logger.log(`document with id "${docId}" not found.`);
+      return;
+    }
+    await doc.putAttachment(attachment);
+  }
+
+  /**
+   * Removes the attachment
+   * @param docId
+   * @param attachmentId
+   */
+  async removeAttachment(docId: string, attachmentId: string): Promise<void> {
+    await this.ensureCollection();
+    const doc = await this.collection.findOne(docId).exec();
+    if (!doc) {
+      logger.log(`document with id "${docId}" not found.`);
+      return;
+    }
+    const attachment = doc.getAttachment(attachmentId);
+    if (!attachment) {
+      logger.log(`attachment with id "${attachmentId}" not found.`);
+      return;
+    }
+    await attachment.remove();
+  }
+
+  /**
    * Add one of RxDB-supported middleware-hooks to current collection, e.g run smth on document postSave.
    * By default runs in series
    * @param hook
@@ -357,17 +471,33 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   // ---------------------------------------------------------------------------
   /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-constraint */
 
-  async getLocal<L = any>(id: string, key?: string): Promise<L | null> {
+  async getLocal<L extends Record<string, any>>(id: string): Promise<L | null>;
+  async getLocal<L extends Record<string, any>, K = keyof L>(
+    id: string,
+    key: K
+  ): Promise<L[keyof L] | null>;
+  async getLocal<L extends Record<string, any>, K extends keyof L>(
+    id: string,
+    key?: K
+  ): Promise<(K extends never ? L : L[K]) | null> {
     await this.ensureCollection();
     const doc = await this.collection.getLocal<L>(id);
-    NgxRxdbUtils.logger.log('local document', doc);
+    logger.log('local document', doc);
     if (!doc) {
       return null;
     }
-    return key ? doc?.get(key) : doc?.toJSON().data;
+    return key ? doc?.get(key as string) : doc?.toJSON().data;
   }
 
-  getLocal$<L = any>(id: string, key?: keyof L): Observable<L | null> {
+  getLocal$<L extends Record<string, any>, K = keyof L>(
+    id: string,
+    key: K
+  ): Observable<L[keyof L] | null>;
+  getLocal$<L extends Record<string, any>>(id: string): Observable<L | null>;
+  getLocal$<L extends Record<string, any>, K extends keyof L>(
+    id: string,
+    key?: K
+  ): Observable<(K extends never ? L : L[K]) | null> {
     return this.initialized$.pipe(
       switchMap(() => this.collection.getLocal$<L>(id)),
       map(doc => {
@@ -376,96 +506,94 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
         }
         return key ? doc.get(key as string) : doc.toJSON().data;
       }),
-      NgxRxdbUtils.runInZone(this.ngZone),
-      NgxRxdbUtils.debug('local document')
+      distinctUntilChanged(),
+      runInZone(this.ngZone),
+      debug('local document')
     );
   }
 
-  async insertLocal<L = any>(id: string, data: L): Promise<void> {
+  /**
+   * Inserts a local document with the specified id and data into the collection's local documents
+   * @param id
+   * @param data
+   */
+  async insertLocal<L extends object>(id: string, data: L): Promise<void> {
     await this.ensureCollection();
-    const doc = await this.collection.insertLocal<L>(id, data);
-    await this.persistLocalToURL(doc);
-  }
-
-  async upsertLocal<L = any>(id: string, data: L): Promise<void> {
-    await this.ensureCollection();
-    const doc = await this.collection.upsertLocal<L>(id, data);
-    await this.persistLocalToURL(doc);
+    await this.collection.insertLocal<L>(id, data);
   }
 
   /**
+   * Upserts a local document with the given id and data
+   * @param id
+   * @param data
+   */
+  async upsertLocal<L extends object>(id: string, data: L): Promise<void> {
+    await this.ensureCollection();
+    await this.collection.upsertLocal<L>(id, data);
+  }
+
+  /**
+   * Sets a local property value for a document in the collection.
    * @param id
    * @param prop
    * @param value
    */
-  async setLocal<L = any>(id: string, prop: keyof L, value: unknown): Promise<void> {
+  async setLocal<L extends object, K = keyof L>(
+    id: string,
+    prop: K,
+    value: unknown
+  ): Promise<void> {
     await this.ensureCollection();
     const loc = await this.collection.getLocal<L>(id);
-    if (!loc) {
-      return;
-    }
     // INFO: as of RxDB version 15.3.0, local doc method `set` is missing
     // so we update whole document
-    const doc = await this.collection.upsertLocal<L>(id, {
-      ...loc?.toJSON().data,
-      [prop]: value,
+    await this.collection.upsertLocal<L>(id, {
+      ...(loc?.toJSON?.()?.data || {}),
+      [prop as string]: value,
     } as L);
-    await this.persistLocalToURL(doc);
   }
 
+  /**
+   * Removes a local document from the collection.
+   * @param id
+   */
   async removeLocal(id: string): Promise<void> {
     await this.ensureCollection();
     const doc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
     await doc?.remove();
-    await this.persistLocalToURL(doc);
-  }
-
-  async persistLocalToURL(doc: RxLocalDocument<any> | null): Promise<void> {
-    if (!doc?.isLocal || !this.config.options?.persistLocalToURL) {
-      return;
-    }
-    const { data } = doc.toJSON();
-    await this.router.navigate([], {
-      queryParams: NgxRxdbUtils.compactObject(data),
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
-    NgxRxdbUtils.logger.log('persistLocalToURL', data, this.router.url);
-  }
-
-  async restoreLocalFromURL(id: string): Promise<void> {
-    if (!this.config.options?.persistLocalToURL) {
-      return;
-    }
-    const data = this.router.parseUrl(this.router.url).queryParams;
-    if (!data) {
-      return;
-    }
-    NgxRxdbUtils.logger.log('restoreLocalToURL', data);
-    await this.upsertLocal(id, data);
   }
   /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-constraint */
 
-  private async init(dbService: NgxRxdbService, config: RxCollectionCreatorExtended) {
-    const { name } = config;
+  private async init(config: RxCollectionCreatorExtended) {
+    const { name, options } = config;
     try {
-      const collectionsOfDatabase = await dbService.initCollections({ [name]: config });
-      this._collection = collectionsOfDatabase[name] as RxCollection<T>;
+      await this.dbService.initCollections({
+        [name]: config,
+      });
+      this._collection = this.db.collections[name] as RxCollection<T>;
+      // Init query params plugin
+      if (options?.useQueryParams) {
+        this.collection.queryParamsInit!(this.currentUrl$, this.updateQueryParamsFn);
+      }
       this._init$.next(true);
       this._init$.complete();
-    } catch (e) {
+    } catch (err) {
       // @see rx-database-internal-store.ts:isDatabaseStateVersionCompatibleWithDatabaseCode
       // @see test/unit/data-migration.test.ts#L16
-      if (e.message.includes('DM5')) {
-        NgxRxdbUtils.logger.log(
-          `Database version conflict.
-          Opening an older RxDB database state with a new major version should throw an error`
+      if (
+        err.message.includes('DM5') ||
+        (err.message.includes('DB6') &&
+          (err as RxError).parameters.previousSchema?.version ===
+            (err as RxError).parameters.schema?.version)
+      ) {
+        logger.log(
+          'Reload the page to fix the issue. The database is in a state where it can not be used.'
         );
-        // await dbService.db.destroy();
-        throw new Error(e);
+        await removeRxDatabase(this.db.name, this.db.storage);
+        window?.location?.reload?.();
       } else {
         this._init$.complete();
-        throw new Error(e.message ?? e);
+        throw err;
       }
     }
   }

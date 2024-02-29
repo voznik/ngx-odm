@@ -6,9 +6,7 @@
     "es2020": true,
     "node": true
   },
-  "extends": [
-    "plugin:prettier/recommended"
-  ],
+  "extends": ["plugin:prettier/recommended"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "project": "tsconfig.json",

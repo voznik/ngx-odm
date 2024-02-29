@@ -31,6 +31,7 @@
       <li
         *ngFor="let todo of $.todos | byStatus: $.filter; trackBy: trackByFn"
         [class.completed]="todo.completed"
+        (contextmenu)="showContextMenu($event, todo)"
       >
         <div class="view">
           <input
@@ -58,7 +59,7 @@
   <footer
     class="footer"
     [hidden]="$.count === 0"
-    *ngrxLet="($.todos | byStatus: 'ACTIVE')?.length; let remainig"
+    *ngrxLet="($.todos | byStatus: 'ACTIVE' : true)?.length; let remainig"
   >
     <ng-container *ngIf="remainig">
       <span class="todo-count" [ngPlural]="remainig">
@@ -68,6 +69,12 @@
       </span>
     </ng-container>
     <ul class="filters">
+      <li>
+        <a href="javascript:void(0);" (click)="todosService.sortTodos('desc')">&#8675;</a>
+      </li>
+      <li>
+        <a href="javascript:void(0);" (click)="todosService.sortTodos('asc')">&#8673;</a>
+      </li>
       <li>
         <a
           href="javascript:void(0);"
@@ -106,3 +113,42 @@
     </button>
   </footer>
 </section>
+
+<dialog [open]="isDialogOpen" class="todo-dialog">
+  <header>Attachments:</header>
+  <ul *ngIf="selectedTodo?._attachments">
+    <li *ngFor="let attachment of selectedTodo._attachments | keyvalue">
+      <a
+        href="javascript:void(0);"
+        (click)="todosService.downloadAttachment(selectedTodo.id, attachment.key)"
+      >
+        {{ attachment.key }} - {{ attachment.value.type }}
+      </a>
+      &nbsp;
+      <button
+        type="button"
+        class="destroy"
+        (click)="
+          todosService.removeAttachment(selectedTodo.id, attachment.key);
+          isDialogOpen = false
+        "
+      >
+        🗙
+      </button>
+    </li>
+  </ul>
+  <form method="dialog" (ngSubmit)="selectedTodo = undefined; isDialogOpen = false">
+    <button type="button" (click)="fileInput.click()">Upload attachment</button>
+    <input
+      type="file"
+      accept=".txt"
+      #fileInput
+      style="display: none"
+      (change)="
+        todosService.uploadAttachment(selectedTodo.id, $any($event.target).files[0]);
+        isDialogOpen = false
+      "
+    />
+    <button>Close Dialog</button>
+  </form>
+</dialog>

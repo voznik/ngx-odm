@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, no-console */
 import { NgZone, isDevMode } from '@angular/core';
-import type { FilledMangoQuery, PreparedQuery, RxJsonSchema } from 'rxdb';
+import type { FilledMangoQuery, PreparedQuery, RxDocument, RxJsonSchema } from 'rxdb';
 import { prepareQuery } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
-import { Observable, OperatorFunction, retry, tap, timer } from 'rxjs';
+import { Observable, OperatorFunction, defer, map, retry, tap, timer } from 'rxjs';
 
 /** @internal */
 export type AnyObject = Record<string, any>;
@@ -53,6 +53,8 @@ export type IsKnownRecord<T> = IsRecord<T> extends true
     ? false
     : true
   : false;
+export type EntityId = string;
+export type Entity = { id: EntityId };
 
 export namespace NgxRxdbUtils {
   /**
@@ -62,7 +64,7 @@ export namespace NgxRxdbUtils {
   export function clone<T>(value: T): T {
     if (Array.isArray(value)) {
       return value.slice() as any;
-    } else if (value instanceof Object) {
+    } else if (isObject(value)) {
       return { ...value };
     } else {
       return value;
@@ -74,8 +76,7 @@ export namespace NgxRxdbUtils {
    *
    * Differences from lodash:
    * - does not give any special consideration for arguments objects, strings, or prototype objects (e.g. many will have `'length'` in the returned array)
-   *
-   * @internal
+   * @param object
    */
   export function keys<T>(object: Nil | T): Array<StringifiedKey<T>> {
     let val = keysOfNonArray(object);
@@ -207,6 +208,10 @@ export namespace NgxRxdbUtils {
     return zone instanceof NgZone;
   }
 
+  export function isValidNumber(value: any): value is number {
+    return typeof value === 'number' && !isNaN(value);
+  }
+
   export function noop(): void {
     return void 0;
   }
@@ -244,38 +249,6 @@ export namespace NgxRxdbUtils {
       .reduce((acc: Partial<T>, [key, val]: [string, any]) => ({ ...acc, [key]: val }), {});
   }
 
-  /**
-   * Transforms an object into an URL query string, stripping out any undefined
-   * values.
-   * @param  {object} obj
-   * @param prefix
-   * @returns {string}
-   * @internal
-   */
-  export function qsify(obj: any, prefix = ''): string {
-    const encode = (v: any): string =>
-      encodeURIComponent(typeof v === 'boolean' ? String(v) : v);
-    const result: string[] = [];
-    forEach(obj, (value, k) => {
-      if (isUndefined(value)) return;
-
-      let ks = encode(prefix + k) + '=';
-      if (Array.isArray(value)) {
-        const values: string[] = [];
-        forEach(value, v => {
-          if (isUndefined(v)) return;
-
-          values.push(encode(v));
-        });
-        ks += values.join(',');
-      } else {
-        ks += encode(value);
-      }
-      result.push(ks);
-    });
-    return result.length ? result.join('&') : '';
-  }
-
   export function isDevModeForced(): boolean {
     return localStorage['debug']?.includes(`@ngx-odm/rxdb`);
   }
@@ -298,16 +271,18 @@ export namespace NgxRxdbUtils {
     );
   }
 
+  /**
+   * Internal logger for debugging
+   */
   export const logger = {
     log: (function () {
       const bgColor = '#8d2089';
       if (isTestEnvironment() || !isDevMode() || !isDevModeForced()) {
         return noop;
       }
-      // eslint-disable-next-line no-console
       return console.log.bind(
         console,
-        `%c[${new Date().toISOString()}::DEBUG::@ngx-odm/rxdb]`,
+        `%c[DEBUG::@ngx-odm/rxdb]`, // ${new Date().toISOString()}
         `background:${bgColor};color:#fff;padding:2px;font-size:normal;`
       );
     })(),
@@ -315,7 +290,6 @@ export namespace NgxRxdbUtils {
       if (isTestEnvironment() || !isDevMode() || !isDevModeForced()) {
         return noop;
       }
-      // eslint-disable-next-line no-console
       return console.table.bind(console);
     })(),
   };
@@ -381,6 +355,18 @@ export namespace NgxRxdbUtils {
       );
   }
 
+  /**
+   * Operator to act as a tap, but only once
+   * @param callback AnyFn
+   */
+  export const tapOnce = <T>(callback: () => void) => {
+    return (source: Observable<T>): Observable<T> =>
+      defer(() => {
+        callback();
+        return source;
+      });
+  };
+
   export const getDefaultQuery: () => FilledMangoQuery<any> = () => ({
     selector: { _deleted: { $eq: false } },
     skip: 0,
@@ -429,11 +415,11 @@ export const getDefaultFetch = () => {
  */
 export function getDefaultFetchWithHeaders(headers: Record<string, string> = {}) {
   const fetch = getDefaultFetch();
-  const ret = (url: string, options: Record<string, any>) => {
+  const ret = (url: string, options: Record<string, any> = {}) => {
     Object.assign(options, {
       headers: {
-        ...options.headers,
-        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+        // 'Content-Type': 'application/json',
         ...headers,
       },
     });
@@ -452,10 +438,19 @@ export function isValidRxReplicationState<T>(
   return obj && obj instanceof RxReplicationState;
 }
 
-/**
- * Function to sync local RxDB document property when URL query segment changes
- * @param document
- * @param queryParam
- * @param queryParamValue
- * @param property
- */
+export function mapFindResultToJsonArray(
+  withRevAndAttachments = false // INFO: rxdb typings somehow are wrong (tru|false)
+): OperatorFunction<any[] | Map<string, any>, any[]> {
+  return map<RxDocument[] | Map<string, RxDocument>, any[]>(docs => {
+    return (Array.isArray(docs) ? docs : [...docs.values()]).map(d => {
+      const data: any = { ...d._data };
+      if (!withRevAndAttachments) {
+        delete data._rev;
+        delete data._attachments;
+        delete data._deleted;
+        delete data._meta;
+      }
+      return data;
+    });
+  });
+}

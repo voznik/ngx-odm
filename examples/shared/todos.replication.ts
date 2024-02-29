@@ -3,7 +3,7 @@ import { getDefaultFetchWithHeaders } from '@ngx-odm/rxdb/utils';
 import { b64EncodeUnicode } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import { replicateCouchDB } from 'rxdb/plugins/replication-couchdb';
-import { environment } from '../../environments/environment';
+import { environment } from './environment';
 import { Todo } from './todos.model';
 
 export const todosReplicationStateFactory = collection => {

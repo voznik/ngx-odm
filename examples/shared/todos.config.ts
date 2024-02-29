@@ -1,7 +1,9 @@
 import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
-import { conflictHandlerKinto } from '@ngx-odm/rxdb/replication-kinto';
 import type { RxCollection } from 'rxdb';
+import { todosConflictHandler } from './todos.conflictHandler';
+import { todosMigrations } from './todos.migration';
 import { TODOS_INITIAL_ITEMS } from './todos.model';
+import { todosReplicationStateFactory } from './todos.replication';
 
 export async function percentageCompletedFn() {
   const allDocs = await (this as RxCollection).find().exec();
@@ -18,26 +20,11 @@ export const TODOS_COLLECTION_CONFIG: RxCollectionCreatorExtended = {
   options: {
     schemaUrl: 'assets/data/todo.schema.json', // load schema from remote url
     initialDocs: TODOS_INITIAL_ITEMS, // populate collection with initial data,
-    persistLocalToURL: true, // bind `local` doc data to URL query params
+    useQueryParams: localStorage['_ngx_rxdb_queryparams'] === 'true', // bind collection filtering/sorting to URL query params,
+    replicationStateFactory: todosReplicationStateFactory, // create replication state for collection
   },
   statics: collectionMethods,
   // in this example we have 3 migrations, since the beginning of development
-  migrationStrategies: {
-    1: function (doc) {
-      if (doc._deleted) {
-        return null;
-      }
-      doc.last_modified = new Date(doc.createdAt).getTime(); // string to unix
-      return doc;
-    },
-    2: function (doc) {
-      if (doc._deleted) {
-        return null;
-      }
-      doc.createdAt = new Date(doc.createdAt).toISOString(); // to string
-      return doc;
-    },
-    3: d => d,
-  },
-  conflictHandler: conflictHandlerKinto, // don't need custom for CouchDb example
+  migrationStrategies: todosMigrations,
+  conflictHandler: todosConflictHandler, // don't need custom for CouchDb example
 };

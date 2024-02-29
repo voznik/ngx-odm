@@ -4,7 +4,7 @@
   text-decoration: none;
 }
 
-.todo-list li label+.last-modified {
+.todo-list li label + .last-modified {
   position: absolute;
   bottom: 4px;
   right: 24px;
@@ -14,6 +14,6 @@
   text-decoration: none !important;
 }
 
-.todo-list li:hover label:not(.editing)+.last-modified {
+.todo-list li:hover label:not(.editing) + .last-modified {
   display: block;
 }

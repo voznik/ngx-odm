@@ -1,14 +1,12 @@
 /* eslint-disable no-console */
 import { Injectable, inject } from '@angular/core';
-import {
-  DEFAULT_LOCAL_DOCUMENT_ID,
-  NgxRxdbCollection,
-  NgxRxdbCollectionService,
-} from '@ngx-odm/rxdb/collection';
-import type { RxDatabaseCreator } from 'rxdb';
+import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
+import { DEFAULT_LOCAL_DOCUMENT_ID } from '@ngx-odm/rxdb/config';
+import { Todo, TodosFilter, TodosLocalState } from '@shared';
 import { Observable, distinctUntilChanged, startWith } from 'rxjs';
 import { v4 as uuid } from 'uuid';
-import { Todo, TodosFilter, TodosLocalState } from './todos.model';
+
+const withAttachments = true;
 
 @Injectable()
 export class TodosService {
@@ -24,22 +22,13 @@ export class TodosService {
 
   count$ = this.collectionService.count();
 
-  todos$: Observable<Todo[]> = this.collectionService.docs();
-
-  get dbOptions(): Readonly<RxDatabaseCreator> {
-    return this.collectionService.dbOptions;
-  }
+  todos$: Observable<Todo[]> = this.collectionService.docs(
+    this.collectionService.queryParams$,
+    withAttachments
+  );
 
   get isAddTodoDisabled() {
     return this.newTodo.length < 4;
-  }
-
-  constructor() {
-    this.collectionService.addHook('postSave', function (plainData, rxDocument) {
-      console.log('postSave', plainData, rxDocument);
-      return new Promise(res => setTimeout(res, 100));
-    });
-    this.restoreFilter();
   }
 
   addTodo(): void {
@@ -107,15 +96,36 @@ export class TodosService {
     this.filterTodos('ALL');
   }
 
-  restoreFilter(): void {
-    this.collectionService.restoreLocalFromURL(DEFAULT_LOCAL_DOCUMENT_ID);
+  filterTodos(filter: TodosFilter): void {
+    const selector = filter === 'ALL' ? {} : { completed: { $eq: filter === 'COMPLETED' } };
+    this.collectionService.patchQueryParams({ selector });
+    this.collectionService.upsertLocal(DEFAULT_LOCAL_DOCUMENT_ID, { filter });
   }
 
-  filterTodos(filter: TodosFilter): void {
-    this.collectionService.setLocal<TodosLocalState>(
-      DEFAULT_LOCAL_DOCUMENT_ID,
-      'filter',
-      filter
-    );
+  sortTodos(dir: 'asc' | 'desc'): void {
+    this.collectionService.patchQueryParams({ sort: [{ last_modified: dir }] });
+  }
+
+  async uploadAttachment(id: string, file: File) {
+    await this.collectionService.putAttachment(id, {
+      id: file.name,
+      data: file,
+      type: 'text/plain',
+    });
+  }
+
+  async downloadAttachment(id: string, a_id: string) {
+    const data = await this.collectionService.getAttachmentById(id, a_id);
+    const url = URL.createObjectURL(data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = a_id;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  async removeAttachment(id: string, a_id: string) {
+    await this.collectionService.removeAttachment(id, a_id);
   }
 }

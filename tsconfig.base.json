@@ -35,14 +35,28 @@
         "packages/rxdb/config/src/index.ts"
       ],
       "@ngx-odm/rxdb/core": ["dist/packages/rxdb/core", "packages/rxdb/core/src/index.ts"],
-      "@ngx-odm/rxdb/replication-kinto": ["packages/rxdb/replication-kinto/src/index.ts"],
-      "@ngx-odm/rxdb/signals": ["packages/rxdb/signals/src/index.ts"],
-      "@ngx-odm/rxdb/testing": ["packages/rxdb/testing/src/index.ts"],
+      "@ngx-odm/rxdb/query-params": [
+        "dist/packages/rxdb/query-params",
+        "packages/rxdb/query-params/src/index.ts"
+      ],
+      "@ngx-odm/rxdb/replication-kinto": [
+        "dist/packages/rxdb/replication-kinto",
+        "packages/rxdb/replication-kinto/src/index.ts"
+      ],
+      "@ngx-odm/rxdb/signals": [
+        "dist/packages/rxdb/signals",
+        "packages/rxdb/signals/src/index.ts"
+      ],
+      "@ngx-odm/rxdb/testing": [
+        "dist/packages/rxdb/testing",
+        "packages/rxdb/testing/src/index.ts"
+      ],
       "@ngx-odm/rxdb/utils": [
         "dist/packages/rxdb/utils",
         "packages/rxdb/utils/src/index.ts"
       ],
-      "@package": ["packages/rxdb/package.json"]
+      "@package": ["packages/rxdb/package.json"],
+      "@shared": ["examples/shared/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

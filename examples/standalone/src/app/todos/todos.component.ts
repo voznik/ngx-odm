@@ -1,27 +1,10 @@
-import { animate, query, stagger, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { RenderScheduler } from '@ngrx/component';
-import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import { Todo } from './todos.model';
+import { provideRxCollection } from '@ngx-odm/rxdb';
+import { Todo, TODOS_COLLECTION_CONFIG, todosListAnimation } from '@shared';
 import { TodoStore } from './todos.store';
-
-const listAnimation = trigger('listAnimation', [
-  transition('* <=> *', [
-    query(
-      ':enter',
-      [
-        style({ opacity: 0 }),
-        stagger('50ms', animate('60ms ease-in', style({ opacity: 1 }))),
-      ],
-      { optional: true }
-    ),
-    query(':leave', stagger('10ms', animate('50ms ease-out', style({ opacity: 0 }))), {
-      optional: true,
-    }),
-  ]),
-]);
 
 @Component({
   standalone: true,
@@ -29,26 +12,30 @@ const listAnimation = trigger('listAnimation', [
   templateUrl: './todos.component.html',
   styleUrls: ['./todos.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [listAnimation],
+  animations: [todosListAnimation],
   imports: [CommonModule],
-  providers: [RenderScheduler, TodoStore],
+  providers: [
+    provideRxCollection(TODOS_COLLECTION_CONFIG), // Collection will be created via this injection
+    TodoStore,
+    RenderScheduler,
+  ],
 })
 export class TodosComponent {
   private renderScheduler = inject(RenderScheduler);
   private titleService = inject(Title);
   readonly todoStore = inject(TodoStore);
+  todos: Todo[] = []; // Copy todos from store inside effect to properly trigger zoneless change detection
 
   trackByFn = (index: number, item: Todo) => {
-    return item.last_modified;
+    return item.id + item.last_modified;
   };
 
   constructor() {
     effect(() => {
-      const { title, filter, entities } = this.todoStore;
+      const { filtered, title } = this.todoStore;
+      this.todos = filtered(); // Copy todos from store inside effect to properly trigger zoneless change detection
       const titleString = title();
       this.titleService.setTitle(titleString);
-      NgxRxdbUtils.logger.log('filter:', filter()); // INFO: signals on their own do not work if we do not use it directly here with proper dependency
-      NgxRxdbUtils.logger.table(entities()); // INFO: signals on their own do not work if we do not use it directly here with proper dependency
 
       // INFO: Angular 17 doesn't provide way to detect changes with `signals` ONLY and no zone
       this.renderScheduler.schedule();

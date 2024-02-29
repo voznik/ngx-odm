@@ -10,6 +10,8 @@ import {
 import { loadRxDBPlugins } from './rxdb-plugin.loader';
 import { prepareCollections } from './rxdb-prepare.plugin';
 
+const { logger } = NgxRxdbUtils;
+
 /**
  * Service for managing a RxDB database instance.
  */
@@ -38,9 +40,9 @@ export class NgxRxdbService {
       await this.db.remove();
       await this.db.destroy();
       (this.dbInstance as unknown) = null;
-      NgxRxdbUtils.logger.log(`database destroy`);
+      logger.log(`database destroy`);
     } catch {
-      NgxRxdbUtils.logger.log(`database destroy error`);
+      logger.log(`database destroy error`);
     }
   }
 
@@ -50,25 +52,25 @@ export class NgxRxdbService {
    * @param config
    */
   async initDb(config: RxDatabaseCreator): Promise<void> {
+    // eslint-disable-next-line no-useless-catch
     try {
-      await loadRxDBPlugins();
-      this.dbInstance = await createRxDatabase(config).catch(e => {
-        throw new Error(e.message ?? e);
-      });
+      await loadRxDBPlugins(config.options?.plugins);
+      this.dbInstance = await createRxDatabase(config);
       this.options = config;
-      NgxRxdbUtils.logger.log(
+      logger.log(
         `created database "${this.db.name}" with config "${JSON.stringify(config)}"`
       );
 
       // optional: can create collections from root config
       if (config?.options?.schemas) {
         const bulk = await this.initCollections(config.options.schemas);
-        NgxRxdbUtils.logger.log(
+        logger.log(
           `created ${Object.keys(bulk).length} collections bulk: ${Object.keys(bulk)}`
         );
       }
     } catch (error) {
-      throw new Error(error.message);
+      logger.log('Error initializing the database:', error);
+      throw error;
     }
   }
 
@@ -79,11 +81,13 @@ export class NgxRxdbService {
   async initCollections(colConfigs: {
     [name: string]: RxCollectionCreatorExtended;
   }): Promise<CollectionsOfDatabase> {
+    // eslint-disable-next-line no-useless-catch
     try {
       const colCreators = await prepareCollections(colConfigs);
       return await this.db.addCollections(colCreators);
     } catch (error) {
-      throw new Error(error.message);
+      logger.log('Error initializing collection(s)', error);
+      throw error;
     }
   }
 }

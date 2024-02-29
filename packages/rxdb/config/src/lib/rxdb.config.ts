@@ -3,24 +3,26 @@
 import { InjectionToken } from '@angular/core';
 import type {
   FilledMangoQuery,
-  PreparedQuery,
+  MangoQuery,
   RxCollection,
   RxCollectionCreator,
   RxDatabaseCreator,
   RxJsonSchema,
+  RxPlugin,
 } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
+import { Observable } from 'rxjs';
 import type { Merge, SetOptional, SetRequired } from 'type-fest';
 
-export interface RxCollectionCreatorOptions {
+export interface RxCollectionCreatorOptions<T = any> {
   schemaUrl?: string;
-  initialDocs?: any[];
+  initialDocs?: T[];
   /** @deprecated */
   recreate?: boolean;
-  persistLocalToURL?: boolean;
-  replicationStateFactory?: (col: RxCollection) => RxReplicationState<any, any> | null;
+  useQueryParams?: boolean;
+  replicationStateFactory?: (col: RxCollection<T>) => RxReplicationState<T, any> | null;
 }
 
 export type RxCollectionCreatorExtended<T = any> = Merge<
@@ -28,21 +30,31 @@ export type RxCollectionCreatorExtended<T = any> = Merge<
   {
     schema: RxJsonSchema<T>;
     name: string;
-    options?: RxCollectionCreatorOptions;
+    options?: RxCollectionCreatorOptions<T>;
   }
 >;
 
-export type RxCollectionExtended<T = any> = Merge<
-  RxCollection<T>,
-  {
-    /** Static empty query */
-    defaultQuery: FilledMangoQuery<any>;
-    /** Static empty query "prepared" (RxDb) */
-    defaultPreparedQuery: PreparedQuery<any>;
-    /** Get DB metadata */
-    getMetadata: () => Promise<RxDbMetadata>;
-  }
->;
+export type RxCollectionExtended<T = any> = RxCollection<T> &
+  RxCollectionWithMetadata &
+  RxCollectionWiithQueryParams<T>;
+
+export type RxCollectionWiithQueryParams<T = any> = {
+  queryParamsInit?: (
+    currentUrl$: Observable<string>,
+    updateQueryParamsInLocationFn: (queryParams: MangoQueryParams) => Promise<any>
+  ) => void;
+  queryParams?: {
+    $: Observable<FilledMangoQuery<T>>;
+    get(): MangoQuery<T>;
+    set(query: MangoQuery<T>): void;
+    patch(query: MangoQuery<T>): void;
+  };
+};
+
+export type RxCollectionWithMetadata = {
+  /** Get DB metadata */
+  getMetadata: () => Promise<RxDbMetadata>;
+};
 
 export interface RxDbMetadata {
   id: string;
@@ -67,6 +79,13 @@ export type RxCollectionHooks =
   | 'postRemove'
   | 'postCreate';
 
+export type MangoQueryParams = {
+  selector?: string | undefined;
+  sort?: string | undefined;
+  skip?: number | undefined;
+  limit?: number | undefined;
+};
+
 /**
  * Instance of RxDatabaseCreator
  */
@@ -75,7 +94,7 @@ export const RXDB_CONFIG = new InjectionToken<RxDatabaseCreator>('RxDatabaseCrea
  * Instance of RxCollectionCreator
  */
 /* prettier-ignore */
-export const RXDB_CONFIG_COLLECTION = new InjectionToken<RxCollectionCreator>('RxCollectionCreator');
+export const RXDB_CONFIG_COLLECTION = new InjectionToken<RxCollectionCreatorExtended>('RxCollectionCreator');
 
 /**
  * Custom options object for {@link RxDatabaseCreator}
@@ -85,6 +104,8 @@ interface NgxRxdbConfigOptions {
   storageType: 'dexie' | 'memory';
   storageOptions?: {};
   dumpPath?: string;
+  useQueryParams?: boolean;
+  plugins?: RxPlugin[];
 }
 
 type RxDatabaseCreatorPartialStorage = SetOptional<RxDatabaseCreator, 'storage'>;
@@ -117,9 +138,12 @@ export function getRxDatabaseCreator(config: NgxRxdbConfig): RxDatabaseCreator {
   const dbConfig: RxDatabaseCreator = {
     name,
     storage,
+    options,
     ...rest,
   };
   return dbConfig;
 }
 
 export const DEFAULT_BACKOFF_FN = (delay: number) => (delay === 0 ? 2000 : delay * 3);
+
+export const DEFAULT_LOCAL_DOCUMENT_ID = 'local';

@@ -25,16 +25,23 @@
       document.addEventListener('DOMContentLoaded', event => {
         const selectStorage = document.getElementById('storage');
         const selectReplication = document.getElementById('replication');
+        const useQueryParams = document.getElementById('queryParams');
         selectStorage.value = localStorage['_ngx_rxdb_storage'] =
           localStorage['_ngx_rxdb_storage'] ?? 'dexie';
         selectReplication.value = localStorage['_ngx_rxdb_replication'] =
           localStorage['_ngx_rxdb_replication'] ?? '';
+        useQueryParams.checked = localStorage['_ngx_rxdb_queryparams'] === 'true';
         selectStorage.addEventListener('change', function () {
           localStorage.setItem('_ngx_rxdb_storage', this.value);
           window.location.reload();
         });
         selectReplication.addEventListener('change', function () {
           localStorage.setItem('_ngx_rxdb_replication', this.value);
+          window.location.reload();
+        });
+        useQueryParams.addEventListener('change', function () {
+          localStorage.setItem('_ngx_rxdb_queryparams', this.checked);
+          window.history.replaceState({}, '', window.location.pathname);
           window.location.reload();
         });
       });
@@ -54,6 +61,8 @@
           <option value="couchdb">couchdb</option>
           <option value="kinto">kinto</option>
         </select>
+        <input type="checkbox" name="queryParams" value="true" id="queryParams" />
+        <label for="queryParams">use "query-params-plugin"</label>
       </div>
       <div>
         <!-- Place this tag in your head or just before your close body tag. -->

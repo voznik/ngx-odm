@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NgxRxdbUtils, getDefaultFetch } from '@ngx-odm/rxdb/utils';
-import { deepEqual, type RxConflictHandlerInput, type RxConflictHandlerOutput } from 'rxdb';
 import {
   KintInfoResponse,
   KintoAggregateResponse,
@@ -32,21 +31,6 @@ export const DEFAULT_REPLICATION_OPTIONS = {
   waitForLeadership: true,
   autoStart: true,
 };
-
-export function conflictHandlerKinto({
-  newDocumentState: local,
-  realMasterState: remote,
-}: RxConflictHandlerInput<any>): Promise<RxConflictHandlerOutput<any>> {
-  if (deepEqual(local, remote)) {
-    return Promise.resolve({
-      isEqual: true,
-    });
-  }
-  return Promise.resolve({
-    isEqual: false,
-    documentData: remote,
-  });
-}
 
 export function assignLastModified(doc: any, last_modified: number, force = false) {
   if (!doc.last_modified || force) {

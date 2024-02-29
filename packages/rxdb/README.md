@@ -4,7 +4,7 @@
 
 ## Demo
 
-![Example Screencast](screencast.gif)
+![Example Screencast](https://github.com/voznik/ngx-odm/blob/master/examples/screencast.gif?raw=true)
 
 [demo](https://voznik.github.io/ngx-odm/) - based on TodoMVC
 
@@ -55,17 +55,19 @@ import { getRxDatabaseCreator } from '@ngx-odm/rxdb/config';
 @NgModule({
   imports: [
     // ... other imports
-    NgxRxdbModule.forRoot(getRxDatabaseCreator({
-      name: 'demo', // <- name (required, 'ngx')
-      storage: getRxStorageDexie(), // <- storage (not required, 'dexie')
-      localDocuments: true,
-      multiInstance: true, // <- multiInstance (optional, default: true)
-      ignoreDuplicate: false,
-      options: {
-        storageType: 'dexie|memory', // <- storageType (optional, use if you want defaults provided automatically)
-        dumpPath: 'assets/dump.json', // path to datbase dump file (optional)
-      },
-    })),
+    NgxRxdbModule.forRoot(
+      getRxDatabaseCreator({
+        name: 'demo', // <- name (required, 'ngx')
+        storage: getRxStorageDexie(), // <- storage (not required, 'dexie')
+        localDocuments: true,
+        multiInstance: true, // <- multiInstance (optional, default: true)
+        ignoreDuplicate: false,
+        options: {
+          storageType: 'dexie|memory', // <- storageType (optional, use if you want defaults provided automatically)
+          dumpPath: 'assets/dump.json', // path to datbase dump file (optional)
+        },
+      })
+    ),
   ],
   providers: [],
   bootstrap: [AppComponent],
@@ -116,7 +118,9 @@ export class TodosModule {
 ```typescript
 @Injectable()
 export class TodosService {
-  private collectionService: NgxRxdbCollection<Todo> = inject<NgxRxdbCollection<Todo>>(NgxRxdbCollectionService);
+  private collectionService: NgxRxdbCollection<Todo> = inject<NgxRxdbCollection<Todo>>(
+    NgxRxdbCollectionService
+  );
   // store & get filter as property of a `local` document
   filter$ = this.collectionService
     .getLocal('local', 'filterValue')
@@ -172,7 +176,7 @@ export const appConfig: ApplicationConfig = {
         localDocuments: true,
         multiInstance: true,
         ignoreDuplicate: false,
-        storage: getRxStorageDexie()
+        storage: getRxStorageDexie(),
       })
     ),
   ],
@@ -189,7 +193,7 @@ import { provideRxCollection } from '@ngx-odm/rxdb';
 @Component({
   standalone: true,
   // ...
-  providers: [provideRxCollection(config)]
+  providers: [provideRxCollection(config)],
 })
 export class StandaloneComponent {
   readonly todoCollection = inject(NgxRxdbCollectionService<Todo>);
@@ -267,7 +271,6 @@ Project inspired by
 - [NgRx Toolkit](https://github.com/angular-architects/ngrx-toolkit/blob/main/libs/ngrx-toolkit/src/lib/with-data-service.ts) - inspired by Manfred Steyer and created singnals tool by analogy of `withDataService` from [Angular Architects](https://angulararchitects.io/)
 
 ## Notes
-
 
 ## Contact
 

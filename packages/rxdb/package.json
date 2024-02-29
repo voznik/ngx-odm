@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/package",
   "private": false,
   "name": "@ngx-odm/rxdb",
-  "version": "5.1.0",
+  "version": "5.2.0",
   "description": "Angular 14+ wrapper (module or standalone) for RxDB - A realtime Database for the Web",
   "keywords": [
     "angular",
@@ -35,17 +35,19 @@
       "url": "https://github.com/voznik"
     }
   ],
+  "sideEffects": false,
   "engines": {
-    "node": ">=16.x",
+    "node": ">=14.16",
     "npm": ">=8.x"
   },
   "peerDependencies": {
     "@angular/common": ">=v14",
     "@angular/core": ">=v14",
-    "rxjs": "^6.6.7 || ^7.6.0"
+    "rxjs": "^6.6.7 || ^7.6.0",
+    "query-string": "^8.1.0"
   },
   "dependencies": {
-    "rxdb": "^15.3.0",
+    "rxdb": "^15.9.1",
     "tslib": "2.0.3"
   }
 }

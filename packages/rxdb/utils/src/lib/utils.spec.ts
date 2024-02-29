@@ -1,31 +1,37 @@
-import { NgxRxdbUtils } from './utils';
+import { of } from 'rxjs';
+import { mapFindResultToJsonArray } from './utils';
 
-describe('NgxRxdb Utils: qsify', () => {
-  it('should return an empty string when given an empty object', () => {
-    const obj = {};
-    const result = NgxRxdbUtils.qsify(obj);
-    expect(result).toBe('');
-  });
+describe('NgxRxdb Utils', () => {
+  describe('mapFindResultToJsonArray', () => {
+    it('should map find result to JSON array without rev and attachments', () => {
+      const input = [
+        { _id: '1', _rev: 'rev1', _attachments: {}, _deleted: false, _meta: {} },
+        { _id: '2', _rev: 'rev2', _attachments: {}, _deleted: false, _meta: {} },
+      ];
+      const expectedOutput = [{ _id: '1' }, { _id: '2' }];
 
-  it('should correctly encode and concatenate key-value pairs', () => {
-    const obj = {
-      name: 'John Doe',
-      age: 30,
-      hobbies: ['reading', 'coding'],
-      isActive: true,
-    };
-    const result = NgxRxdbUtils.qsify(obj);
-    expect(result).toBe('name=John%20Doe&age=30&hobbies=reading,coding&isActive=true');
-  });
+      of(input)
+        .pipe(mapFindResultToJsonArray())
+        .subscribe(output => {
+          expect(output).toEqual(expectedOutput);
+        });
+    });
 
-  it('should ignore undefined values', () => {
-    const obj = {
-      name: 'John Doe',
-      age: undefined,
-      hobbies: ['reading', undefined, 'coding'],
-      isActive: true,
-    };
-    const result = NgxRxdbUtils.qsify(obj);
-    expect(result).toBe('name=John%20Doe&hobbies=reading,coding&isActive=true');
+    it('should map find result to JSON array with rev and attachments', () => {
+      const input = [
+        { _id: '1', _rev: 'rev1', _attachments: {}, _deleted: false, _meta: {} },
+        { _id: '2', _rev: 'rev2', _attachments: {}, _deleted: false, _meta: {} },
+      ];
+      const expectedOutput = [
+        { _id: '1', _rev: 'rev1', _attachments: {}, _deleted: false, _meta: {} },
+        { _id: '2', _rev: 'rev2', _attachments: {}, _deleted: false, _meta: {} },
+      ];
+
+      of(input)
+        .pipe(mapFindResultToJsonArray(true))
+        .subscribe(output => {
+          expect(output).toEqual(expectedOutput);
+        });
+    });
   });
 });

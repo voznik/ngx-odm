@@ -230,7 +230,6 @@ describe(`NgxRxdbCollectionService`, () => {
 
     it('should set doc', async () => {
       const id = '0';
-      // const rxDoc: RxDocument = createNewRxDocument(service.collection, { id: '0', title: 'test0', _rev: '0-x', } as any);
       const rxQ = {
         update: jest.fn().mockResolvedValue({}),
       } as unknown as RxQuery;
@@ -327,13 +326,13 @@ describe(`NgxRxdbCollectionService`, () => {
       expect(result).toEqual({ [prop]: value });
     });
 
-    it('should not update local doc if not found', async () => {
+    it('should insert local doc if not found', async () => {
       const id = '1';
       const prop = 'name';
       const value = 'updated';
       jest.spyOn(service.collection, 'getLocal').mockResolvedValueOnce(null);
       await service.setLocal(id, prop, value);
-      expect(service.collection.upsertLocal).not.toHaveBeenCalled();
+      expect(service.collection.upsertLocal).toHaveBeenCalled();
     });
 
     it('should remove local doc', async () => {
@@ -343,6 +342,52 @@ describe(`NgxRxdbCollectionService`, () => {
       jest.spyOn(service.collection, 'getLocal').mockResolvedValueOnce(mockLocalDoc);
       await service.removeLocal(id);
       expect(mockLocalDoc.remove).toHaveBeenCalled();
+    });
+
+    it('should return all attachments of a doc as array of blob', async () => {
+      const id = '10';
+      const data = new Blob(['test'], { type: 'text/plain' });
+      const spy = jest.spyOn(service.collection, 'findOne').mockReturnValue({
+        exec: jest.fn().mockResolvedValue({
+          allAttachments: jest.fn().mockReturnValue([
+            {
+              getData: () => Promise.resolve(data),
+            },
+          ]),
+        }),
+      } as any);
+      const result = await service.getAttachments(id);
+      expect(spy).toHaveBeenCalled();
+      expect(result).toEqual([data]);
+    });
+
+    it('should return one attachment by its id of a doc as blob', async () => {
+      const id = '11';
+      const data = new Blob(['test'], { type: 'text/plain' });
+      const spy = jest.spyOn(service.collection, 'findOne').mockReturnValue({
+        exec: jest.fn().mockResolvedValue({
+          getAttachment: jest.fn().mockReturnValue({
+            getData: () => Promise.resolve(data),
+          }),
+        }),
+      } as any);
+      const result = await service.getAttachmentById(id, 'test');
+      expect(spy).toHaveBeenCalled();
+      expect(result).toEqual(data);
+    });
+
+    it(' should use plugin to set QueryParams ', () => {
+      const query = { selector: { id: { $eq: '0' } } };
+      const spy = jest.spyOn(service.collection.queryParams!, 'set');
+      service.setQueryParams(query);
+      expect(spy).toHaveBeenCalledWith(query);
+    });
+
+    it(' should use plugin to patch QueryParams ', () => {
+      const query = { limit: 1 };
+      const spy = jest.spyOn(service.collection.queryParams!, 'patch');
+      service.patchQueryParams(query);
+      expect(spy).toHaveBeenCalledWith(query);
     });
   });
 });
