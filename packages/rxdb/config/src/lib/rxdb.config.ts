@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types */
 import { InjectionToken } from '@angular/core';
 import type {
-  FilledMangoQuery,
   MangoQuery,
   RxCollection,
   RxCollectionCreator,
@@ -44,7 +43,7 @@ export type RxCollectionWiithQueryParams<T = any> = {
     updateQueryParamsInLocationFn: (queryParams: MangoQueryParams) => Promise<any>
   ) => void;
   queryParams?: {
-    $: Observable<FilledMangoQuery<T>>;
+    $: Observable<MangoQuery<T>>;
     get(): MangoQuery<T>;
     set(query: MangoQuery<T>): void;
     patch(query: MangoQuery<T>): void;

@@ -35,13 +35,13 @@ import {
   distinctUntilChanged,
   fromEvent,
   isObservable,
-  lastValueFrom,
   map,
   of,
   shareReplay,
   switchMap,
   takeWhile,
 } from 'rxjs';
+import { ensureCollection, ensureCollection$ } from './rxdb-collection.helpers';
 
 const { getMaybeId, logger, debug, runInZone } = NgxRxdbUtils;
 
@@ -95,9 +95,10 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   }
 
   get queryParams$(): Observable<MangoQuery<T>> {
-    return this.initialized$.pipe(
-      switchMap(() => this.collection.queryParams?.$ || of({}))
-    );
+    if (!this.config.options?.useQueryParams) {
+      return of({});
+    }
+    return this.initialized$.pipe(switchMap(() => this.collection.queryParams!.$));
   }
 
   constructor(public readonly config: RxCollectionCreatorExtended) {
@@ -135,8 +136,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * The replication will also re-sync when the device goes back online.
    * @returns A promise that resolves when the synchronization is complete.
    */
+  @ensureCollection()
   async sync(): Promise<void> {
-    await this.ensureCollection();
     if (isValidRxReplicationState(this.replicationState)) {
       this.replicationState.reSync();
       return;
@@ -177,10 +178,9 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   /**
    * Returns the internal data that is used by the storage engine
    */
+  @ensureCollection()
   async info(): Promise<RxDbMetadata> {
-    await this.ensureCollection();
     const meta = await this.collection.getMetadata();
-    logger.log('metadata:', { meta });
     return meta;
   }
 
@@ -188,8 +188,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * Imports the json dump into your collection
    * @param docs
    */
+  @ensureCollection()
   async import(docs: T[]): Promise<void> {
-    await this.ensureCollection();
     const schemaHash = await this.collection.schema.hash;
     const dump: RxDumpCollectionAny<T> = {
       name: this.collection.name,
@@ -202,8 +202,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   /**
    * Creates a json export from every document in the collection.
    */
+  @ensureCollection()
   async export(): Promise<RxDumpCollection<T>> {
-    await this.ensureCollection();
     return this.collection.exportJSON();
   }
 
@@ -213,18 +213,15 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * @param query
    * @param withRevAndAttachments
    */
+  @ensureCollection$()
   docs(
     query?: MangoQuery<T> | Observable<MangoQuery<T>>,
     withRevAndAttachments = false
   ): Observable<T[]> {
-    return this.initialized$.pipe(
-      switchMap(() => (isObservable(query) ? query : of(query))),
-      switchMap(q => {
-        return this.collection.find(q).$;
-      }),
+    return (isObservable(query) ? query : of(query)).pipe(
+      switchMap(q => this.collection.find(q).$),
       mapFindResultToJsonArray(withRevAndAttachments),
       runInZone(this.ngZone),
-      debug('docs'),
       shareReplay(RXJS_SHARE_REPLAY_DEFAULTS)
     );
   }
@@ -238,14 +235,15 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * @param ids
    * @param withRevAndAttachments
    */
+  @ensureCollection$()
   docsByIds(ids: string[], withRevAndAttachments = false): Observable<T[]> {
-    return this.initialized$.pipe(
-      switchMap(() => this.collection.findByIds(ids).$),
-      mapFindResultToJsonArray(withRevAndAttachments),
-      runInZone(this.ngZone),
-      debug('docsByIds'),
-      shareReplay(RXJS_SHARE_REPLAY_DEFAULTS)
-    );
+    return this.collection
+      .findByIds(ids)
+      .$.pipe(
+        mapFindResultToJsonArray(withRevAndAttachments),
+        runInZone(this.ngZone),
+        shareReplay(RXJS_SHARE_REPLAY_DEFAULTS)
+      );
   }
 
   /**
@@ -253,13 +251,11 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * The performance difference compared to a normal query differs depending on which RxStorage implementation is used.
    * @param query
    */
+  @ensureCollection$()
   count(query?: MangoQuery<T>): Observable<number> {
-    return this.initialized$.pipe(
-      switchMap(() => this.collection.count(query).$),
-      runInZone(this.ngZone),
-      debug('count'),
-      shareReplay(RXJS_SHARE_REPLAY_DEFAULTS)
-    );
+    return this.collection
+      .count(query)
+      .$.pipe(runInZone(this.ngZone), shareReplay(RXJS_SHARE_REPLAY_DEFAULTS));
   }
 
   /**
@@ -267,12 +263,11 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * @param id
    * @param withRevAndAttachments
    */
+  @ensureCollection$()
   get(id: string, withRevAndAttachments = false): Observable<T | null> {
-    return this.initialized$.pipe(
-      switchMap(() => this.collection.findOne(id).$),
+    return this.collection.findOne(id).$.pipe(
       map(doc => (doc ? doc.toMutableJSON(withRevAndAttachments as true) : null)),
       runInZone(this.ngZone),
-      debug('get one'),
       shareReplay(RXJS_SHARE_REPLAY_DEFAULTS)
     );
   }
@@ -282,8 +277,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * The collection will validate the schema and automatically encrypt any encrypted fields
    * @param data
    */
+  @ensureCollection()
   async insert(data: T): Promise<RxDocument<T>> {
-    await this.ensureCollection();
     return this.collection.insert(data);
   }
 
@@ -292,10 +287,10 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * This is much faster than calling .insert() multiple times.
    * @param data
    */
+  @ensureCollection()
   async insertBulk(
     data: T[]
   ): Promise<{ success: RxDocument<T>[]; error: RxStorageWriteError<T>[] }> {
-    await this.ensureCollection();
     return this.collection.bulkInsert(data);
   }
 
@@ -303,8 +298,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * Inserts the document if it does not exist within the collection, otherwise it will overwrite it. Returns the new or overwritten RxDocument.
    * @param data
    */
+  @ensureCollection()
   async upsert(data: T): Promise<RxDocument<T>> {
-    await this.ensureCollection();
     return this.collection.upsert(data);
   }
 
@@ -313,10 +308,10 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * Improves performance compared to running many upsert() calls.
    * @param data
    */
+  @ensureCollection()
   async upsertBulk(
     data: Partial<T>[]
   ): Promise<{ success: RxDocument<T>[]; error: RxStorageWriteError<T>[] }> {
-    await this.ensureCollection();
     return this.collection.bulkUpsert(data);
   }
 
@@ -325,8 +320,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * @param id
    * @param data
    */
+  @ensureCollection()
   async set(id: string, data: Partial<T>): Promise<RxDocument<T> | null> {
-    await this.ensureCollection();
     return this.collection.findOne(id).update({ $set: data });
   }
 
@@ -335,8 +330,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * @param query
    * @param data
    */
+  @ensureCollection()
   async updateBulk(query: MangoQuery<T>, data: Partial<T>): Promise<RxDocument<T, {}>[]> {
-    await this.ensureCollection();
     return this.collection.find(query).update({ $set: data });
   }
 
@@ -344,8 +339,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * Removes the document from the database by finding one with the matching id.
    * @param entityOrId
    */
+  @ensureCollection()
   async remove(entityOrId: T | string): Promise<RxDocument<T> | null> {
-    await this.ensureCollection();
     const id = getMaybeId(entityOrId);
     return this.collection.findOne(id).remove();
   }
@@ -354,10 +349,10 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * Removes many documents at once
    * @param params
    */
+  @ensureCollection()
   async removeBulk(
     params: string[] | MangoQuery<T>
   ): Promise<{ success: RxDocument<T>[]; error: RxStorageWriteError<T>[] }> {
-    await this.ensureCollection();
     if (Array.isArray(params)) {
       return this.collection.bulkRemove(params);
     }
@@ -375,8 +370,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * Removes all known data of the collection and its previous versions.
    * This removes the documents, the schemas, and older schemaVersions
    */
+  @ensureCollection()
   async clear(): Promise<void> {
-    await this.ensureCollection();
     return this.collection.remove();
   }
 
@@ -384,8 +379,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * Returns an array of Blobs of all attachments of the RxDocument.
    * @param docId
    */
+  @ensureCollection()
   async getAttachments(docId: string): Promise<Blob[] | null> {
-    await this.ensureCollection();
     const doc = await this.collection.findOne(docId).exec();
     if (!doc) {
       return null;
@@ -399,8 +394,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * @param docId
    * @param attachmentId
    */
+  @ensureCollection()
   async getAttachmentById(docId: string, attachmentId: string): Promise<Blob | null> {
-    await this.ensureCollection();
     const doc = await this.collection.findOne(docId).exec();
     if (!doc) {
       return null;
@@ -417,11 +412,10 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * @param docId
    * @param attachment
    */
+  @ensureCollection()
   async putAttachment(docId: string, attachment: RxAttachmentCreator): Promise<void> {
-    await this.ensureCollection();
     const doc = await this.collection.findOne(docId).exec();
     if (!doc) {
-      logger.log(`document with id "${docId}" not found.`);
       return;
     }
     await doc.putAttachment(attachment);
@@ -432,16 +426,14 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * @param docId
    * @param attachmentId
    */
+  @ensureCollection()
   async removeAttachment(docId: string, attachmentId: string): Promise<void> {
-    await this.ensureCollection();
     const doc = await this.collection.findOne(docId).exec();
     if (!doc) {
-      logger.log(`document with id "${docId}" not found.`);
       return;
     }
     const attachment = doc.getAttachment(attachmentId);
     if (!attachment) {
-      logger.log(`attachment with id "${attachmentId}" not found.`);
       return;
     }
     await attachment.remove();
@@ -455,12 +447,12 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * @param parralel
    * @see https://rxdb.info/middleware.html
    */
+  @ensureCollection()
   async addHook<Hook extends RxCollectionHooks>(
     hook: Hook,
     handler: Parameters<RxCollection<T>[Hook]>[0],
     parralel = false
   ): Promise<void> {
-    await this.ensureCollection();
     // Type 'RxCollectionHookNoInstanceCallback<T, {}>' is not assignable to type 'RxCollectionHookCallback<T, {}>'.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.collection[hook](handler as any, parralel);
@@ -476,13 +468,12 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     id: string,
     key: K
   ): Promise<L[keyof L] | null>;
+  @ensureCollection()
   async getLocal<L extends Record<string, any>, K extends keyof L>(
     id: string,
     key?: K
   ): Promise<(K extends never ? L : L[K]) | null> {
-    await this.ensureCollection();
     const doc = await this.collection.getLocal<L>(id);
-    logger.log('local document', doc);
     if (!doc) {
       return null;
     }
@@ -494,12 +485,12 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     key: K
   ): Observable<L[keyof L] | null>;
   getLocal$<L extends Record<string, any>>(id: string): Observable<L | null>;
+  @ensureCollection$()
   getLocal$<L extends Record<string, any>, K extends keyof L>(
     id: string,
     key?: K
   ): Observable<(K extends never ? L : L[K]) | null> {
-    return this.initialized$.pipe(
-      switchMap(() => this.collection.getLocal$<L>(id)),
+    return this.collection.getLocal$<L>(id).pipe(
       map(doc => {
         if (!doc) {
           return null;
@@ -507,8 +498,7 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
         return key ? doc.get(key as string) : doc.toJSON().data;
       }),
       distinctUntilChanged(),
-      runInZone(this.ngZone),
-      debug('local document')
+      runInZone(this.ngZone)
     );
   }
 
@@ -517,8 +507,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * @param id
    * @param data
    */
+  @ensureCollection()
   async insertLocal<L extends object>(id: string, data: L): Promise<void> {
-    await this.ensureCollection();
     await this.collection.insertLocal<L>(id, data);
   }
 
@@ -527,8 +517,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * @param id
    * @param data
    */
+  @ensureCollection()
   async upsertLocal<L extends object>(id: string, data: L): Promise<void> {
-    await this.ensureCollection();
     await this.collection.upsertLocal<L>(id, data);
   }
 
@@ -538,12 +528,12 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * @param prop
    * @param value
    */
+  @ensureCollection()
   async setLocal<L extends object, K = keyof L>(
     id: string,
     prop: K,
     value: unknown
   ): Promise<void> {
-    await this.ensureCollection();
     const loc = await this.collection.getLocal<L>(id);
     // INFO: as of RxDB version 15.3.0, local doc method `set` is missing
     // so we update whole document
@@ -557,8 +547,8 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    * Removes a local document from the collection.
    * @param id
    */
+  @ensureCollection()
   async removeLocal(id: string): Promise<void> {
-    await this.ensureCollection();
     const doc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
     await doc?.remove();
   }
@@ -596,16 +586,5 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
         throw err;
       }
     }
-  }
-
-  private async ensureCollection(): Promise<boolean> {
-    if (!this.collection) {
-      await lastValueFrom(this.initialized$).catch(() => {
-        throw new Error(
-          `Collection "${this.config.name}" was not initialized. Please check previous RxDB errors.`
-        );
-      });
-    }
-    return true;
   }
 }
