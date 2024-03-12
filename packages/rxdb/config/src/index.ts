@@ -1,1 +1,1 @@
-export * from './lib/rxdb.config';
+export * from './lib/config';

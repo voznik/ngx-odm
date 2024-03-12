@@ -1,3 +1,3 @@
-export * from './lib/rxdb.service';
-export * from './lib/rxdb-prepare.plugin';
-export * from './lib/rxdb-plugin.loader';
+export * from './lib/service';
+export * from './lib/prepare.plugin';
+export * from './lib/plugin.loader';

@@ -98,8 +98,9 @@ describe('NgxRxdbModule', () => {
         expect(dbService.initCollections).toHaveBeenCalledWith({
           [TEST_FEATURE_CONFIG_1.name]: TEST_FEATURE_CONFIG_1,
         });
-        await colService['ensureCollection']();
+        const meta = await colService.info();
         expect(colService.collection).toBeDefined();
+        expect(meta.rev).toBe(1);
         expect(colService.collection.schema.version).toEqual(
           TEST_FEATURE_CONFIG_1.schema.version
         );

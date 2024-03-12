@@ -1,5 +1,5 @@
 import { RxStorage } from 'rxdb';
-import { getRxDatabaseCreator } from './rxdb.config';
+import { getRxDatabaseCreator } from './config';
 
 jest.mock('rxdb/plugins/storage-dexie', () => ({
   getRxStorageDexie: jest.fn(() => {

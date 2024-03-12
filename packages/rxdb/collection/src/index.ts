@@ -1,2 +1,2 @@
-export * from './lib/rxdb-collection.module';
-export * from './lib/rxdb-collection.service';
+export * from './lib/collection.module';
+export * from './lib/collection.service';

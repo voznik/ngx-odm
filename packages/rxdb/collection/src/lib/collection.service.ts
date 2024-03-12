@@ -41,7 +41,7 @@ import {
   switchMap,
   takeWhile,
 } from 'rxjs';
-import { ensureCollection, ensureCollection$ } from './rxdb-collection.helpers';
+import { ensureCollection, ensureCollection$ } from './helpers';
 
 const { getMaybeId, logger, debug, runInZone } = NgxRxdbUtils;
 
@@ -176,12 +176,24 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
   }
 
   /**
-   * Returns the internal data that is used by the storage engine
+   * Some useful information about the DB & collection collected by `prepare` plugin -
+   * a mix of the internal data that is used by the storage engine and DB
+   * @returns {RxDbMetadata}
+   @example ```
+    {
+      "id": "collection|todo-3",
+      "databaseName": "demo",
+      "collectionName": "todo",
+      "storageName": "dexie",
+      "last_modified": 1708684412052,
+      "rev": 2,
+      "isFirstTimeInstantiated": false
+    }
+    ```
    */
   @ensureCollection()
   async info(): Promise<RxDbMetadata> {
-    const meta = await this.collection.getMetadata();
-    return meta;
+    return this.collection.getMetadata();
   }
 
   /**
@@ -237,13 +249,12 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    */
   @ensureCollection$()
   docsByIds(ids: string[], withRevAndAttachments = false): Observable<T[]> {
-    return this.collection
-      .findByIds(ids)
-      .$.pipe(
-        mapFindResultToJsonArray(withRevAndAttachments),
-        runInZone(this.ngZone),
-        shareReplay(RXJS_SHARE_REPLAY_DEFAULTS)
-      );
+    return this.collection.findByIds(ids).$.pipe(
+      // prettier-ignore
+      mapFindResultToJsonArray(withRevAndAttachments),
+      runInZone(this.ngZone),
+      shareReplay(RXJS_SHARE_REPLAY_DEFAULTS)
+    );
   }
 
   /**
@@ -253,9 +264,11 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
    */
   @ensureCollection$()
   count(query?: MangoQuery<T>): Observable<number> {
-    return this.collection
-      .count(query)
-      .$.pipe(runInZone(this.ngZone), shareReplay(RXJS_SHARE_REPLAY_DEFAULTS));
+    return this.collection.count(query).$.pipe(
+      // prettier-ignore
+      runInZone(this.ngZone),
+      shareReplay(RXJS_SHARE_REPLAY_DEFAULTS)
+    );
   }
 
   /**
