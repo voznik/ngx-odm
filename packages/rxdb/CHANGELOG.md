@@ -2,6 +2,12 @@
 
 This file was generated using [@jscutlery/semver](https://github.com/jscutlery/semver).
 
+## 5.3.0 (2024-03-12)
+
+* feat: introduce decorators to simplify collection methods checks ([5332920](https://github.com/voznik/ngx-odm/commit/5332920))
+
+
+
 ## 5.2.0 (2024-02-29)
 
 * chore: proper dist folder for npm release pipeline ([98d1c71](https://github.com/voznik/ngx-odm/commit/98d1c71))
