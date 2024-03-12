@@ -1,5 +1,5 @@
 import { Inject, NgModule } from '@angular/core';
-import { NgxRxdbCollection, NgxRxdbCollectionService } from './rxdb-collection.service';
+import { NgxRxdbCollection, NgxRxdbCollectionService } from './collection.service';
 
 /**
  * (Fake) Feature module for NgxRxdbModule

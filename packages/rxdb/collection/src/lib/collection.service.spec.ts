@@ -9,12 +9,12 @@ import {
 import { MangoQuery, RxQuery } from 'rxdb';
 import { createRxLocalDocument } from 'rxdb/plugins/local-documents';
 import { RxReplicationState } from 'rxdb/plugins/replication';
-import { EMPTY, Observable, Subject, firstValueFrom } from 'rxjs';
+import { EMPTY, Observable, Subject, firstValueFrom, of } from 'rxjs';
 import {
   NgxRxdbCollection,
   NgxRxdbCollectionService,
   collectionServiceFactory,
-} from './rxdb-collection.service';
+} from './collection.service';
 
 const getMockReplicationState = (obj: Partial<RxReplicationState<any, any>>) => {
   obj.reSync = jest.fn();
@@ -75,15 +75,6 @@ describe(`NgxRxdbCollectionService`, () => {
       expect(service.collection).toBeDefined();
     });
 
-    it('should throw an error if collection is not initialized and initialized$ rejects', async () => {
-      service['_collection'] = null as any;
-      service['_init$'] = new Subject() as any;
-      service['_init$'].complete();
-      await expect(service['ensureCollection']()).rejects.toThrow(
-        `Collection "${service.config.name}" was not initialized. Please check previous RxDB errors.`
-      );
-    });
-
     it('should destroy collection', async () => {
       jest.spyOn(service.collection, 'destroy').mockResolvedValue(null as any);
       await service.destroy();
@@ -96,12 +87,21 @@ describe(`NgxRxdbCollectionService`, () => {
       expect(service.collection.remove).toHaveBeenCalled();
     });
 
-    it('should call ensureCollection', async () => {
+    it('should always ensure collection is created asynchronously before calling any method (e.g. `info`)', async () => {
       const spy = jest
-        .spyOn(service as any, 'ensureCollection')
-        .mockImplementation(() => Promise.resolve());
-      await service.sync();
+        .spyOn(service, 'initialized$', 'get')
+        .mockImplementation(() => of(true));
+      await service.info();
       expect(spy).toHaveBeenCalled();
+    });
+
+    it('should throw an error if collection is not initialized and initialized$ rejects', async () => {
+      service['_collection'] = null as any;
+      service['_init$'] = new Subject() as any;
+      service['_init$'].complete();
+      await expect(service.info()).rejects.toThrow(
+        `Collection "${service.config.name}" was not initialized. Please check RxDB errors.`
+      );
     });
 
     it('should handle valid replicationState', async () => {

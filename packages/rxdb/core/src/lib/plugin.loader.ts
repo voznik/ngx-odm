@@ -7,7 +7,7 @@ import { RxDBJsonDumpPlugin } from 'rxdb/plugins/json-dump';
 import { RxDBLocalDocumentsPlugin } from 'rxdb/plugins/local-documents';
 import { RxDBMigrationPlugin } from 'rxdb/plugins/migration-schema';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
-import { RxDBPreparePlugin } from './rxdb-prepare.plugin';
+import { RxDBPreparePlugin } from './prepare.plugin';
 
 /**
  * Loads all the necessary and additional RxDB plugins for the application to work.

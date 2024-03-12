@@ -7,8 +7,8 @@ import {
   RxDatabaseCreator,
   createRxDatabase,
 } from 'rxdb';
-import { loadRxDBPlugins } from './rxdb-plugin.loader';
-import { prepareCollections } from './rxdb-prepare.plugin';
+import { loadRxDBPlugins } from './plugin.loader';
+import { prepareCollections } from './prepare.plugin';
 
 const { logger } = NgxRxdbUtils;
 

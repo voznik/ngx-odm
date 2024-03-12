@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/no-non-null-assertion */
 import { getMockRxCollection } from '@ngx-odm/rxdb/testing';
 import { RxCollection, RxCollectionCreator, RxQuery } from 'rxdb';
-import { RxDBPreparePlugin } from './rxdb-prepare.plugin';
+import { RxDBPreparePlugin } from './prepare.plugin';
 
 describe('RxDBPreparePlugin', () => {
   describe('test hook "createRxCollection:after"', () => {

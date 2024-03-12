@@ -3,7 +3,17 @@ import { NgZone, isDevMode } from '@angular/core';
 import type { FilledMangoQuery, PreparedQuery, RxDocument, RxJsonSchema } from 'rxdb';
 import { prepareQuery } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
-import { Observable, OperatorFunction, defer, map, retry, tap, timer } from 'rxjs';
+import {
+  Observable,
+  OperatorFunction,
+  Subject,
+  defer,
+  map,
+  retry,
+  switchMap,
+  tap,
+  timer,
+} from 'rxjs';
 
 /** @internal */
 export type AnyObject = Record<string, any>;
@@ -367,6 +377,17 @@ export namespace NgxRxdbUtils {
       });
   };
 
+  /**
+   * Operator that defers the execution of the source observable until the provided subject emits a value.
+   * @param subj
+   */
+  export const deferUntil = (subj: Subject<any>) => {
+    return (source: Observable<any>) =>
+      defer(() => {
+        return subj.pipe(switchMap(() => source));
+      });
+  };
+
   export const getDefaultQuery: () => FilledMangoQuery<any> = () => ({
     selector: { _deleted: { $eq: false } },
     skip: 0,
@@ -438,6 +459,10 @@ export function isValidRxReplicationState<T>(
   return obj && obj instanceof RxReplicationState;
 }
 
+/**
+ * Function to map find result of RxDocument instances to plain JSON array.
+ * @param {boolean} withRevAndAttachments - flag to indicate whether to include _rev and _attachments
+ */
 export function mapFindResultToJsonArray(
   withRevAndAttachments = false // INFO: rxdb typings somehow are wrong (tru|false)
 ): OperatorFunction<any[] | Map<string, any>, any[]> {
