@@ -1,15 +1,21 @@
-import { APP_INITIALIZER, Provider } from '@angular/core';
+import { APP_INITIALIZER, InjectionToken, Provider } from '@angular/core';
 import {
   NgxRxdbCollectionService,
   collectionServiceFactory,
 } from '@ngx-odm/rxdb/collection';
-import {
-  RXDB_CONFIG,
-  RXDB_CONFIG_COLLECTION,
-  RxCollectionCreatorExtended,
-} from '@ngx-odm/rxdb/config';
+import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbService } from '@ngx-odm/rxdb/core';
 import { RxDatabaseCreator } from 'rxdb';
+
+/**
+ * Instance of RxDatabaseCreator
+ */
+export const RXDB_CONFIG = new InjectionToken<RxDatabaseCreator>('RxDatabaseCreator');
+/**
+ * Instance of RxCollectionCreator
+ */
+/* prettier-ignore */
+export const RXDB_CONFIG_COLLECTION = new InjectionToken<RxCollectionCreatorExtended>('RxCollectionCreator');
 
 /**
  * Initializes DB at `APP_INITIALIZER` cycle

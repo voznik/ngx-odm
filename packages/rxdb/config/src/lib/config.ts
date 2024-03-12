@@ -1,6 +1,5 @@
 // INFO: we NEED to keep `any` here. only Typescript complains, but type resolution for consumers does work
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types */
-import { InjectionToken } from '@angular/core';
 import type {
   MangoQuery,
   RxCollection,
@@ -84,16 +83,6 @@ export type MangoQueryParams = {
   skip?: number | undefined;
   limit?: number | undefined;
 };
-
-/**
- * Instance of RxDatabaseCreator
- */
-export const RXDB_CONFIG = new InjectionToken<RxDatabaseCreator>('RxDatabaseCreator');
-/**
- * Instance of RxCollectionCreator
- */
-/* prettier-ignore */
-export const RXDB_CONFIG_COLLECTION = new InjectionToken<RxCollectionCreatorExtended>('RxCollectionCreator');
 
 /**
  * Custom options object for {@link RxDatabaseCreator}

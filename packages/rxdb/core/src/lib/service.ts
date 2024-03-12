@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
+import { RxCollectionCreatorExtended, loadRxDBPlugins } from '@ngx-odm/rxdb/config';
+import { prepareCollections } from '@ngx-odm/rxdb/prepare';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import {
   CollectionsOfDatabase,
@@ -7,8 +8,6 @@ import {
   RxDatabaseCreator,
   createRxDatabase,
 } from 'rxdb';
-import { loadRxDBPlugins } from './plugin.loader';
-import { prepareCollections } from './prepare.plugin';
 
 const { logger } = NgxRxdbUtils;
 

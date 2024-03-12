@@ -41,9 +41,9 @@ import {
   switchMap,
   takeWhile,
 } from 'rxjs';
-import { ensureCollection, ensureCollection$ } from './helpers';
+import { ensureCollection, ensureCollection$, runInZone } from './helpers';
 
-const { getMaybeId, logger, debug, runInZone } = NgxRxdbUtils;
+const { getMaybeId, logger, debug } = NgxRxdbUtils;
 
 /**
  * Injection token for Service for interacting with a RxDB {@link RxCollection}.

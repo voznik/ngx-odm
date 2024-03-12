@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { NgZone } from '@angular/core';
 import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import { Observable, defer, lastValueFrom, switchMap } from 'rxjs';
+import { Observable, OperatorFunction, defer, lastValueFrom, switchMap } from 'rxjs';
 
 const { debug } = NgxRxdbUtils;
 
@@ -9,6 +10,26 @@ type CollectionLike = {
   readonly initialized$: Observable<boolean>;
   readonly config: RxCollectionCreatorExtended;
 };
+
+export function isNgZone(zone: unknown): zone is NgZone {
+  return zone instanceof NgZone;
+}
+
+/**
+ * Moves observable execution in and out of Angular zone.
+ * @param zone
+ */
+export function runInZone<T>(zone: NgZone): OperatorFunction<T, T> {
+  return source => {
+    return new Observable(subscriber => {
+      return source.subscribe(
+        (value: T) => zone.run(() => subscriber.next(value)),
+        (e: any) => zone.run(() => subscriber.error(e)),
+        () => zone.run(() => subscriber.complete())
+      );
+    });
+  };
+}
 
 /**
  * Collection method decorator for Observable return type

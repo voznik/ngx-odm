@@ -1,5 +1,5 @@
-import { isDevMode } from '@angular/core';
-import { RxDBPUseQueryParamsPlugin } from '@ngx-odm/rxdb/query-params';
+import { RxDBPreparePlugin } from '@ngx-odm/rxdb/prepare';
+// import { RxDBPUseQueryParamsPlugin } from '@ngx-odm/rxdb/query-params';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import { RxPlugin, addRxPlugin } from 'rxdb';
 import { RxDBCleanupPlugin } from 'rxdb/plugins/cleanup';
@@ -7,7 +7,8 @@ import { RxDBJsonDumpPlugin } from 'rxdb/plugins/json-dump';
 import { RxDBLocalDocumentsPlugin } from 'rxdb/plugins/local-documents';
 import { RxDBMigrationPlugin } from 'rxdb/plugins/migration-schema';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
-import { RxDBPreparePlugin } from './prepare.plugin';
+
+const { isDevMode, isTestEnvironment } = NgxRxdbUtils;
 
 /**
  * Loads all the necessary and additional RxDB plugins for the application to work.
@@ -25,14 +26,14 @@ export async function loadRxDBPlugins(plugins: RxPlugin[] = []): Promise<void> {
     addRxPlugin(RxDBCleanupPlugin);
     // custom
     addRxPlugin(RxDBPreparePlugin);
-    addRxPlugin(RxDBPUseQueryParamsPlugin);
+    // addRxPlugin(RxDBPUseQueryParamsPlugin);
     // additional plugins
     for (const plugin of plugins) {
       addRxPlugin(plugin);
     }
 
     /** * to reduce the build-size, we use some plugins in dev-mode only */
-    if (isDevMode() && !NgxRxdbUtils.isTestEnvironment()) {
+    if (isDevMode() && !isTestEnvironment()) {
       // https://rxdb.info/dev-mode.html
       const { RxDBDevModePlugin } = await import('rxdb/plugins/dev-mode');
       addRxPlugin(RxDBDevModePlugin);

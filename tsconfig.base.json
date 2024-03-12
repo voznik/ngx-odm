@@ -39,6 +39,10 @@
         "dist/packages/rxdb/query-params",
         "packages/rxdb/query-params/src/index.ts"
       ],
+      "@ngx-odm/rxdb/prepare": [
+        "dist/packages/rxdb/prepare",
+        "packages/rxdb/prepare/src/index.ts"
+      ],
       "@ngx-odm/rxdb/replication-kinto": [
         "dist/packages/rxdb/replication-kinto",
         "packages/rxdb/replication-kinto/src/index.ts"
@@ -47,6 +51,7 @@
         "dist/packages/rxdb/signals",
         "packages/rxdb/signals/src/index.ts"
       ],
+      "@ngx-odm/rxdb/sreamlit": ["packages/streamlit-rxdb-dataframe-frontend/src/index.ts"],
       "@ngx-odm/rxdb/testing": [
         "dist/packages/rxdb/testing",
         "packages/rxdb/testing/src/index.ts"

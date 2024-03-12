@@ -1,0 +1,8 @@
+{
+  "name": "streamlit-rxdb-dataframe-frontend",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/streamlit-rxdb-dataframe/frontend/src",
+  "projectType": "application",
+  "targets": {},
+  "tags": []
+}
