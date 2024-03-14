@@ -77,10 +77,6 @@ initial_docs = [
         ),  # in milliseconds
     },
 ]
-
-# Test code to play with the component while it's in development.
-# During development, we can run this just as we would any other Streamlit
-# app: `$ streamlit run rxdb_dataframe/example.py`
 collection_config: RxCollectionCreator = {
     "name": collection_name,
     "schema": todoSchema,  # to load schema from remote url pass None
@@ -91,10 +87,12 @@ collection_config: RxCollectionCreator = {
         "recreate": True,
     },
 }
-
+collection_query = {"selector": {}, "sort": [{"createdAt": "desc"}]}
 df = get_dataframe_by_schema(todoSchema)
 column_config = get_column_config(todoSchema)
-data = rxdb_dataframe(collection_config, dataframe=df)
+data = rxdb_dataframe(
+    collection_config, dataframe=df, query=collection_query, with_rev=False
+)
 
 
 def on_change():
@@ -114,4 +112,8 @@ st.data_editor(
     column_order=["title", "completed", "createdAt"],
     on_change=on_change,
 )
-st.sidebar.json(st.session_state.to_dict())
+
+st.sidebar.title("Collection Query")
+st.sidebar.json(collection_query)
+# st.sidebar.title("State")
+# st.sidebar.json(st.session_state.to_dict())

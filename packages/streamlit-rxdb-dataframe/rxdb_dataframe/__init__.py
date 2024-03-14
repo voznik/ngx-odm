@@ -83,6 +83,19 @@ class RxCollectionCreator:
         # self.conflictHandler = conflictHandler
 
 
+class MangoQuery:
+    def __init__(
+        self,
+        selector: Dict[str, Any],
+        sort: Optional[List[Dict[str, str]]] = None,
+        limit: Optional[int] = None,
+        skip: Optional[int] = None,
+    ):
+        self.selector = selector
+        self.sort = sort
+        self.limit = limit
+        self.skip = skip
+
 # Create a _RELEASE constant. We'll set this to False while we're developing
 # the component, and True when we're ready to package and distribute it.
 _RELEASE = False
@@ -140,7 +153,7 @@ def get_column_config(schema: dict):
     for column, prop in properties.items():
         if prop["type"] == "string" and prop.get("format") == "date-time":
             column_config[column] = st.column_config.DatetimeColumn(
-                format="YYYY-MM-DD HH:mm:ss",
+                format="YYYY-MM-DD HH:mm",
             )
         elif prop["type"] == "string":
             column_config[column] = st.column_config.TextColumn(
@@ -187,6 +200,8 @@ def rxdb_dataframe(
     collection_config,
     db_config: RxCollectionCreator = default_db_config,
     dataframe: pd.DataFrame = pd.DataFrame(),
+    query: MangoQuery = None,
+    with_rev: Optional[bool] = False,
     key: str = None,
 ) -> List[Dict[str, Any]]:
     if key is None:
@@ -200,6 +215,8 @@ def rxdb_dataframe(
         db_config=db_config,
         dataframe=dataframe.copy(),
         data=dataframe.to_json(),
+        query=query,
+        with_rev=with_rev,
         key=(key + "_rxdb"),
         editing_state=st.session_state.get(key, {}),
     )
