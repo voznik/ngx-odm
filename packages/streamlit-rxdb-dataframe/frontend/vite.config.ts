@@ -4,8 +4,11 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 // import json from 'vite-plugin-json';
+// import staticFiles from 'vite-plugin-static';
+// import jsonServer from 'vite-plugin-json-server';
 
 export default defineConfig({
+  logLevel: 'info',
   root: __dirname,
   cacheDir: '../../../node_modules/.vite/packages/streamlit-rxdb-dataframe/frontend',
 
@@ -19,7 +22,11 @@ export default defineConfig({
     host: 'localhost',
   },
 
-  plugins: [/* json(), */ react(), nxViteTsPaths()],
+  plugins: [
+    // json(),
+    react({ tsDecorators: true, devTarget: 'es2022' }),
+    nxViteTsPaths(),
+  ],
 
   // Uncomment this if you are using workers.
   // worker: {

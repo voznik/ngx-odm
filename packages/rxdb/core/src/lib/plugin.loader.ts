@@ -1,5 +1,5 @@
 import { RxDBPreparePlugin } from '@ngx-odm/rxdb/prepare';
-// import { RxDBPUseQueryParamsPlugin } from '@ngx-odm/rxdb/query-params';
+import { RxDBPUseQueryParamsPlugin } from '@ngx-odm/rxdb/query-params';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import { RxPlugin, addRxPlugin } from 'rxdb';
 import { RxDBCleanupPlugin } from 'rxdb/plugins/cleanup';
@@ -8,7 +8,7 @@ import { RxDBLocalDocumentsPlugin } from 'rxdb/plugins/local-documents';
 import { RxDBMigrationPlugin } from 'rxdb/plugins/migration-schema';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 
-const { isDevMode, isTestEnvironment } = NgxRxdbUtils;
+const { isDevMode, isTestEnvironment } = NgxRxdbUtils; //
 
 /**
  * Loads all the necessary and additional RxDB plugins for the application to work.
@@ -26,7 +26,7 @@ export async function loadRxDBPlugins(plugins: RxPlugin[] = []): Promise<void> {
     addRxPlugin(RxDBCleanupPlugin);
     // custom
     addRxPlugin(RxDBPreparePlugin);
-    // addRxPlugin(RxDBPUseQueryParamsPlugin);
+    addRxPlugin(RxDBPUseQueryParamsPlugin);
     // additional plugins
     for (const plugin of plugins) {
       addRxPlugin(plugin);

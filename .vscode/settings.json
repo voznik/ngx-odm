@@ -9,5 +9,6 @@
     "statusBarItem.remoteBackground": "#8d2089",
     "statusBarItem.remoteForeground": "#e7e7e7"
   },
-  "peacock.color": "#8d2089"
+  "peacock.color": "#8d2089",
+  "python.defaultInterpreterPath": "/home/voznik/.cache/pypoetry/virtualenvs/streamlit-rxdb-dataframe-zuiqvGqO-py3.10"
 }

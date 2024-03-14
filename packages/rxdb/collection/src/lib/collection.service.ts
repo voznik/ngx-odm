@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { InjectionToken, NgZone, inject } from '@angular/core';
 import type {
   RxCollectionExtended as RxCollection,
   RxCollectionCreatorExtended,
   RxCollectionHooks,
   RxDbMetadata,
 } from '@ngx-odm/rxdb/config';
-import { NgxRxdbService } from '@ngx-odm/rxdb/core';
-import { CURRENT_URL, updateQueryParams } from '@ngx-odm/rxdb/query-params';
+import { RxDBService } from '@ngx-odm/rxdb/core';
 import {
   Entity,
   EntityId,
@@ -41,35 +39,14 @@ import {
   switchMap,
   takeWhile,
 } from 'rxjs';
-import { ensureCollection, ensureCollection$, runInZone } from './helpers';
+import { ZoneLike, ensureCollection, ensureCollection$, runInZone } from './helpers';
 
-const { getMaybeId, logger, debug } = NgxRxdbUtils;
-
-/**
- * Injection token for Service for interacting with a RxDB {@link RxCollection}.
- * This token is used to inject an instance of NgxRxdbCollection into a component or service.
- */
-export const NgxRxdbCollectionService = new InjectionToken<NgxRxdbCollection>(
-  'NgxRxdbCollection'
-);
-
-/**
- * Factory function that returns a new instance of NgxRxdbCollection
- * with the provided NgxRxdbService and RxCollectionCreator.
- * @param config - The configuration object for the collection to be created automatically.
- */
-export function collectionServiceFactory(config: RxCollectionCreatorExtended) {
-  return (): NgxRxdbCollection => new NgxRxdbCollection(config);
-}
+const { getMaybeId, logger, debug, noop } = NgxRxdbUtils;
 
 /**
  * Service for interacting with a RxDB {@link RxCollection}.
  */
-export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
-  protected readonly dbService: NgxRxdbService = inject(NgxRxdbService);
-  protected readonly ngZone: NgZone = inject(NgZone);
-  protected readonly currentUrl$ = inject(CURRENT_URL);
-  protected readonly updateQueryParamsFn = inject(updateQueryParams);
+export class RxDBCollectionService<T extends Entity = { id: EntityId }> {
   private _collection!: RxCollection<T>;
   private _replicationState: RxReplicationState<T, unknown> | null = null;
   private _init$ = new ReplaySubject<boolean>();
@@ -101,7 +78,13 @@ export class NgxRxdbCollection<T extends Entity = { id: EntityId }> {
     return this.initialized$.pipe(switchMap(() => this.collection.queryParams!.$));
   }
 
-  constructor(public readonly config: RxCollectionCreatorExtended) {
+  constructor(
+    public readonly config: RxCollectionCreatorExtended,
+    protected readonly dbService: RxDBService,
+    protected readonly ngZone: ZoneLike = {} as any, // eslint-disable-line
+    protected readonly currentUrl$: Observable<string> = of(''),
+    protected readonly updateQueryParamsFn: any = noop // eslint-disable-line
+  ) {
     this.init(config);
   }
 

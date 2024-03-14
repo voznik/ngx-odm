@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { TestBed } from '@angular/core/testing';
-import { NgxRxdbService } from '@ngx-odm/rxdb/core';
+import { RxDBService } from '@ngx-odm/rxdb/core';
 import {
   TEST_FEATURE_CONFIG_1,
   TestDocType,
@@ -11,7 +11,7 @@ import { createRxLocalDocument } from 'rxdb/plugins/local-documents';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import { EMPTY, Observable, Subject, firstValueFrom, of } from 'rxjs';
 import {
-  NgxRxdbCollection,
+  RxDBCollectionService,
   NgxRxdbCollectionService,
   collectionServiceFactory,
 } from './collection.service';
@@ -26,14 +26,14 @@ const getMockReplicationState = (obj: Partial<RxReplicationState<any, any>>) => 
 
 describe(`NgxRxdbCollectionService`, () => {
   describe(`test methods using mock NgxRxdbService`, () => {
-    let dbService: NgxRxdbService;
-    let service: NgxRxdbCollection<TestDocType>;
+    let dbService: RxDBService;
+    let service: RxDBCollectionService<TestDocType>;
 
     beforeEach(async () => {
       dbService = await getMockRxdbService();
       TestBed.configureTestingModule({
         providers: [
-          { provide: NgxRxdbService, useValue: dbService },
+          { provide: RxDBService, useValue: dbService },
           {
             provide: NgxRxdbCollectionService,
             useFactory: collectionServiceFactory(TEST_FEATURE_CONFIG_1),

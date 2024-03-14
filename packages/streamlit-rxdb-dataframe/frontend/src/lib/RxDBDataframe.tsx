@@ -1,177 +1,151 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { RxCollectionExtended as RxCollection } from '@ngx-odm/rxdb/config';
-import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import React, { Fragment, ReactNode, useEffect } from 'react';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
+import {
+  getRxDatabaseCreator,
+  RxDatabaseCreatorExtended,
+  type RxCollectionCreatorExtended,
+} from '@ngx-odm/rxdb/config';
+import { RxDBService } from '@ngx-odm/rxdb/core';
+import { Entity, EntityId, NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import { Subscription } from 'rxjs';
 import {
   ArrowTable,
   ComponentProps,
+  RenderData,
   Streamlit,
   withStreamlitConnection,
 } from 'streamlit-component-lib';
-import * as Database from './Database';
-import { Subscription } from 'rxjs';
-import type { RxCollection as _RxCollection, RxDatabase } from 'rxdb';
-import { Todo } from '@shared';
+import equal from 'fast-deep-equal';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+import { v4 as uuid } from 'uuid';
 
-const { logger, range } = NgxRxdbUtils;
+const { logger, isEmpty, isEmptyObject } = NgxRxdbUtils;
 
-interface TableProps {
-  element: ArrowTable;
-}
-
-class Table extends React.PureComponent<TableProps> {
-  subs: Subscription[] = [];
-  collection!: RxCollection<Todo>;
-
-  public returnDataframe = (): void => {
-    // NOTE: Returning Styler data is not supported,
-    // so it won't be included in the returned dataframe.
-    Streamlit.setComponentValue(this.props.element);
-  };
-
-  async componentDidMount() {
-    const db: RxDatabase<any> = await Database.get();
-    this.collection = db.collections['todo'];
-    const meta = await this.collection.getMetadata();
-    logger.log('meta', meta);
-  }
-
-  componentWillUnmount() {
-    this.subs.forEach(sub => sub.unsubscribe());
-  }
-
-  public render = (): ReactNode => {
-    logger.log(this.props.element);
-
-    const table = this.props.element;
-    const hasHeader = table.headerRows > 0;
-    const hasData = table.dataRows > 0;
-    const id = table.uuid ? 'T_' + table.uuid : undefined;
-    const classNames = 'table table-bordered' + (hasData ? undefined : 'empty-table');
-    const caption = table.caption ? <caption>{table.caption}</caption> : null;
-
-    return (
-      <>
-        <div className="streamlit-table stTable">
-          <style>{table.styles}</style>
-          <table id={id} className={classNames}>
-            {caption}
-            {hasHeader && (
-              <thead>
-                <TableRows isHeader={true} table={table} />
-              </thead>
-            )}
-            <tbody>
-              {hasData ? (
-                <TableRows isHeader={false} table={table} />
-              ) : (
-                <tr>
-                  <td colSpan={table.columns || 1}>empty</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        <button className="btn btn-primary" onClick={this.returnDataframe}>
-          Return dataframe
-        </button>
-      </>
-    );
-  };
-}
-
-/**
- * Purely functional component returning a list of rows.
- *
- * isHeader     - Whether to display the header.
- * table        - The table to display.
- */
-
-interface TableRowsProps {
-  isHeader: boolean;
-  table: ArrowTable;
-}
-
-const TableRows: React.FC<TableRowsProps> = props => {
-  const { isHeader, table } = props;
-  const { headerRows, rows } = table;
-  const startRow = isHeader ? 0 : headerRows;
-  const endRow = isHeader ? headerRows : rows;
-
-  const tableRows = range(startRow, endRow).map(rowIndex => (
-    <tr key={rowIndex}>
-      <TableRow rowIndex={rowIndex} table={table} />
-    </tr>
-  ));
-
-  return <Fragment>{tableRows}</Fragment>;
+type DataframeEditingState = {
+  edited_rows: Record<EntityId, Entity>;
+  added_rows: Entity[];
+  deleted_rows: number[];
 };
 
-/**
- * Purely functional component returning a list entries for a row.
- *
- * rowIndex - The row index.
- * table    - The table to display.
- */
-
-interface TableRowProps {
-  rowIndex: number;
-  table: ArrowTable;
+interface ComponentArgs {
+  collection_config: RxCollectionCreatorExtended;
+  db_config: RxDatabaseCreatorExtended;
+  dataframe: ArrowTable;
+  data: Entity[];
+  editing_state: DataframeEditingState;
 }
-
-const TableRow: React.FC<TableRowProps> = props => {
-  const { rowIndex, table } = props;
-  const { columns } = table;
-
-  const cells = range(0, columns).map(columnIndex => {
-    const { classNames, content, id, type } = table.getCell(rowIndex, columnIndex);
-
-    // Format the content if needed
-    const formattedContent = (content || '').toString();
-
-    switch (type) {
-      case 'blank': {
-        return <th key={columnIndex} className={classNames} />;
-      }
-      case 'index': {
-        return (
-          <th key={columnIndex} scope="row" className={classNames}>
-            {formattedContent}
-          </th>
-        );
-      }
-      case 'columns': {
-        return (
-          <th key={columnIndex} scope="col" id={id} className={classNames}>
-            {formattedContent}
-          </th>
-        );
-      }
-      case 'data': {
-        return (
-          <td key={columnIndex} id={id} className={classNames}>
-            {formattedContent}
-          </td>
-        );
-      }
-      default: {
-        throw new Error(`Cannot parse type "${type}".`);
-      }
-    }
-  });
-
-  return <Fragment>{cells}</Fragment>;
-};
 
 /**
  * Dataframe example using Apache Arrow.
  */
 const RxDBDataframe: React.FC<ComponentProps> = props => {
-  useEffect(() => {
-    Streamlit.setFrameHeight();
-  });
+  const [inited, setInited] = useState<boolean>();
+  const [entities, setEntities] = useState<Entity[]>();
+  let _editingState: DataframeEditingState = {} as any;
+  const [renderData, setRenderData] = useState<RenderData<ComponentArgs>>();
+  const dbServiceRef = useRef<RxDBService>();
+  const collectionServiceRef = useRef<RxDBCollectionService>();
+  const subs: Subscription[] = [];
+  if (!dbServiceRef.current) {
+    dbServiceRef.current = new RxDBService();
+  }
 
-  return <Table element={props.args.data} />;
+  async function initDb(dbConfig: RxDatabaseCreatorExtended) {
+    const parsedDbConfig = getRxDatabaseCreator(dbConfig);
+    return dbServiceRef.current!.initDb(parsedDbConfig);
+  }
+
+  async function initCollection(collectionConfig: RxCollectionCreatorExtended) {
+    if (!collectionServiceRef.current) {
+      collectionServiceRef.current = new RxDBCollectionService(
+        collectionConfig,
+        dbServiceRef.current!
+      );
+    }
+    await collectionServiceRef.current!.info();
+    setInited(true);
+    const sub = collectionServiceRef.current!.docs({ // eslint-disable-line
+        selector: {},
+        sort: [{ last_modified: 'asc' }],
+      })
+      .subscribe(docs => {
+        if (!docs) {
+          return;
+        }
+        logger.table(docs);
+        setEntities(docs);
+        Streamlit.setComponentValue(docs);
+      });
+    subs.push(sub);
+  }
+
+  useEffect(() => {
+    const onRenderEvent = (event: Event): void => {
+      const renderEvent = event as CustomEvent<RenderData>;
+      setRenderData(renderEvent.detail);
+    };
+
+    // Set up event listeners, and signal to Streamlit that we're ready.
+    // We won't render the component until we receive the first RENDER_EVENT.
+    Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, onRenderEvent);
+    Streamlit.setComponentReady();
+
+    const cleanup = () => {
+      Streamlit.events.removeEventListener(Streamlit.RENDER_EVENT, onRenderEvent);
+      subs.forEach(sub => sub.unsubscribe());
+    };
+    return cleanup;
+  }, []);
+
+  if (isEmptyObject(renderData)) return null; // Don't do anything at all
+
+  const { dataframe, editing_state, collection_config, db_config } = renderData!.args;
+
+  if (!inited) {
+    try {
+      initDb(db_config).then(() => initCollection(collection_config));
+    } catch (error) {
+      logger.log('Error initializing database', error);
+    }
+  }
+
+  if (!isEmpty(editing_state) && !equal(_editingState, editing_state)) {
+    _editingState = editing_state;
+    if (!isEmpty(_editingState.added_rows)) {
+      const docs = _editingState.added_rows.map(item => ({
+        ...item,
+        id: uuid(),
+        createdAt: new Date().toISOString(),
+        last_modified: Date.now(),
+      }));
+      collectionServiceRef.current!.upsertBulk(docs);
+    }
+
+    if (!isEmpty(_editingState.deleted_rows) && !isEmpty(entities)) {
+      const ids: string[] = [];
+      _editingState.deleted_rows.forEach(rowIndex => {
+        const entity = entities!.at(rowIndex);
+        if (entity) {
+          ids.push(entity.id);
+        }
+      });
+      collectionServiceRef.current!.removeBulk(ids);
+    }
+
+    if (!isEmpty(_editingState.edited_rows) && !isEmpty(entities)) {
+      Object.entries(_editingState.edited_rows).forEach(([rowIndex, change]) => {
+        const entity = entities!.at(parseInt(rowIndex));
+        if (entity) {
+          collectionServiceRef.current!.set(entity.id, change);
+        }
+      });
+    }
+  }
+
+  return props.args.element as ReactNode;
 };
 
 export default withStreamlitConnection(RxDBDataframe);

@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
-import { RXDB_CONFIG_COLLECTION } from '@ngx-odm/rxdb/config';
+import { RXDB_CONFIG_COLLECTION } from '@ngx-odm/rxdb';
 import { Todo, TodosFilter } from '@shared';
 
 @Pipe({ name: 'byStatus' })

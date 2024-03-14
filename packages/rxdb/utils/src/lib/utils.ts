@@ -213,6 +213,9 @@ export namespace NgxRxdbUtils {
   export const isObject = (x: any): x is object =>
     Object.prototype.toString.call(x) === '[object Object]';
 
+  export const isEmptyObject = (x: any): x is object =>
+    isNullOrUndefined(x) || (isObject(x) && isEmpty(x));
+
   export function isDevMode(): boolean {
     return typeof globalThis['ngDevMode'] === 'undefined' || !!globalThis['ngDevMode'];
   }

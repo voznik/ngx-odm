@@ -5,10 +5,11 @@
   "title": "Todo",
   "description": "Todo Schema",
   "required": ["id", "title", "createdAt"],
-  "version": 3,
+  "version": 0,
   "properties": {
     "id": {
       "type": "string",
+      "format": "uuid",
       "title": "Id",
       "pattern": "^(.*)$",
       "maxLength": 36,
@@ -16,7 +17,8 @@
     },
     "title": {
       "type": "string",
-      "title": "Title"
+      "title": "Title",
+      "minLength": 3
     },
     "completed": {
       "type": "boolean",
@@ -30,6 +32,7 @@
     },
     "last_modified": {
       "type": "number",
+      "format": "time",
       "title": "Last Modified Date",
       "multipleOf": 1
     }

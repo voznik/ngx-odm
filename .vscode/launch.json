@@ -84,6 +84,18 @@
         "TS_NODE_TRANSPILE_ONLY": "true"
       },
       "disableOptimisticBPs": true
+    },
+    //
+    {
+        "name": "Python: Streamlit",
+        "type": "python",
+        "request": "launch",
+        "module": "streamlit",
+        "args": ["run", "${file}", "--server.headless=true", "--browser.gatherUsageStats=false"],
+        "env": {
+            "PYTHONPATH": "${workspaceFolder}"
+        },
+        "console": "integratedTerminal"
     }
   ],
   "inputs": [

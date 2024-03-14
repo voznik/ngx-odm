@@ -1,16 +1,26 @@
-import { APP_INITIALIZER, InjectionToken, Provider } from '@angular/core';
-import {
-  NgxRxdbCollectionService,
-  collectionServiceFactory,
-} from '@ngx-odm/rxdb/collection';
+import { Location } from '@angular/common';
+import { APP_INITIALIZER, InjectionToken, NgZone, Provider, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
 import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
-import { NgxRxdbService } from '@ngx-odm/rxdb/core';
+import { MangoQueryParams } from '@ngx-odm/rxdb/config';
+import { RxDBService } from '@ngx-odm/rxdb/core';
 import { RxDatabaseCreator } from 'rxdb';
+import { BehaviorSubject, Observable, defer, distinctUntilChanged } from 'rxjs';
+
+/**
+ * Instance of RxDB service
+ */
+export const RXDB = new InjectionToken<RxDBService>('RxDBService Instance', {
+  providedIn: 'root',
+  factory: () => new RxDBService(),
+});
 
 /**
  * Instance of RxDatabaseCreator
  */
 export const RXDB_CONFIG = new InjectionToken<RxDatabaseCreator>('RxDatabaseCreator');
+
 /**
  * Instance of RxCollectionCreator
  */
@@ -18,12 +28,20 @@ export const RXDB_CONFIG = new InjectionToken<RxDatabaseCreator>('RxDatabaseCrea
 export const RXDB_CONFIG_COLLECTION = new InjectionToken<RxCollectionCreatorExtended>('RxCollectionCreator');
 
 /**
+ * Injection token for Service for interacting with a RxDB {@link RxCollection}.
+ * This token is used to inject an instance of NgxRxdbCollection into a component or service.
+ */
+export const NgxRxdbCollectionService = new InjectionToken<RxDBCollectionService>(
+  'NgxRxdbCollection'
+);
+
+/**
  * Initializes DB at `APP_INITIALIZER` cycle
  * @param dbService
  * @param dbConfig
  */
 function dbInitializerFactory(
-  dbService: NgxRxdbService,
+  dbService: RxDBService,
   dbConfig: RxDatabaseCreator
 ): () => Promise<void> {
   return async () => {
@@ -56,7 +74,7 @@ export function provideRxDatabase(config: RxDatabaseCreator): Provider[] {
     {
       provide: APP_INITIALIZER,
       useFactory: dbInitializerFactory,
-      deps: [NgxRxdbService, RXDB_CONFIG],
+      deps: [RXDB, RXDB_CONFIG],
       multi: true,
     },
   ];
@@ -89,8 +107,58 @@ export function provideRxCollection(
     { provide: RXDB_CONFIG_COLLECTION, useValue: collectionConfig },
     {
       provide: NgxRxdbCollectionService,
-      useFactory: collectionServiceFactory(collectionConfig),
-      deps: [],
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      useFactory: (config, dbService, ngZone, currentUrl, updateQueryParamsFn) =>
+        new RxDBCollectionService(
+          config,
+          dbService,
+          ngZone,
+          currentUrl,
+          updateQueryParamsFn
+        ),
+      deps: [
+        //
+        RXDB_CONFIG_COLLECTION,
+        RXDB,
+        NgZone,
+        CURRENT_URL,
+        updateQueryParams,
+      ],
     },
   ];
 }
+
+/**
+ * The current URL as an observable
+ */
+export const CURRENT_URL = new InjectionToken<Observable<string>>('CURRENT_URL', {
+  providedIn: 'root',
+  factory: () => {
+    const location = inject(Location);
+    const subject = new BehaviorSubject(window.location.href);
+
+    location.onUrlChange(url => {
+      subject.next(url);
+    });
+    return defer(() => subject).pipe(distinctUntilChanged());
+  },
+});
+
+/**
+ * Updates query params in the URL via {@link Router.navigate }
+ */
+export const updateQueryParams = new InjectionToken<
+  (queryParams: MangoQueryParams) => Promise<boolean>
+>('UPDATE_QUERY_PARAMS', {
+  providedIn: 'root',
+  factory: () => {
+    const router = inject(Router);
+    return (queryParams: MangoQueryParams) => {
+      return router.navigate([], {
+        queryParams,
+        queryParamsHandling: 'merge',
+      });
+    };
+  },
+});

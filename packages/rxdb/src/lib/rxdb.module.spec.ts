@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { ApplicationInitStatus } from '@angular/core';
 import { TestBed, inject } from '@angular/core/testing';
-import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
+import { RxDBCollectionService, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
 import { RXDB_CONFIG } from '@ngx-odm/rxdb/config';
-import { NgxRxdbService } from '@ngx-odm/rxdb/core';
+import { RxDBService } from '@ngx-odm/rxdb/core';
 import {
   setupNavigationWarnStub,
   getMockRxdbService,
@@ -31,7 +31,7 @@ describe('NgxRxdbModule', () => {
       expect(() => TestBed.inject(RXDB_CONFIG)).toThrowError(
         /InjectionToken RxDatabaseCreator is not provided. Make sure you call the 'forRoot'/
       );
-      expect(() => TestBed.inject(NgxRxdbService)).toThrowError(
+      expect(() => TestBed.inject(RxDBService)).toThrowError(
         // /No provider for/
         /InjectionToken RxDatabaseCreator is not provided. Make sure you call the 'forRoot'/
       );
@@ -46,7 +46,7 @@ describe('NgxRxdbModule', () => {
     });
 
     it(`should provide db service`, () => {
-      expect(TestBed.inject(NgxRxdbService)).toBeDefined();
+      expect(TestBed.inject(RxDBService)).toBeDefined();
     });
 
     it(`should provide db config`, () => {
@@ -55,12 +55,12 @@ describe('NgxRxdbModule', () => {
   });
 
   describe(`NgxRxdbModule :: init w/o forFeature`, () => {
-    let dbService: NgxRxdbService;
+    let dbService: RxDBService;
     beforeEach(async () => {
       dbService = await getMockRxdbService();
       TestBed.configureTestingModule({
         imports: [NgxRxdbModule.forRoot(TEST_DB_CONFIG_1)],
-        providers: [{ provide: NgxRxdbService, useValue: dbService }],
+        providers: [{ provide: RxDBService, useValue: dbService }],
       });
     });
 
@@ -76,7 +76,7 @@ describe('NgxRxdbModule', () => {
   });
 
   describe(`NgxRxdbModule :: forFeature`, () => {
-    let dbService: NgxRxdbService;
+    let dbService: RxDBService;
 
     beforeEach(async () => {
       dbService = await getMockRxdbService();
@@ -85,7 +85,7 @@ describe('NgxRxdbModule', () => {
           NgxRxdbModule.forRoot(TEST_DB_CONFIG_1),
           NgxRxdbModule.forFeature(TEST_FEATURE_CONFIG_1),
         ],
-        providers: [{ provide: NgxRxdbService, useValue: dbService }],
+        providers: [{ provide: RxDBService, useValue: dbService }],
       });
       const appInitStatus = TestBed.inject(ApplicationInitStatus);
       await appInitStatus.donePromise;
@@ -93,7 +93,7 @@ describe('NgxRxdbModule', () => {
 
     it(`should init db via dbService`, inject(
       [NgxRxdbCollectionService],
-      async (colService: NgxRxdbCollection) => {
+      async (colService: RxDBCollectionService) => {
         expect(dbService.initDb).toHaveBeenCalledWith(TEST_DB_CONFIG_1);
         expect(dbService.initCollections).toHaveBeenCalledWith({
           [TEST_FEATURE_CONFIG_1.name]: TEST_FEATURE_CONFIG_1,

@@ -5,7 +5,7 @@ import RxDBDataframe from './lib/RxDBDataframe';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
-  <StrictMode>
+  // <StrictMode>
     <RxDBDataframe />
-  </StrictMode>
+  // </StrictMode>
 );

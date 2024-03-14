@@ -8,12 +8,18 @@ import {
   Self,
   SkipSelf,
 } from '@angular/core';
-import { NgxRxdbFeatureModule } from '@ngx-odm/rxdb/collection';
-import { RXDB_CONFIG, RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
-import { NgxRxdbService } from '@ngx-odm/rxdb/core';
+import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
+import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
+import { RxDBService } from '@ngx-odm/rxdb/core';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import type { RxDatabaseCreator } from 'rxdb';
-import { provideRxCollection, provideRxDatabase } from './rxdb.providers';
+import {
+  NgxRxdbCollectionService,
+  RXDB,
+  RXDB_CONFIG,
+  provideRxCollection,
+  provideRxDatabase,
+} from './rxdb.providers';
 
 /**
  * Main module which should be imported once in app module, will init RxDbDatabase with given configuration
@@ -118,7 +124,7 @@ export class NgxRxdbModule {
 
     if (trueNgxRxdbConfig && !ngxRxdbConfig) {
       appInitStatus.donePromise.then(() => {
-        const ngxRxdbService = injector.get(NgxRxdbService);
+        const ngxRxdbService = injector.get(RXDB);
         if (ngxRxdbService.db.startupErrors.length) {
           NgxRxdbUtils.logger.log(ngxRxdbService.db.startupErrors);
         }
@@ -128,4 +134,19 @@ export class NgxRxdbModule {
       });
     }
   }
+}
+
+/**
+ * (Fake) Feature module for NgxRxdbModule
+ *
+ * By being provided with `forChild` method of *root* NgxRxdbModule,
+ * and by injecting `NgxRxdbCollectionService` in its constructor,
+ * this module actually creates a collection with collectionService and provided config
+ */
+@NgModule()
+export class NgxRxdbFeatureModule {
+  constructor(
+    @Inject(RXDB) private dbService: RxDBService,
+    @Inject(NgxRxdbCollectionService) private collectionService: RxDBCollectionService
+  ) {}
 }

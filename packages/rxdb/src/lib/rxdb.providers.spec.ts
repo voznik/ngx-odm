@@ -2,9 +2,9 @@ import { Location } from '@angular/common';
 import { SpyLocation } from '@angular/common/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { MangoQueryParams } from '@ngx-odm/rxdb/config';
+import type { MangoQueryParams } from '@ngx-odm/rxdb/config';
 import { Observable, take } from 'rxjs';
-import { CURRENT_URL, updateQueryParams } from './tokens';
+import { CURRENT_URL, updateQueryParams } from './rxdb.providers';
 
 describe('query-params injection tokens', () => {
   describe('CURRENT_URL should emit stream', () => {

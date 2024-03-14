@@ -100,13 +100,13 @@ type RxDatabaseCreatorPartialStorage = SetOptional<RxDatabaseCreator, 'storage'>
 /* prettier-ignore */
 type RxDatabaseCreatorRequireOptions = SetRequired< RxDatabaseCreatorPartialStorage, 'options'>;
 /* prettier-ignore */
-type NgxRxdbConfig = Merge< RxDatabaseCreatorRequireOptions, { options: NgxRxdbConfigOptions }>;
+export type RxDatabaseCreatorExtended = Merge< RxDatabaseCreatorRequireOptions, { options: NgxRxdbConfigOptions }>;
 
 /**
  * Returns full configuration object for creating an RxDatabase instance.
  * @param config - Partial configuration options for the RxDatabase instance.
  */
-export function getRxDatabaseCreator(config: NgxRxdbConfig): RxDatabaseCreator {
+export function getRxDatabaseCreator(config: RxDatabaseCreatorExtended): RxDatabaseCreator {
   // eslint-disable-next-line prefer-const
   let { name, options, storage, ...rest } = config;
   if (!storage) {

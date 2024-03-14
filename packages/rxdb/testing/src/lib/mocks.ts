@@ -2,15 +2,20 @@
 /// <reference types="jest" />
 
 import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
-import { NgxRxdbService, loadRxDBPlugins } from '@ngx-odm/rxdb/core';
+import { RxDBService } from '@ngx-odm/rxdb/core';
 import {
   RxCollectionCreator,
   RxDatabaseCreator,
   RxJsonSchema,
+  addRxPlugin,
   createRxDatabase,
   randomCouchString,
 } from 'rxdb';
+import { RxDBCleanupPlugin } from 'rxdb/plugins/cleanup';
+import { RxDBJsonDumpPlugin } from 'rxdb/plugins/json-dump';
+import { RxDBMigrationPlugin } from 'rxdb/plugins/migration-schema';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
+import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 
 export type TestDocType = {
   id: string;
@@ -109,7 +114,12 @@ export const getMockRxCollection = async (
   colConfig: RxCollectionCreatorExtended = TEST_FEATURE_CONFIG_1,
   randomName = false
 ) => {
-  await loadRxDBPlugins();
+  // await loadRxDBPlugins();
+  addRxPlugin(RxDBJsonDumpPlugin);
+  addRxPlugin(RxDBMigrationPlugin);
+  addRxPlugin(RxDBUpdatePlugin);
+  addRxPlugin(RxDBCleanupPlugin);
+
   const database = await createRxDatabase({
     name: randomName ? randomCouchString(6) : 'test',
     storage: getRxStorageMemory(),
@@ -153,6 +163,6 @@ export const getMockRxdbService = async (
     service.collections[colConfig.name] = collection;
     return Promise.resolve(service.collections);
   });
-  Object.setPrototypeOf(service, NgxRxdbService.prototype);
-  return service as unknown as NgxRxdbService;
+  Object.setPrototypeOf(service, RxDBService.prototype);
+  return service as unknown as RxDBService;
 };
