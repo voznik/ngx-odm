@@ -18,23 +18,25 @@ function isZone(obj: any): obj is ZoneLike {
   return !isEmptyObject(obj) && isFunction(obj.run);
 }
 
+/* eslint-disable prettier/prettier */
 /**
  * Moves observable execution in and out of Angular zone.
  * @param zone
  */
-export function runInZone<T>(zone: ZoneLike): OperatorFunction<T, T> {
+export function runInZone<T>(zone: ZoneLike): OperatorFunction<T, T> { // NOSONAR
   if (!isZone(zone)) return source => source;
 
-  return source => {
-    return new Observable(subscriber => {
+  return source => { // NOSONAR
+    return new Observable(subscriber => { // NOSONAR
       return source.subscribe(
         (value: T) => zone.run(() => subscriber.next(value)),
         (e: any) => zone.run(() => subscriber.error(e)),
-        () => zone.run(() => subscriber.complete())
+        () => zone.run(() => subscriber.complete()) // NOSONAR
       );
     });
   };
 }
+/* eslint-enable prettier/prettier */
 
 /**
  * Collection method decorator for Observable return type

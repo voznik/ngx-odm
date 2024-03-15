@@ -28,11 +28,11 @@ export const RXDB_CONFIG = new InjectionToken<RxDatabaseCreator>('RxDatabaseCrea
 export const RXDB_CONFIG_COLLECTION = new InjectionToken<RxCollectionCreatorExtended>('RxCollectionCreator');
 
 /**
- * Injection token for Service for interacting with a RxDB {@link RxCollection}.
- * This token is used to inject an instance of NgxRxdbCollection into a component or service.
+ * Injection token for Service for interacting with a RxCollection.
+ * This token is used to inject an instance of RxDBCollectionService into a component or service.
  */
 export const NgxRxdbCollectionService = new InjectionToken<RxDBCollectionService>(
-  'NgxRxdbCollection'
+  'RxDBCollectionService'
 );
 
 /**

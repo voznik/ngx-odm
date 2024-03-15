@@ -1412,17 +1412,6 @@ streamlit = ">=1.12,<2"
 test = ["pytest", "pytest-mock", "tox"]
 
 [[package]]
-name = "streamlit-superapp"
-version = "1.3.0"
-description = ""
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "streamlit_superapp-1.3.0-py3-none-any.whl", hash = "sha256:b48e87f148d642aadc5eb77542b955be71d3cc8534900cb29200c6f4ec9ecf80"},
-    {file = "streamlit_superapp-1.3.0.tar.gz", hash = "sha256:3ec9e76f79df42065eb4439087fef232857e2535d5f238cc777cfa2b457399fc"},
-]
-
-[[package]]
 name = "tenacity"
 version = "8.2.3"
 description = "Retry code until it succeeds"
@@ -1583,4 +1572,4 @@ watchmedo = ["PyYAML (>=3.10)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "b4bf1074634e3f98de67d859e6cfe3c4bbc58e5844c92f9cba8148dcf3cef534"
+content-hash = "55329c5e879e252159baecdb32a131f467baadf199ea3d66a0865dec0d0d7821"

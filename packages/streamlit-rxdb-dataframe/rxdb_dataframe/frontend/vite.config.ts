@@ -10,7 +10,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   logLevel: 'info',
   root: __dirname,
-  cacheDir: '../../../node_modules/.vite/packages/streamlit-rxdb-dataframe/frontend',
+  cacheDir: '../../../../node_modules/.vite/packages/streamlit-rxdb-dataframe/frontend',
 
   server: {
     port: 4201,
@@ -32,30 +32,22 @@ export default defineConfig({
   // worker: {
   //  plugins: [ nxViteTsPaths() ],
   // },
-
+  base: './', // This is needed to make compiled app work in Streamlit.
   build: {
-    outDir: '../../../dist/packages/streamlit-rxdb-dataframe/frontend',
+    outDir: './build',
+    emptyOutDir: true,
     reportCompressedSize: true,
+    terserOptions: {
+      mangle: false,
+    },
     commonjsOptions: {
       transformMixedEsModules: true,
     },
-  },
-
-  define: {
-    'import.meta.vitest': undefined,
-  },
-  test: {
-    globals: true,
-    cache: {
-      dir: '../../../node_modules/.vitest',
-    },
-    environment: 'jsdom',
-    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    includeSource: ['src/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    reporters: ['default'],
-    coverage: {
-      reportsDirectory: '../../../coverage/packages/streamlit-rxdb-dataframe/frontend',
-      provider: 'v8',
+    rollupOptions: {
+      output: {
+        entryFileNames: `[name].js`, // disable hash in file name
+        chunkFileNames: `[name].js`, // disable hash in chunk file name
+      },
     },
   },
 });

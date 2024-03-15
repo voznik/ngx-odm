@@ -25,6 +25,7 @@
     "typeRoots": ["node_modules/@types"],
     "types": ["node"],
     "paths": {
+      "@ngx-odm/react": ["packages/react/src/index.ts"],
       "@ngx-odm/rxdb": ["dist/packages/rxdb", "packages/rxdb/src/index.ts"],
       "@ngx-odm/rxdb/collection": [
         "dist/packages/rxdb/collection",
@@ -35,13 +36,13 @@
         "packages/rxdb/config/src/index.ts"
       ],
       "@ngx-odm/rxdb/core": ["dist/packages/rxdb/core", "packages/rxdb/core/src/index.ts"],
-      "@ngx-odm/rxdb/query-params": [
-        "dist/packages/rxdb/query-params",
-        "packages/rxdb/query-params/src/index.ts"
-      ],
       "@ngx-odm/rxdb/prepare": [
         "dist/packages/rxdb/prepare",
         "packages/rxdb/prepare/src/index.ts"
+      ],
+      "@ngx-odm/rxdb/query-params": [
+        "dist/packages/rxdb/query-params",
+        "packages/rxdb/query-params/src/index.ts"
       ],
       "@ngx-odm/rxdb/replication-kinto": [
         "dist/packages/rxdb/replication-kinto",

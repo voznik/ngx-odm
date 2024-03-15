@@ -8,7 +8,7 @@ import { RxDBLocalDocumentsPlugin } from 'rxdb/plugins/local-documents';
 import { RxDBMigrationPlugin } from 'rxdb/plugins/migration-schema';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 
-const { isDevMode, isTestEnvironment } = NgxRxdbUtils; //
+const { logger } = NgxRxdbUtils;
 
 /**
  * Loads all the necessary and additional RxDB plugins for the application to work.
@@ -31,14 +31,7 @@ export async function loadRxDBPlugins(plugins: RxPlugin[] = []): Promise<void> {
     for (const plugin of plugins) {
       addRxPlugin(plugin);
     }
-
-    /** * to reduce the build-size, we use some plugins in dev-mode only */
-    if (isDevMode() && !isTestEnvironment()) {
-      // https://rxdb.info/dev-mode.html
-      const { RxDBDevModePlugin } = await import('rxdb/plugins/dev-mode');
-      addRxPlugin(RxDBDevModePlugin);
-    }
-    NgxRxdbUtils.logger.log('rxdb plugins loaded');
+    logger.log('rxdb plugins loaded');
   } catch (error) {
     throw new Error(error.message ?? error);
   }

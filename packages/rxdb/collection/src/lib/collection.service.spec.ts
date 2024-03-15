@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { TestBed } from '@angular/core/testing';
+import { NgxRxdbCollectionService, RXDB, provideRxCollection } from '@ngx-odm/rxdb';
 import { RxDBService } from '@ngx-odm/rxdb/core';
 import {
   TEST_FEATURE_CONFIG_1,
@@ -10,11 +11,7 @@ import { MangoQuery, RxQuery } from 'rxdb';
 import { createRxLocalDocument } from 'rxdb/plugins/local-documents';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import { EMPTY, Observable, Subject, firstValueFrom, of } from 'rxjs';
-import {
-  RxDBCollectionService,
-  NgxRxdbCollectionService,
-  collectionServiceFactory,
-} from './collection.service';
+import { RxDBCollectionService } from './collection.service';
 
 const getMockReplicationState = (obj: Partial<RxReplicationState<any, any>>) => {
   obj.reSync = jest.fn();
@@ -33,11 +30,8 @@ describe(`NgxRxdbCollectionService`, () => {
       dbService = await getMockRxdbService();
       TestBed.configureTestingModule({
         providers: [
-          { provide: RxDBService, useValue: dbService },
-          {
-            provide: NgxRxdbCollectionService,
-            useFactory: collectionServiceFactory(TEST_FEATURE_CONFIG_1),
-          },
+          { provide: RXDB, useValue: dbService },
+          provideRxCollection(TEST_FEATURE_CONFIG_1),
         ],
       });
       service = TestBed.inject(NgxRxdbCollectionService) as any;

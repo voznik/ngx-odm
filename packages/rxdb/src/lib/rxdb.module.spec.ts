@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { ApplicationInitStatus } from '@angular/core';
 import { TestBed, inject } from '@angular/core/testing';
-import { RxDBCollectionService, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
-import { RXDB_CONFIG } from '@ngx-odm/rxdb/config';
+import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
 import { RxDBService } from '@ngx-odm/rxdb/core';
 import {
   setupNavigationWarnStub,
@@ -11,6 +10,7 @@ import {
   TEST_FEATURE_CONFIG_1,
 } from '@ngx-odm/rxdb/testing';
 import { NgxRxdbModule } from './rxdb.module';
+import { NgxRxdbCollectionService, RXDB, RXDB_CONFIG } from './rxdb.providers';
 
 describe('NgxRxdbModule', () => {
   beforeAll(() => {
@@ -31,7 +31,7 @@ describe('NgxRxdbModule', () => {
       expect(() => TestBed.inject(RXDB_CONFIG)).toThrowError(
         /InjectionToken RxDatabaseCreator is not provided. Make sure you call the 'forRoot'/
       );
-      expect(() => TestBed.inject(RxDBService)).toThrowError(
+      expect(() => TestBed.inject(RXDB)).toThrowError(
         // /No provider for/
         /InjectionToken RxDatabaseCreator is not provided. Make sure you call the 'forRoot'/
       );
@@ -46,7 +46,7 @@ describe('NgxRxdbModule', () => {
     });
 
     it(`should provide db service`, () => {
-      expect(TestBed.inject(RxDBService)).toBeDefined();
+      expect(TestBed.inject(RXDB)).toBeDefined();
     });
 
     it(`should provide db config`, () => {
@@ -60,7 +60,7 @@ describe('NgxRxdbModule', () => {
       dbService = await getMockRxdbService();
       TestBed.configureTestingModule({
         imports: [NgxRxdbModule.forRoot(TEST_DB_CONFIG_1)],
-        providers: [{ provide: RxDBService, useValue: dbService }],
+        providers: [{ provide: RXDB, useValue: dbService }],
       });
     });
 
@@ -85,7 +85,7 @@ describe('NgxRxdbModule', () => {
           NgxRxdbModule.forRoot(TEST_DB_CONFIG_1),
           NgxRxdbModule.forFeature(TEST_FEATURE_CONFIG_1),
         ],
-        providers: [{ provide: RxDBService, useValue: dbService }],
+        providers: [{ provide: RXDB, useValue: dbService }],
       });
       const appInitStatus = TestBed.inject(ApplicationInitStatus);
       await appInitStatus.donePromise;

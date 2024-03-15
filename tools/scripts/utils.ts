@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable @typescript-eslint/no-var-requires, @typescript-eslint/no-explicit-any */
 import { exec, ExecOptions } from 'child_process';
 import { resolve } from 'path';
 

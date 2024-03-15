@@ -96,11 +96,12 @@ class MangoQuery:
         self.limit = limit
         self.skip = skip
 
+
 # Create a _RELEASE constant. We'll set this to False while we're developing
 # the component, and True when we're ready to package and distribute it.
-_RELEASE = False
+_RELEASE = True
 
-if not _RELEASE:
+if not _RELEASE: # NOSONAR
     _rxdb_dataframe = components.declare_component(
         "rxdb_dataframe",
         url="http://localhost:4201",
@@ -108,6 +109,13 @@ if not _RELEASE:
 else:
     parent_dir = os.path.dirname(os.path.abspath(__file__))
     build_dir = os.path.join(parent_dir, "frontend/build")
+    index_js_path = os.path.join(build_dir, "index.js")
+
+    if os.path.exists(index_js_path):
+        print("index.js exists")
+    else:
+        print("index.js does not exist")
+
     _rxdb_dataframe = components.declare_component("rxdb_dataframe", path=build_dir)
 
 

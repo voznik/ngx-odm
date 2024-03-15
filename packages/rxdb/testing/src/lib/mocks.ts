@@ -7,15 +7,11 @@ import {
   RxCollectionCreator,
   RxDatabaseCreator,
   RxJsonSchema,
-  addRxPlugin,
   createRxDatabase,
   randomCouchString,
 } from 'rxdb';
-import { RxDBCleanupPlugin } from 'rxdb/plugins/cleanup';
-import { RxDBJsonDumpPlugin } from 'rxdb/plugins/json-dump';
-import { RxDBMigrationPlugin } from 'rxdb/plugins/migration-schema';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
-import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
+import { loadRxDBPlugins } from '../../../core/src/lib/plugin.loader';
 
 export type TestDocType = {
   id: string;
@@ -114,11 +110,7 @@ export const getMockRxCollection = async (
   colConfig: RxCollectionCreatorExtended = TEST_FEATURE_CONFIG_1,
   randomName = false
 ) => {
-  // await loadRxDBPlugins();
-  addRxPlugin(RxDBJsonDumpPlugin);
-  addRxPlugin(RxDBMigrationPlugin);
-  addRxPlugin(RxDBUpdatePlugin);
-  addRxPlugin(RxDBCleanupPlugin);
+  await loadRxDBPlugins();
 
   const database = await createRxDatabase({
     name: randomName ? randomCouchString(6) : 'test',

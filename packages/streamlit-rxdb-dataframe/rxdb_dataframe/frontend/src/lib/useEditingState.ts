@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import { DataframeEditingState } from './RxDBDataframeArgs';
 
-const { isEmpty } = NgxRxdbUtils;
+const { logger, isEmpty } = NgxRxdbUtils;
 
 /**
  * Custom hook that manages the editing state of a Dataframe.
@@ -39,7 +39,8 @@ export const useEditedState = (
         createdAt: new Date().toISOString(),
         last_modified: Date.now(),
       }));
-      collectionService.upsertBulk(docs);
+      if (!docs.length) return;
+      collectionService.upsertBulk(docs).catch(error => logger.log('upsertBulk', error));
     }
 
     if (!isEmpty(editingState.deleted_rows)) {
@@ -50,16 +51,21 @@ export const useEditedState = (
           ids.push(entity.id);
         }
       });
-      collectionService.removeBulk(ids);
+      if (!ids.length) return;
+      collectionService.removeBulk(ids).catch(error => logger.log('removeBulk', error));
     }
 
     if (!isEmpty(editingState.edited_rows)) {
-      Object.entries(editingState.edited_rows).forEach(([rowIndex, change]) => {
+      const docs = Object.entries(editingState.edited_rows).map(([rowIndex, change]) => {
         const entity = entities.at(parseInt(rowIndex));
-        if (entity) {
-          collectionService.set(entity.id, change);
-        }
+        return {
+          ...entity,
+          ...change,
+          last_modified: Date.now(),
+        };
       });
+      if (!docs.length) return;
+      collectionService.upsertBulk(docs).catch(error => logger.log('upsertBulk', error));
     }
   }, [editingState, entities]);
 

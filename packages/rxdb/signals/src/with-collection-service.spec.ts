@@ -3,8 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { getState, signalStore } from '@ngrx/signals';
 import { withEntities } from '@ngrx/signals/entities';
 import { EntitySignals } from '@ngrx/signals/entities/src/models';
-import { provideRxCollection } from '@ngx-odm/rxdb';
-import { RxDBCollectionService, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
+import { NgxRxdbCollectionService, RXDB, provideRxCollection } from '@ngx-odm/rxdb';
+import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
 import { RxDBService } from '@ngx-odm/rxdb/core';
 import {
   MOCK_DATA,
@@ -36,7 +36,7 @@ describe('withCollectionService', () => {
       TestBed.configureTestingModule({
         providers: [
           //
-          { provide: RxDBService, useValue: dbService },
+          { provide: RXDB, useValue: dbService },
           TestStore,
         ],
       });
@@ -98,7 +98,7 @@ describe('withCollectionService', () => {
       TestBed.configureTestingModule({
         providers: [
           //
-          { provide: RxDBService, useValue: dbService },
+          { provide: RXDB, useValue: dbService },
           provideRxCollection(TEST_FEATURE_CONFIG_1),
           TestStore,
         ],

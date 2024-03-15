@@ -7,7 +7,7 @@ import {
 } from '@ngx-odm/rxdb/config';
 import { RxDBService } from '@ngx-odm/rxdb/core';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import React, { ReactNode, useRef, useState } from 'react';
+import React, { ReactNode, useCallback, useRef, useState } from 'react';
 import {
   ComponentProps,
   Streamlit,
@@ -38,41 +38,42 @@ const RxDBDataframe: React.FC<ComponentProps> = props => {
 
   const [, setEntities] = useEditedState(editing_state, collectionService());
 
-  async function initDb(dbConfig: RxDatabaseCreatorExtended) {
+  const initDb = useCallback((dbConfig: RxDatabaseCreatorExtended) => {
     const parsedDbConfig = getRxDatabaseCreator(dbConfig);
     return dbServiceRef.current!.initDb(parsedDbConfig);
-  }
+  }, []);
 
-  async function initCollection(collectionConfig: RxCollectionCreatorExtended) {
-    if (!collectionServiceRef.current) {
-      collectionServiceRef.current = new RxDBCollectionService(
-        collectionConfig,
-        dbServiceRef.current!
-      );
-    }
-    await collectionService().info();
-    setInited(true);
-    const docssub = collectionService()
-      .docs(query, with_rev)
-      .subscribe(docs => {
-        if (!docs) {
-          return;
-        }
-        logger.table(docs);
-        setEntities(docs);
-        Streamlit.setComponentValue(docs);
-      });
-    sub.add(docssub);
-  }
+  const initCollection = useCallback(
+    async (collectionConfig: RxCollectionCreatorExtended) => {
+      if (!collectionServiceRef.current) {
+        collectionServiceRef.current = new RxDBCollectionService(
+          collectionConfig,
+          dbServiceRef.current!
+        );
+      }
+      await collectionService().info();
+      setInited(true);
+      const docssub = collectionService()
+        .docs(query, with_rev)
+        .subscribe(docs => {
+          if (!docs) {
+            return;
+          }
+          logger.table(docs);
+          setEntities(docs);
+          Streamlit.setComponentValue(docs);
+        });
+      sub.add(docssub);
+    },
+    []
+  );
 
   if (isEmptyObject(renderData)) return null; // Don't do anything at all
 
   if (!inited) {
-    try {
-      initDb(db_config).then(() => initCollection(collection_config));
-    } catch (error) {
-      logger.log('Error initializing database', error);
-    }
+    initDb(db_config)
+      .then(() => initCollection(collection_config))
+      .catch(logger.log);
   }
 
   return props.args.element as ReactNode;

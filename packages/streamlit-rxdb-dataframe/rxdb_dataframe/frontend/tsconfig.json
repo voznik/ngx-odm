@@ -5,6 +5,8 @@
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
     "strict": true,
+    "isolatedModules": true,
+    "noEmit": true,
     "types": ["vite/client", "vitest"]
   },
   "files": [],
@@ -17,5 +19,5 @@
       "path": "./tsconfig.spec.json"
     }
   ],
-  "extends": "../../../tsconfig.base.json"
+  "extends": "../../../../tsconfig.base.json"
 }
