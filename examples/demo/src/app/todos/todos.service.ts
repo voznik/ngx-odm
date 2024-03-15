@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { Injectable, inject } from '@angular/core';
-import { NgxRxdbCollectionService } from '@ngx-odm/rxdb';
+import { RXDB_COLLECTION } from '@ngx-odm/rxdb';
 import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
 import { DEFAULT_LOCAL_DOCUMENT_ID } from '@ngx-odm/rxdb/config';
 import { Todo, TodosFilter, TodosLocalState } from '@shared';
@@ -11,9 +11,8 @@ const withAttachments = true;
 
 @Injectable()
 export class TodosService {
-  private collectionService: RxDBCollectionService<Todo> = inject<
-    RxDBCollectionService<Todo>
-  >(NgxRxdbCollectionService);
+  private collectionService: RxDBCollectionService<Todo> =
+    inject<RxDBCollectionService<Todo>>(RXDB_COLLECTION);
   newTodo = '';
   current: Todo = undefined;
 

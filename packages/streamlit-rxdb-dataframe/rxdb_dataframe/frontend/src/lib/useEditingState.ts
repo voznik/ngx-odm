@@ -32,8 +32,10 @@ export const useEditedState = (
     }
     editingStateRef.current = editingState;
 
-    if (!isEmpty(editingState.added_rows)) {
-      const docs = editingState.added_rows.map(item => ({
+    const { added_rows: added, edited_rows: edited, deleted_rows: deleted } = editingState;
+
+    if (!isEmpty(added)) {
+      const docs = added.map(item => ({
         ...item,
         id: uuid(),
         createdAt: new Date().toISOString(),
@@ -43,9 +45,9 @@ export const useEditedState = (
       collectionService.upsertBulk(docs).catch(error => logger.log('upsertBulk', error));
     }
 
-    if (!isEmpty(editingState.deleted_rows)) {
+    if (!isEmpty(deleted)) {
       const ids: string[] = [];
-      editingState.deleted_rows.forEach(rowIndex => {
+      deleted.forEach(rowIndex => {
         const entity = entities.at(rowIndex);
         if (entity) {
           ids.push(entity.id);
@@ -55,8 +57,8 @@ export const useEditedState = (
       collectionService.removeBulk(ids).catch(error => logger.log('removeBulk', error));
     }
 
-    if (!isEmpty(editingState.edited_rows)) {
-      const docs = Object.entries(editingState.edited_rows).map(([rowIndex, change]) => {
+    if (!isEmpty(edited)) {
+      const docs = Object.entries(edited).map(([rowIndex, change]) => {
         const entity = entities.at(parseInt(rowIndex));
         return {
           ...entity,
@@ -67,7 +69,7 @@ export const useEditedState = (
       if (!docs.length) return;
       collectionService.upsertBulk(docs).catch(error => logger.log('upsertBulk', error));
     }
-  }, [editingState, entities]);
+  }, [editingState, entities, collectionService]);
 
   return [entities, setEntities];
 };

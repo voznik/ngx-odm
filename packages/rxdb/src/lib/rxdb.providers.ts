@@ -31,7 +31,7 @@ export const RXDB_CONFIG_COLLECTION = new InjectionToken<RxCollectionCreatorExte
  * Injection token for Service for interacting with a RxCollection.
  * This token is used to inject an instance of RxDBCollectionService into a component or service.
  */
-export const NgxRxdbCollectionService = new InjectionToken<RxDBCollectionService>(
+export const RXDB_COLLECTION = new InjectionToken<RxDBCollectionService>(
   'RxDBCollectionService'
 );
 
@@ -106,9 +106,9 @@ export function provideRxCollection(
   return [
     { provide: RXDB_CONFIG_COLLECTION, useValue: collectionConfig },
     {
-      provide: NgxRxdbCollectionService,
+      provide: RXDB_COLLECTION,
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
+      // @ts-ignore // INFO: no need for typings here, nothing's exposed, but ts complains // NOSONAR
       useFactory: (config, dbService, ngZone, currentUrl, updateQueryParamsFn) =>
         new RxDBCollectionService(
           config,

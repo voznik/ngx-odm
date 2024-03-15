@@ -16,6 +16,7 @@ import {
 import { RxDBDataframeArgs } from './RxDBDataframeArgs';
 import { useEditedState } from './useEditingState';
 import { useNullableRenderData } from './useNullableRenderData';
+import { Subscription } from 'rxjs';
 
 const { logger, isEmptyObject } = NgxRxdbUtils;
 
@@ -24,7 +25,12 @@ const { logger, isEmptyObject } = NgxRxdbUtils;
  */
 const RxDBDataframe: React.FC<ComponentProps> = props => {
   const [inited, setInited] = useState<boolean>();
-  const [renderData, sub] = useNullableRenderData();
+  const sub = new Subscription();
+  const subRef = useRef<Subscription>();
+  if (!subRef.current) {
+    subRef.current = new Subscription();
+  }
+  const renderData = useNullableRenderData(subRef.current);
   // Parse the render data
   const { editing_state, collection_config, db_config, query, with_rev } =
     renderData?.['args'] || ({} as RxDBDataframeArgs);

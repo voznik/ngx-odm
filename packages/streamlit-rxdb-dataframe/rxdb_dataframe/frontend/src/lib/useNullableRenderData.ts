@@ -5,13 +5,12 @@ import { RxDBDataframeArgs } from './RxDBDataframeArgs';
 
 /**
  * Returns `RenderData` received from Streamlit after the first render event received.
+ * @param sub Subscriptions holder
  */
-export const useNullableRenderData = (): [
-  RenderData<RxDBDataframeArgs> | undefined,
-  Subscription,
-] => {
+export const useNullableRenderData = (
+  sub: Subscription
+): RenderData<RxDBDataframeArgs> | undefined => {
   const [renderData, setRenderData] = useState<RenderData<RxDBDataframeArgs>>();
-  const sub = new Subscription();
 
   useEffect(() => {
     const onRenderEvent = (event: Event): void => {
@@ -31,5 +30,5 @@ export const useNullableRenderData = (): [
     return cleanup;
   }, []);
 
-  return [renderData, sub];
+  return renderData;
 };

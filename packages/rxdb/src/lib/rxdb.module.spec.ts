@@ -4,13 +4,13 @@ import { TestBed, inject } from '@angular/core/testing';
 import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
 import { RxDBService } from '@ngx-odm/rxdb/core';
 import {
-  setupNavigationWarnStub,
-  getMockRxdbService,
   TEST_DB_CONFIG_1,
   TEST_FEATURE_CONFIG_1,
+  getMockRxdbService,
+  setupNavigationWarnStub,
 } from '@ngx-odm/rxdb/testing';
 import { NgxRxdbModule } from './rxdb.module';
-import { NgxRxdbCollectionService, RXDB, RXDB_CONFIG } from './rxdb.providers';
+import { RXDB, RXDB_COLLECTION, RXDB_CONFIG } from './rxdb.providers';
 
 describe('NgxRxdbModule', () => {
   beforeAll(() => {
@@ -69,9 +69,7 @@ describe('NgxRxdbModule', () => {
     });
     it(`should not provide feature config token & collection service`, () => {
       expect(dbService.initCollections).not.toHaveBeenCalled();
-      expect(() => TestBed.inject(NgxRxdbCollectionService)).toThrowError(
-        /No provider for/
-      );
+      expect(() => TestBed.inject(RXDB_COLLECTION)).toThrowError(/No provider for/);
     });
   });
 
@@ -92,7 +90,7 @@ describe('NgxRxdbModule', () => {
     });
 
     it(`should init db via dbService`, inject(
-      [NgxRxdbCollectionService],
+      [RXDB_COLLECTION],
       async (colService: RxDBCollectionService) => {
         expect(dbService.initDb).toHaveBeenCalledWith(TEST_DB_CONFIG_1);
         expect(dbService.initCollections).toHaveBeenCalledWith({

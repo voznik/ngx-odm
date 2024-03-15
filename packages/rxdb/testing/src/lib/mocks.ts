@@ -2,7 +2,7 @@
 /// <reference types="jest" />
 
 import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
-import { RxDBService } from '@ngx-odm/rxdb/core';
+import { RxDBService, loadRxDBPlugins } from '@ngx-odm/rxdb/core';
 import {
   RxCollectionCreator,
   RxDatabaseCreator,
@@ -11,7 +11,6 @@ import {
   randomCouchString,
 } from 'rxdb';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
-import { loadRxDBPlugins } from '../../../core/src/lib/plugin.loader';
 
 export type TestDocType = {
   id: string;

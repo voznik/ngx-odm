@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { getState, signalStore } from '@ngrx/signals';
 import { withEntities } from '@ngrx/signals/entities';
 import { EntitySignals } from '@ngrx/signals/entities/src/models';
-import { NgxRxdbCollectionService, RXDB, provideRxCollection } from '@ngx-odm/rxdb';
+import { RXDB_COLLECTION, RXDB, provideRxCollection } from '@ngx-odm/rxdb';
 import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
 import { RxDBService } from '@ngx-odm/rxdb/core';
 import {
@@ -107,7 +107,7 @@ describe('withCollectionService', () => {
         },
       });
       store = TestBed.inject(TestStore) as any;
-      colService = TestBed.inject(NgxRxdbCollectionService) as any;
+      colService = TestBed.inject(RXDB_COLLECTION) as any;
       rxCollection = dbService.collections['test'];
       spyFind = jest.spyOn(rxCollection, 'find');
     });

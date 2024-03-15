@@ -186,8 +186,6 @@
     "typescript": "5.2.2",
     "vite": "~5.0.0",
     "vite-plugin-dts": "~2.3.0",
-    "vite-plugin-json-server": "^0.1.1",
-    "vite-plugin-static": "^0.0.3",
     "vitest": "~0.34.6"
   },
   "engines": {

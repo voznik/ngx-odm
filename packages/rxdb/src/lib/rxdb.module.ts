@@ -14,8 +14,8 @@ import { RxDBService } from '@ngx-odm/rxdb/core';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import type { RxDatabaseCreator } from 'rxdb';
 import {
-  NgxRxdbCollectionService,
   RXDB,
+  RXDB_COLLECTION,
   RXDB_CONFIG,
   provideRxCollection,
   provideRxDatabase,
@@ -140,13 +140,13 @@ export class NgxRxdbModule {
  * (Fake) Feature module for NgxRxdbModule
  *
  * By being provided with `forChild` method of *root* NgxRxdbModule,
- * and by injecting `NgxRxdbCollectionService` in its constructor,
+ * and by injecting `RXDB_COLLECTION` in its constructor,
  * this module actually creates a collection with collectionService and provided config
  */
 @NgModule()
 export class NgxRxdbFeatureModule {
   constructor(
     @Inject(RXDB) private dbService: RxDBService,
-    @Inject(NgxRxdbCollectionService) private collectionService: RxDBCollectionService
+    @Inject(RXDB_COLLECTION) private collectionService: RxDBCollectionService
   ) {}
 }

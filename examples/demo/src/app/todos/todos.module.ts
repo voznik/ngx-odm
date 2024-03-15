@@ -3,7 +3,7 @@ import { Inject, NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { LetDirective, PushPipe } from '@ngrx/component';
-import { NgxRxdbCollectionService, NgxRxdbModule } from '@ngx-odm/rxdb';
+import { NgxRxdbModule, RXDB_COLLECTION } from '@ngx-odm/rxdb';
 import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
 import { TODOS_COLLECTION_CONFIG, Todo } from '@shared';
 import { TodosComponent } from './todos.component';
@@ -24,7 +24,7 @@ import { TodosService } from './todos.service';
 })
 export class TodosModule {
   constructor(
-    @Inject(NgxRxdbCollectionService) private collectionService: RxDBCollectionService<Todo>
+    @Inject(RXDB_COLLECTION) private collectionService: RxDBCollectionService<Todo>
   ) {
     this.collectionService.sync();
   }

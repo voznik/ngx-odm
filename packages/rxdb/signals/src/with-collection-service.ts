@@ -19,7 +19,7 @@ import { setAllEntities } from '@ngrx/signals/entities';
 import { NamedEntitySignals } from '@ngrx/signals/entities/src/models';
 import { SignalStoreFeatureResult } from '@ngrx/signals/src/signal-store-models';
 import { StateSignal } from '@ngrx/signals/src/state-signal';
-import { NgxRxdbCollectionService } from '@ngx-odm/rxdb';
+import { RXDB_COLLECTION } from '@ngx-odm/rxdb';
 import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
 import { DEFAULT_LOCAL_DOCUMENT_ID } from '@ngx-odm/rxdb/config';
 import { Entity, EntityId, NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
@@ -295,7 +295,7 @@ export function withCollectionService<
     if (colService instanceof RxDBCollectionService) return;
     const injector = inject(Injector);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    colService = injector.get(NgxRxdbCollectionService) as RxDBCollectionService<any>;
+    colService = injector.get(RXDB_COLLECTION) as RxDBCollectionService<any>;
   };
 
   return signalStoreFeature(

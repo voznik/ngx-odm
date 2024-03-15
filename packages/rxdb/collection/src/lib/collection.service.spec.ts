@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { TestBed } from '@angular/core/testing';
-import { NgxRxdbCollectionService, RXDB, provideRxCollection } from '@ngx-odm/rxdb';
+import { RXDB_COLLECTION, RXDB, provideRxCollection } from '@ngx-odm/rxdb';
 import { RxDBService } from '@ngx-odm/rxdb/core';
 import {
   TEST_FEATURE_CONFIG_1,
@@ -21,7 +21,7 @@ const getMockReplicationState = (obj: Partial<RxReplicationState<any, any>>) => 
   return obj as RxReplicationState<any, any>;
 };
 
-describe(`NgxRxdbCollectionService`, () => {
+describe(`RXDB_COLLECTION`, () => {
   describe(`test methods using mock NgxRxdbService`, () => {
     let dbService: RxDBService;
     let service: RxDBCollectionService<TestDocType>;
@@ -34,7 +34,7 @@ describe(`NgxRxdbCollectionService`, () => {
           provideRxCollection(TEST_FEATURE_CONFIG_1),
         ],
       });
-      service = TestBed.inject(NgxRxdbCollectionService) as any;
+      service = TestBed.inject(RXDB_COLLECTION) as any;
     });
 
     afterEach(() => {
