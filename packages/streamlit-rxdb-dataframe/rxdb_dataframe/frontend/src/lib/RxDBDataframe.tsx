@@ -7,7 +7,7 @@ import {
 } from '@ngx-odm/rxdb/config';
 import { RxDBService } from '@ngx-odm/rxdb/core';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import React, { ReactNode, useCallback, useRef, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import {
   ComponentProps,
   Streamlit,
@@ -16,19 +16,24 @@ import {
 import { RxDBDataframeArgs } from './RxDBDataframeArgs';
 import { useEditedState } from './useEditingState';
 import { useNullableRenderData } from './useNullableRenderData';
-import { Subscription } from 'rxjs';
+import equal from 'fast-deep-equal';
+import { BehaviorSubject, Subscription, distinctUntilChanged, withLatestFrom } from 'rxjs';
+import { MangoQuery } from 'rxdb';
 
-const { logger, isEmptyObject } = NgxRxdbUtils;
+const { logger, isEmptyObject, tapOnce } = NgxRxdbUtils;
 
 /**
  * Dataframe example using Apache Arrow.
  */
 const RxDBDataframe: React.FC<ComponentProps> = props => {
   const [inited, setInited] = useState<boolean>();
-  const sub = new Subscription();
+  const querySubjectRef = useRef<BehaviorSubject<MangoQuery>>();
   const subRef = useRef<Subscription>();
   if (!subRef.current) {
     subRef.current = new Subscription();
+  }
+  if (!querySubjectRef.current) {
+    querySubjectRef.current = new BehaviorSubject<MangoQuery>({});
   }
   const renderData = useNullableRenderData(subRef.current);
   // Parse the render data
@@ -57,22 +62,38 @@ const RxDBDataframe: React.FC<ComponentProps> = props => {
           dbServiceRef.current!
         );
       }
-      await collectionService().info();
-      setInited(true);
+      const query$ = querySubjectRef.current!.pipe(distinctUntilChanged(equal));
       const docssub = collectionService()
-        .docs(query, with_rev)
-        .subscribe(docs => {
+        .docs(query$, with_rev)
+        .pipe(
+          //
+          tapOnce(() => setInited(true)),
+          withLatestFrom(collectionService().info())
+        )
+        .subscribe(([docs, info]) => {
           if (!docs) {
             return;
           }
-          logger.table(docs);
           setEntities(docs);
-          Streamlit.setComponentValue(docs);
+          Streamlit.setComponentValue({
+            docs,
+            info,
+            query: querySubjectRef.current!.value,
+          });
+          Streamlit.setFrameHeight();
         });
-      sub.add(docssub);
+      subRef.current!.add(docssub);
+      logger.log('Collection & docs subscription initialized, with', query, with_rev);
     },
-    []
+    [] // eslint-disable-line
   );
+
+  useEffect(() => {
+    if (!inited) {
+      return;
+    }
+    query && querySubjectRef.current!.next(query);
+  }, [inited, query]); // eslint-disable-line
 
   if (isEmptyObject(renderData)) return null; // Don't do anything at all
 

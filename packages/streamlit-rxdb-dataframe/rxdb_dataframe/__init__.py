@@ -1,22 +1,16 @@
 import os
+from typing import Any, Callable, Dict, List, Optional, Union
+
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
-
-# from streamlit.connections import ExperimentalBaseConnection
-# from jsonschema import validate, TypeChecker
+from streamlit import session_state as ss
+from streamlit.elements.lib.column_config_utils import (
+    ColumnConfig,
+    ColumnConfigMappingInput as ColumnConfigMap,
+    ColumnDataKind,
+)
 from streamlit.runtime.caching import cache_data
-from typing import Any, Optional, Dict, Union, List, Callable
-
-default_db_config = {
-    "name": "streamlit-rxdb",
-    "options": {"storageType": "dexie"},
-    "multiInstance": False,
-    "ignoreDuplicate": True,
-}
-
-
-# https://experimental-connection.streamlit.app/Build_your_own
 
 
 class RxJsonSchema:
@@ -27,14 +21,13 @@ class RxJsonSchema:
         type: Union["object", str],
         properties: Dict[str, Dict[str, Any]],
         required: Optional[List[str]] = None,
-        indexes: Optional[List[Union[str, List[str]]]] = None,
-        internalIndexes: Optional[List[List[str]]] = None,
+        indexes: Optional[List[Union[str, List[str]]]] = None,  # noqa: TAE002
+        internalIndexes: Optional[List[List[str]]] = None,  # noqa: TAE002
         encrypted: Optional[List[str]] = None,
         keyCompression: Optional[bool] = None,
         additionalProperties: Optional[bool] = None,
         title: Optional[str] = None,
         description: Optional[str] = None,
-        # sharding: Optional[Sharding] = None,
         # attachments: Optional[Dict[str, Any]] = None,
         # crdt: Optional["CRDTSchemaOptions"] = None,
     ):
@@ -51,7 +44,6 @@ class RxJsonSchema:
         self.keyCompression = keyCompression
         self.additionalProperties = additionalProperties
         # self.attachments = attachments
-        # self.sharding = sharding
         # self.crdt = crdt
 
 
@@ -60,67 +52,99 @@ class RxCollectionCreator:
         self,
         schema: RxJsonSchema,
         instanceCreationOptions: Optional[Any] = None,
-        # migrationStrategies: Optional['MigrationStrategies'] = None,
         autoMigrate: Optional[bool] = None,
-        # statics: Optional[Dict[str, 'Function']] = None,
-        # methods: Optional[Dict[str, 'Function']] = None,
         attachments: Optional[Dict[str, Callable]] = None,
         options: Optional[Any] = None,
         localDocuments: Optional[bool] = None,
+        # migrationStrategies: Optional['MigrationStrategies'] = None,
         # cacheReplacementPolicy: Optional['RxCacheReplacementPolicy'] = None,
         # conflictHandler: Optional['RxConflictHandler'] = None
     ):
         self.schema = schema
         self.instanceCreationOptions = instanceCreationOptions
-        # self.migrationStrategies = migrationStrategies
         self.autoMigrate = autoMigrate
-        # self.statics = statics
-        # self.methods = methods
         self.attachments = attachments
         self.options = options
         self.localDocuments = localDocuments
+        # self.migrationStrategies = migrationStrategies
         # self.cacheReplacementPolicy = cacheReplacementPolicy
         # self.conflictHandler = conflictHandler
 
 
-class MangoQuery:
-    def __init__(
-        self,
-        selector: Dict[str, Any],
-        sort: Optional[List[Dict[str, str]]] = None,
-        limit: Optional[int] = None,
-        skip: Optional[int] = None,
-    ):
-        self.selector = selector
-        self.sort = sort
-        self.limit = limit
-        self.skip = skip
+class RxDBSessionState:
+    """
+    Represents the `session_state` wrapper object for RxDBDataframe component
+    """
+
+    def __init__(self):
+        if RXDB_STATE_KEY not in ss:
+            ss[RXDB_STATE_KEY] = {
+                "info": {},  # collection info
+                "with_rev": False,  # include revision in the result
+                "query": {"selector": {}, "sort": []},  # collection query
+                "dataframe": None,  #
+                "column_config": None,  # ColumnConfig
+                "docs": [],  # collection documents
+            }
+        if RXDB_COLLECTION_EDITOR_KEY not in st.session_state:
+            pass
+            ss[RXDB_COLLECTION_EDITOR_KEY] = {}
+
+    def __getattr__(self, key):
+        if key not in ss[RXDB_STATE_KEY]:
+            ss[RXDB_STATE_KEY][key] = {}
+        return ss[RXDB_STATE_KEY][key]
+
+    def __getitem__(self, key):
+        if key not in ss[RXDB_STATE_KEY]:
+            ss[RXDB_STATE_KEY][key] = {}
+        return ss[RXDB_STATE_KEY][key]
+
+    def __setattr__(self, key, value):
+        ss[RXDB_STATE_KEY][key] = value
+
+    def __setitem__(self, key, value):
+        ss[RXDB_STATE_KEY][key] = value
 
 
 # Create a _RELEASE constant. We'll set this to False while we're developing
 # the component, and True when we're ready to package and distribute it.
 _RELEASE = True
 
-if not _RELEASE: # NOSONAR
+if not _RELEASE:  # NOSONAR
     _rxdb_dataframe = components.declare_component(
         "rxdb_dataframe",
         url="http://localhost:4201",
     )
 else:
     parent_dir = os.path.dirname(os.path.abspath(__file__))
-    build_dir = os.path.join(parent_dir, "frontend/build")
-    index_js_path = os.path.join(build_dir, "index.js")
+    dist = os.path.join(parent_dir, "frontend/build")
+    index_js_path = os.path.join(dist, "index.js")
 
     if os.path.exists(index_js_path):
         print("index.js exists")
     else:
         print("index.js does not exist")
 
-    _rxdb_dataframe = components.declare_component("rxdb_dataframe", path=build_dir)
+    _rxdb_dataframe = components.declare_component("rxdb_dataframe", path=dist)
+
+
+RXDB_STATE_KEY = "rxdb"
+RXDB_COLLECTION_KEY = "rxdb_collection"
+RXDB_COLLECTION_EDITOR_KEY = "rxdb_collection_editor"
+DEFAULT_DB_CONFIG = {
+    "name": "streamlit-rxdb",
+    "options": {"storageType": "dexie"},
+    "multiInstance": False,
+    "ignoreDuplicate": True,
+}
 
 
 @cache_data
-def get_dataframe_by_schema(schema: dict):
+def get_dataframe_by_schema(schema: dict) -> pd:
+    """
+    Create a `pandas.DataFrame` based on the given JSONSchema.
+    """
     df = pd.DataFrame()
     properties = schema["properties"]
     for column, prop in properties.items():
@@ -135,7 +159,7 @@ def get_dataframe_by_schema(schema: dict):
         elif prop.get("enum") and len(prop["enum"]) > 0:
             df[column] = pd.Series(dtype="category")
         elif prop["type"] == "integer" and prop.get("format") == "time":
-            df[column] = pd.Timestamp.now()
+            df[column] = pd.Series(dtype="int")  # pd.Timestamp.now()
         elif prop["type"] == "integer":
             df[column] = pd.Series(dtype="int")
         elif prop["type"] == "number":
@@ -144,92 +168,89 @@ def get_dataframe_by_schema(schema: dict):
 
 
 @cache_data
-def get_column_config(schema: dict):
+def get_column_config(schema: dict) -> ColumnConfigMap:
     """
     Generates a column configuration dictionary based on the given schema.
 
-    Args:
-      schema (dict): The schema dictionary containing the properties
-
-    Returns:
-      dict: The column configuration dictionary.
-
-    INFO: https://docs.streamlit.io/library/api-reference/data/st.column_config/st.column_config.textcolumn
+    INFO: https://docs.streamlit.io/library/api-reference/data/st.column_config
     """
     properties = schema["properties"]
-    column_config = {}
-    for column, prop in properties.items():
-        if prop["type"] == "string" and prop.get("format") == "date-time":
-            column_config[column] = st.column_config.DatetimeColumn(
+    column_config: ColumnConfigMap = {}
+    for key, prop in properties.items():
+        if (
+            prop["type"] == ColumnDataKind.STRING
+            and prop.get("format") == "date-time"  # marks column as datetime
+        ):
+            column_config[key] = st.column_config.DatetimeColumn(
                 format="YYYY-MM-DD HH:mm",
             )
-        elif prop["type"] == "string":
-            column_config[column] = st.column_config.TextColumn(
-                max_chars=prop.get("maxLength")
-            )
-        elif prop["type"] == "boolean":
-            column_config[column] = st.column_config.CheckboxColumn()
+        elif prop["type"] == ColumnDataKind.STRING:
+            column_config[key] = st.column_config.TextColumn(max_chars=prop.get("maxLength", None))
+        elif prop["type"] == ColumnDataKind.BOOLEAN:
+            column_config[key] = st.column_config.CheckboxColumn()
         elif prop["type"] == "object":
-            column_config[column] = st.column_config.Column()
+            column_config[key] = st.column_config.Column()
         elif prop.get("enum") and len(prop["enum"]) > 0:
-            column_config[column] = st.column_config.SelectboxColumn(
-                options=prop["enum"]
-            )
-        # elif prop['type'] == 'integer' and prop.get('format') == 'time':
-        #     column_config[column] = st.column_config.DatetimeColumn(step=1)
-        elif prop["type"] == "integer":
-            # st.column_config.DatetimeColumn() # FIXME: try to make it time
-            column_config[column] = st.column_config.NumberColumn(
-                max_value=prop.get("max"),
-                min_value=prop.get("min"),
-                step=prop.get("multipleOf"),
+            column_config[key] = st.column_config.SelectboxColumn(options=prop["enum"])
+        elif prop["type"] == ColumnDataKind.INTEGER and prop.get("format", None) == "time":
+            column_config[key] = st.column_config.NumberColumn()
+        elif prop["type"] == ColumnDataKind.INTEGER:
+            column_config[key] = st.column_config.NumberColumn(
+                max_value=prop.get("max", None),
+                min_value=prop.get("min", None),
+                step=prop.get("multipleOf", None),
             )
         elif prop["type"] == "number":
             st.column_config.NumberColumn(
-                max_value=prop.get("max"), min_value=prop.get("min")
+                max_value=prop.get("max", None), min_value=prop.get("min", None)
             )
-        column_config[column]["label"] = prop.get("title")
-        column_config[column]["help"] = prop.get("description")
-        column_config[column]["disabled"] = prop.get("readOnly")
-        column_config[column]["required"] = column in schema.get("required", [])
+        # assign common properties for every column
+        try:
+            column: ColumnConfig = column_config[key]
+            column["label"] = prop.get("title", "")
+            column["help"] = "format: " + prop.get("format", column["type_config"]["type"])
+            column["disabled"] = prop.get("readOnly", False)
+            column["required"] = key in schema.get("required", [])  # noqa: E501
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
 
     return column_config
 
 
-def reset_editing_state(collection_name):
-    if collection_name in st.session_state:
-        print("resetting editing state")
-        # st.session_state[collection_name].clear()
-        # st.session_state[collection_name].get("added_rows", []).clear()
-        # st.session_state[collection_name].get("deleted_rows", []).clear()
-
-
 def rxdb_dataframe(
     collection_config,
-    db_config: RxCollectionCreator = default_db_config,
-    dataframe: pd.DataFrame = pd.DataFrame(),
-    query: MangoQuery = None,
+    db_config: RxCollectionCreator = DEFAULT_DB_CONFIG,
+    query: Optional[Dict[str, Any]] = None,
     with_rev: Optional[bool] = False,
-    key: str = None,
-) -> List[Dict[str, Any]]:
-    if key is None:
-        key = collection_config["name"]
-    if key not in st.session_state:
-        print("resetting editing state")
-        # reset_editing_state(key)
+    on_change: Optional[Callable] = None,
+) -> pd.DataFrame:
+    state = RxDBSessionState()
+    if state.dataframe is None:
+        state.dataframe = get_dataframe_by_schema(collection_config["schema"])
+    if state.column_config is None:
+        state.column_config = get_column_config(collection_config["schema"])
 
     result = _rxdb_dataframe(
         collection_config=collection_config,
         db_config=db_config,
-        dataframe=dataframe.copy(),
-        data=dataframe.to_json(),
         query=query,
         with_rev=with_rev,
-        key=(key + "_rxdb"),
-        editing_state=st.session_state.get(key, {}),
+        key=(RXDB_COLLECTION_KEY),
+        editing_state=ss[RXDB_COLLECTION_EDITOR_KEY],
     )
-    # print(result)
-    return result
+
+    try:
+        if result and result["docs"]:
+            result_df = pd.DataFrame(result["docs"], columns=state.dataframe.columns)
+            state.docs = result["docs"]
+            state.info = result["info"]
+            state.query = result["query"]  # store query here from response, to prevent re-rendering
+            state.dataframe = result_df
+            on_change(state)
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+    return state.dataframe
 
 
 __title__ = "RxDB Dataframe"

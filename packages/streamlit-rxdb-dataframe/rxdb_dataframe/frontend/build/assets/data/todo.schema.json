@@ -31,10 +31,9 @@
       "readOnly": true
     },
     "last_modified": {
-      "type": "number",
+      "type": "integer",
       "format": "time",
-      "title": "Last Modified Date",
-      "multipleOf": 1
+      "title": "Last Modified Date"
     }
   },
   "__indexes": ["createdAt"],

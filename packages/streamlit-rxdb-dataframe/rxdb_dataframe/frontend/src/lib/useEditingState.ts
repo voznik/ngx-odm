@@ -59,7 +59,7 @@ export const useEditedState = (
 
     if (!isEmpty(edited)) {
       const docs = Object.entries(edited).map(([rowIndex, change]) => {
-        const entity = entities.at(parseInt(rowIndex));
+        const entity = entities.at(+rowIndex);
         return {
           ...entity,
           ...change,

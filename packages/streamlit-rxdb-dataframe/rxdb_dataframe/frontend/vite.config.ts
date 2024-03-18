@@ -40,6 +40,7 @@ export default defineConfig({
     terserOptions: {
       mangle: false,
     },
+    sourcemap: true,
     commonjsOptions: {
       transformMixedEsModules: true,
     },
