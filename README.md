@@ -63,6 +63,12 @@ import { getRxDatabaseCreator } from '@ngx-odm/rxdb/config';
         multiInstance: true, // <- multiInstance (optional, default: true)
         ignoreDuplicate: false,
         options: {
+          plugins: [
+            // will be loaded by together with core plugins
+            RxDBDevModePlugin, // <- add only for development
+            RxDBAttachmentsPlugin,
+            RxDBLeaderElectionPlugin,
+          ],
           storageType: 'dexie|memory', // <- storageType (optional, use if you want defaults provided automatically)
           dumpPath: 'assets/dump.json', // path to datbase dump file (optional)
         },
@@ -106,7 +112,7 @@ const todoCollectionConfig: RxCollectionCreatorExtended = {
 })
 export class TodosModule {
   constructor(
-    @Inject(NgxRxdbCollectionService) private collectionService: NgxRxdbCollection<Todo>
+    @Inject(RXDB_COLLECTION) private collectionService: RxDBCollectionService<Todo>
   ) {
     this.collectionService.sync(); // INFO: collection is ready
   }
@@ -116,11 +122,13 @@ export class TodosModule {
 ### In your `FeatureService`
 
 ```typescript
+import { RXDB_COLLECTION } from '@ngx-odm/rxdb';
+import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
+
 @Injectable()
 export class TodosService {
-  private collectionService: NgxRxdbCollection<Todo> = inject<NgxRxdbCollection<Todo>>(
-    NgxRxdbCollectionService
-  );
+  private collectionService: RxDBCollectionService<Todo> =
+    inject<RxDBCollectionService<Todo>>(RXDB_COLLECTION);
   // store & get filter as property of a `local` document
   filter$ = this.collectionService
     .getLocal('local', 'filterValue')
@@ -177,6 +185,12 @@ export const appConfig: ApplicationConfig = {
         multiInstance: true,
         ignoreDuplicate: false,
         storage: getRxStorageDexie(),
+        plugins: [
+          // will be loaded by together with core plugins
+          RxDBDevModePlugin, // <- add only for development
+          RxDBAttachmentsPlugin,
+          RxDBLeaderElectionPlugin,
+        ],
       })
     ),
   ],

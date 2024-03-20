@@ -82,7 +82,6 @@ class RxDBSessionState:
                 "info": {},  # collection info
                 "with_rev": False,  # include revision in the result
                 "query": {"selector": {}, "sort": []},  # collection query
-                "dataframe": None,  #
                 "column_config": None,  # ColumnConfig
                 "docs": [],  # collection documents
             }
@@ -139,6 +138,8 @@ DEFAULT_DB_CONFIG = {
     "ignoreDuplicate": True,
 }
 
+# blueprint_df: pd.DataFrame = None
+
 
 @cache_data
 def get_dataframe_by_schema(schema: dict) -> pd:
@@ -146,7 +147,7 @@ def get_dataframe_by_schema(schema: dict) -> pd:
     Create a `pandas.DataFrame` based on the given JSONSchema.
     """
     df = pd.DataFrame()
-    properties = schema["properties"]
+    properties = schema.get("properties", {})
     for column, prop in properties.items():
         if prop["type"] == "string" and prop.get("format") == "date-time":
             df[column] = pd.Series(dtype="datetime64[ns]")
@@ -170,17 +171,18 @@ def get_dataframe_by_schema(schema: dict) -> pd:
 @cache_data
 def get_column_config(schema: dict) -> ColumnConfigMap:
     """
-    Generates a column configuration dictionary based on the given schema.
+    Generates a (default) column configuration dictionary based on the given schema,
+    which can be used to configure streamlit dataframe or data_editor widgets.
+    Use own column config if default one is not suitable for your use case.
 
     INFO: https://docs.streamlit.io/library/api-reference/data/st.column_config
     """
-    properties = schema["properties"]
+    properties = schema.get("properties", {})
     column_config: ColumnConfigMap = {}
     for key, prop in properties.items():
-        if (
-            prop["type"] == ColumnDataKind.STRING
-            and prop.get("format") == "date-time"  # marks column as datetime
-        ):
+        if prop.get("enum") and len(prop["enum"]) > 0:
+            column_config[key] = st.column_config.SelectboxColumn(options=prop["enum"])
+        elif prop["type"] == ColumnDataKind.STRING and prop.get("format") == "date-time":
             column_config[key] = st.column_config.DatetimeColumn(
                 format="YYYY-MM-DD HH:mm",
             )
@@ -190,8 +192,6 @@ def get_column_config(schema: dict) -> ColumnConfigMap:
             column_config[key] = st.column_config.CheckboxColumn()
         elif prop["type"] == "object":
             column_config[key] = st.column_config.Column()
-        elif prop.get("enum") and len(prop["enum"]) > 0:
-            column_config[key] = st.column_config.SelectboxColumn(options=prop["enum"])
         elif prop["type"] == ColumnDataKind.INTEGER and prop.get("format", None) == "time":
             column_config[key] = st.column_config.NumberColumn()
         elif prop["type"] == ColumnDataKind.INTEGER:
@@ -204,13 +204,12 @@ def get_column_config(schema: dict) -> ColumnConfigMap:
             st.column_config.NumberColumn(
                 max_value=prop.get("max", None), min_value=prop.get("min", None)
             )
-        # assign common properties for every column
         try:
             column: ColumnConfig = column_config[key]
             column["label"] = prop.get("title", "")
             column["help"] = "format: " + prop.get("format", column["type_config"]["type"])
-            column["disabled"] = prop.get("readOnly", False)
-            column["required"] = key in schema.get("required", [])  # noqa: E501
+            # column["disabled"] = prop.get("readOnly", False)
+            column["required"] = key in schema.get("required", [])
         except Exception as e:
             print(f"An error occurred: {str(e)}")
 
@@ -225,8 +224,9 @@ def rxdb_dataframe(
     on_change: Optional[Callable] = None,
 ) -> pd.DataFrame:
     state = RxDBSessionState()
-    if state.dataframe is None:
-        state.dataframe = get_dataframe_by_schema(collection_config["schema"])
+    blueprint_df = get_dataframe_by_schema(collection_config["schema"])
+    result_df = blueprint_df.copy()
+
     if state.column_config is None:
         state.column_config = get_column_config(collection_config["schema"])
 
@@ -240,17 +240,19 @@ def rxdb_dataframe(
     )
 
     try:
-        if result and result["docs"]:
-            result_df = pd.DataFrame(result["docs"], columns=state.dataframe.columns)
+        if result:
+            result_df = pd.DataFrame(result["docs"], columns=blueprint_df.columns)
+            for col in blueprint_df.columns:
+                if blueprint_df[col].dtype == "datetime64[ns]":
+                    result_df[col] = pd.to_datetime(result_df[col])
             state.docs = result["docs"]
             state.info = result["info"]
             state.query = result["query"]  # store query here from response, to prevent re-rendering
-            state.dataframe = result_df
             on_change(state)
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
-    return state.dataframe
+    return result_df
 
 
 __title__ = "RxDB Dataframe"
