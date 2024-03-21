@@ -2,6 +2,11 @@
 
 This file was generated using [@jscutlery/semver](https://github.com/jscutlery/semver).
 
+## 6.0.0 (2024-03-21)
+
+
+
+
 ## 6.0.0-dev.0 (2024-03-21)
 
 * Feat: introduce streamlit integration (#68) ([272a16b](https://github.com/voznik/ngx-odm/commit/272a16b)), closes [#68](https://github.com/voznik/ngx-odm/issues/68)
