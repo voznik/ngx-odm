@@ -1,6 +1,5 @@
 // INFO: we NEED to keep `any` here. only Typescript complains, but type resolution for consumers does work
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types */
-import { InjectionToken } from '@angular/core';
 import type {
   MangoQuery,
   RxCollection,
@@ -86,16 +85,6 @@ export type MangoQueryParams = {
 };
 
 /**
- * Instance of RxDatabaseCreator
- */
-export const RXDB_CONFIG = new InjectionToken<RxDatabaseCreator>('RxDatabaseCreator');
-/**
- * Instance of RxCollectionCreator
- */
-/* prettier-ignore */
-export const RXDB_CONFIG_COLLECTION = new InjectionToken<RxCollectionCreatorExtended>('RxCollectionCreator');
-
-/**
  * Custom options object for {@link RxDatabaseCreator}
  */
 interface NgxRxdbConfigOptions {
@@ -111,13 +100,13 @@ type RxDatabaseCreatorPartialStorage = SetOptional<RxDatabaseCreator, 'storage'>
 /* prettier-ignore */
 type RxDatabaseCreatorRequireOptions = SetRequired< RxDatabaseCreatorPartialStorage, 'options'>;
 /* prettier-ignore */
-type NgxRxdbConfig = Merge< RxDatabaseCreatorRequireOptions, { options: NgxRxdbConfigOptions }>;
+export type RxDatabaseCreatorExtended = Merge< RxDatabaseCreatorRequireOptions, { options: NgxRxdbConfigOptions }>;
 
 /**
  * Returns full configuration object for creating an RxDatabase instance.
  * @param config - Partial configuration options for the RxDatabase instance.
  */
-export function getRxDatabaseCreator(config: NgxRxdbConfig): RxDatabaseCreator {
+export function getRxDatabaseCreator(config: RxDatabaseCreatorExtended): RxDatabaseCreator {
   // eslint-disable-next-line prefer-const
   let { name, options, storage, ...rest } = config;
   if (!storage) {

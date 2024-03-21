@@ -4,7 +4,7 @@
 
 ## Demo
 
-![Example Screencast](https://github.com/voznik/ngx-odm/blob/master/examples/screencast.gif?raw=true)
+![Example Screencast](examples/screencast.gif)
 
 [demo](https://voznik.github.io/ngx-odm/) - based on TodoMVC
 
@@ -63,6 +63,12 @@ import { getRxDatabaseCreator } from '@ngx-odm/rxdb/config';
         multiInstance: true, // <- multiInstance (optional, default: true)
         ignoreDuplicate: false,
         options: {
+          plugins: [
+            // will be loaded by together with core plugins
+            RxDBDevModePlugin, // <- add only for development
+            RxDBAttachmentsPlugin,
+            RxDBLeaderElectionPlugin,
+          ],
           storageType: 'dexie|memory', // <- storageType (optional, use if you want defaults provided automatically)
           dumpPath: 'assets/dump.json', // path to datbase dump file (optional)
         },
@@ -106,7 +112,7 @@ const todoCollectionConfig: RxCollectionCreatorExtended = {
 })
 export class TodosModule {
   constructor(
-    @Inject(NgxRxdbCollectionService) private collectionService: NgxRxdbCollection<Todo>
+    @Inject(RXDB_COLLECTION) private collectionService: RxDBCollectionService<Todo>
   ) {
     this.collectionService.sync(); // INFO: collection is ready
   }
@@ -116,11 +122,13 @@ export class TodosModule {
 ### In your `FeatureService`
 
 ```typescript
+import { RXDB_COLLECTION } from '@ngx-odm/rxdb';
+import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
+
 @Injectable()
 export class TodosService {
-  private collectionService: NgxRxdbCollection<Todo> = inject<NgxRxdbCollection<Todo>>(
-    NgxRxdbCollectionService
-  );
+  private collectionService: RxDBCollectionService<Todo> =
+    inject<RxDBCollectionService<Todo>>(RXDB_COLLECTION);
   // store & get filter as property of a `local` document
   filter$ = this.collectionService
     .getLocal('local', 'filterValue')
@@ -177,6 +185,12 @@ export const appConfig: ApplicationConfig = {
         multiInstance: true,
         ignoreDuplicate: false,
         storage: getRxStorageDexie(),
+        plugins: [
+          // will be loaded by together with core plugins
+          RxDBDevModePlugin, // <- add only for development
+          RxDBAttachmentsPlugin,
+          RxDBLeaderElectionPlugin,
+        ],
       })
     ),
   ],
@@ -247,7 +261,14 @@ By using this module you can simplify your work with RxDB in Angular application
   - optionally provide syncronization with remote db (CouchDB, Kinto etc.) as DB options
 - Automatically initialize RxCollection for each _lazy-loaded Feature module / standalone component_ with config
 - Work with documents via _NgxRxdbCollectionService_ with unified methods instead of using _RxCollection_ directly (though you still have access to _RxCollection_ and _RxDatabase_ instance)
+  - simple methods to work database & documents (with queries)
+  - simple methods to work with local documents
+  - simple methods to work with attachments
+  - simple replication sync initialization
 - Work with signals and entities with `@ngrx/signals` and `@ngrx/entity` (optionally _zoneless_) (see [example](examples/standalone/src/app/todos/todos.store.ts))
+- Persist collection query ([mango-query-syntax](https://github.com/cloudant/mango)) in URL with new plugin `query-params-plugin` (in demo, set localStorage `_ngx_rxdb_queryparams` )
+  - provide Observable of current URL (automatically for Angular)
+  - simple methods to set or patch filter, sort, limit, skip
 
 <!-- ## Diagrams
 

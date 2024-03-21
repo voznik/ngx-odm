@@ -1,0 +1,44 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Todo",
+  "description": "Todo Schema",
+  "required": ["id", "title", "createdAt"],
+  "version": 0,
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Id",
+      "pattern": "^(.*)$",
+      "maxLength": 36,
+      "readOnly": true
+    },
+    "title": {
+      "type": "string",
+      "title": "Title",
+      "minLength": 3
+    },
+    "completed": {
+      "type": "boolean",
+      "title": "Done"
+    },
+    "createdAt": {
+      "type": "string",
+      "title": "Created Date",
+      "format": "date-time",
+      "readOnly": true
+    },
+    "last_modified": {
+      "type": "integer",
+      "format": "time",
+      "title": "Last Modified Date"
+    }
+  },
+  "__indexes": ["createdAt"],
+  "primaryKey": "id",
+  "attachments": {
+    "encrypted": false
+  }
+}

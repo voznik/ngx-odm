@@ -2,7 +2,7 @@
 /// <reference types="jest" />
 
 import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
-import { NgxRxdbService, loadRxDBPlugins } from '@ngx-odm/rxdb/core';
+import { RxDBService, loadRxDBPlugins } from '@ngx-odm/rxdb/core';
 import {
   RxCollectionCreator,
   RxDatabaseCreator,
@@ -110,6 +110,7 @@ export const getMockRxCollection = async (
   randomName = false
 ) => {
   await loadRxDBPlugins();
+
   const database = await createRxDatabase({
     name: randomName ? randomCouchString(6) : 'test',
     storage: getRxStorageMemory(),
@@ -153,6 +154,6 @@ export const getMockRxdbService = async (
     service.collections[colConfig.name] = collection;
     return Promise.resolve(service.collections);
   });
-  Object.setPrototypeOf(service, NgxRxdbService.prototype);
-  return service as unknown as NgxRxdbService;
+  Object.setPrototypeOf(service, RxDBService.prototype);
+  return service as unknown as RxDBService;
 };

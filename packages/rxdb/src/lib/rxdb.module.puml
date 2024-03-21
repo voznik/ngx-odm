@@ -4,7 +4,7 @@ actor User
 participant ApplicationInitStatus
 participant NgxRxdbModule
 participant NgxRxdbService
-participant NgxRxdbCollectionService
+participant RXDB_COLLECTION
 participant RXDB_CONFIG
 
 User -> ApplicationInitStatus: Start Application
@@ -22,10 +22,10 @@ NgxRxdbService -> ApplicationInitStatus: Done with Initialization
 
 deactivate NgxRxdbService
 
-User -> NgxRxdbCollectionService: Use NgxRxdbCollectionService
-NgxRxdbCollectionService -> NgxRxdbService: Use NgxRxdbService
-NgxRxdbService --> NgxRxdbCollectionService: Provide NgxRxdbService
-NgxRxdbCollectionService -> RXDB_CONFIG: Use RXDB_CONFIG
+User -> RXDB_COLLECTION: Use RXDB_COLLECTION
+RXDB_COLLECTION -> NgxRxdbService: Use NgxRxdbService
+NgxRxdbService --> RXDB_COLLECTION: Provide NgxRxdbService
+RXDB_COLLECTION -> RXDB_CONFIG: Use RXDB_CONFIG
 NgxRxdbService --> RXDB_CONFIG: Provide RXDB_CONFIG
 
 @enduml

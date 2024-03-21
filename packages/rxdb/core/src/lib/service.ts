@@ -1,5 +1,8 @@
-import { Injectable } from '@angular/core';
-import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
+import {
+  RxCollectionExtended as RxCollection,
+  RxCollectionCreatorExtended,
+} from '@ngx-odm/rxdb/config';
+import { prepareCollections } from '@ngx-odm/rxdb/prepare';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import {
   CollectionsOfDatabase,
@@ -8,17 +11,13 @@ import {
   createRxDatabase,
 } from 'rxdb';
 import { loadRxDBPlugins } from './plugin.loader';
-import { prepareCollections } from './prepare.plugin';
 
 const { logger } = NgxRxdbUtils;
 
 /**
  * Service for managing a RxDB database instance.
  */
-@Injectable({
-  providedIn: 'root',
-})
-export class NgxRxdbService {
+export class RxDBService {
   private dbInstance!: RxDatabase;
   private options!: RxDatabaseCreator;
 
@@ -31,8 +30,8 @@ export class NgxRxdbService {
     return this.options;
   }
 
-  get collections(): CollectionsOfDatabase {
-    return this.db.collections;
+  get collections(): { [name: string]: RxCollection } {
+    return this.db.collections as { [name: string]: RxCollection };
   }
 
   async destroyDb() {
@@ -52,7 +51,9 @@ export class NgxRxdbService {
    * @param config
    */
   async initDb(config: RxDatabaseCreator): Promise<void> {
-    // eslint-disable-next-line no-useless-catch
+    if (this.dbInstance) {
+      return;
+    }
     try {
       await loadRxDBPlugins(config.options?.plugins);
       this.dbInstance = await createRxDatabase(config);

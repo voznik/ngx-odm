@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
-import {
+import type {
   RxCollectionExtended as RxCollection,
   RxCollectionCreatorExtended,
   RxDbMetadata,

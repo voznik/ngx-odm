@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { TestBed } from '@angular/core/testing';
-import { NgxRxdbService } from '@ngx-odm/rxdb/core';
+import { RXDB_COLLECTION, RXDB, provideRxCollection } from '@ngx-odm/rxdb';
+import { RxDBService } from '@ngx-odm/rxdb/core';
 import {
   TEST_FEATURE_CONFIG_1,
   TestDocType,
@@ -10,11 +11,7 @@ import { MangoQuery, RxQuery } from 'rxdb';
 import { createRxLocalDocument } from 'rxdb/plugins/local-documents';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import { EMPTY, Observable, Subject, firstValueFrom, of } from 'rxjs';
-import {
-  NgxRxdbCollection,
-  NgxRxdbCollectionService,
-  collectionServiceFactory,
-} from './collection.service';
+import { RxDBCollectionService } from './collection.service';
 
 const getMockReplicationState = (obj: Partial<RxReplicationState<any, any>>) => {
   obj.reSync = jest.fn();
@@ -24,23 +21,20 @@ const getMockReplicationState = (obj: Partial<RxReplicationState<any, any>>) => 
   return obj as RxReplicationState<any, any>;
 };
 
-describe(`NgxRxdbCollectionService`, () => {
+describe(`RXDB_COLLECTION`, () => {
   describe(`test methods using mock NgxRxdbService`, () => {
-    let dbService: NgxRxdbService;
-    let service: NgxRxdbCollection<TestDocType>;
+    let dbService: RxDBService;
+    let service: RxDBCollectionService<TestDocType>;
 
     beforeEach(async () => {
       dbService = await getMockRxdbService();
       TestBed.configureTestingModule({
         providers: [
-          { provide: NgxRxdbService, useValue: dbService },
-          {
-            provide: NgxRxdbCollectionService,
-            useFactory: collectionServiceFactory(TEST_FEATURE_CONFIG_1),
-          },
+          { provide: RXDB, useValue: dbService },
+          provideRxCollection(TEST_FEATURE_CONFIG_1),
         ],
       });
-      service = TestBed.inject(NgxRxdbCollectionService) as any;
+      service = TestBed.inject(RXDB_COLLECTION) as any;
     });
 
     afterEach(() => {

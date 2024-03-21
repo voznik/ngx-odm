@@ -3,9 +3,9 @@ import { TestBed } from '@angular/core/testing';
 import { getState, signalStore } from '@ngrx/signals';
 import { withEntities } from '@ngrx/signals/entities';
 import { EntitySignals } from '@ngrx/signals/entities/src/models';
-import { provideRxCollection } from '@ngx-odm/rxdb';
-import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
-import { NgxRxdbService } from '@ngx-odm/rxdb/core';
+import { RXDB_COLLECTION, RXDB, provideRxCollection } from '@ngx-odm/rxdb';
+import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
+import { RxDBService } from '@ngx-odm/rxdb/core';
 import {
   MOCK_DATA,
   TEST_FEATURE_CONFIG_1,
@@ -29,14 +29,14 @@ describe('withCollectionService', () => {
         filter: 'any',
       })
     );
-    let dbService: NgxRxdbService;
+    let dbService: RxDBService;
 
     beforeEach(async () => {
       dbService = await getMockRxdbService();
       TestBed.configureTestingModule({
         providers: [
           //
-          { provide: NgxRxdbService, useValue: dbService },
+          { provide: RXDB, useValue: dbService },
           TestStore,
         ],
       });
@@ -54,9 +54,9 @@ describe('withCollectionService', () => {
       EntitySignals<TestDocType> &
       CollectionServiceSignals<TestDocType> &
       CollectionServiceMethods<TestDocType, string>;
-    let dbService: NgxRxdbService;
+    let dbService: RxDBService;
     let rxCollection: RxCollection<TestDocType>;
-    let colService: NgxRxdbCollection<TestDocType>;
+    let colService: RxDBCollectionService<TestDocType>;
     let spyFind: jest.SpyInstance;
 
     /** mock data & wait for promise from collection */
@@ -98,7 +98,7 @@ describe('withCollectionService', () => {
       TestBed.configureTestingModule({
         providers: [
           //
-          { provide: NgxRxdbService, useValue: dbService },
+          { provide: RXDB, useValue: dbService },
           provideRxCollection(TEST_FEATURE_CONFIG_1),
           TestStore,
         ],
@@ -107,7 +107,7 @@ describe('withCollectionService', () => {
         },
       });
       store = TestBed.inject(TestStore) as any;
-      colService = TestBed.inject(NgxRxdbCollectionService) as any;
+      colService = TestBed.inject(RXDB_COLLECTION) as any;
       rxCollection = dbService.collections['test'];
       spyFind = jest.spyOn(rxCollection, 'find');
     });

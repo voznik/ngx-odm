@@ -1,0 +1,12 @@
+[server]
+headless = true
+runOnSave = true
+allowRunOnSave = true
+# fastReruns = true
+fileWatcherType = "auto"
+
+[browser]
+gatherUsageStats = false
+
+[logger]
+level = "info"

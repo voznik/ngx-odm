@@ -19,7 +19,8 @@ import { setAllEntities } from '@ngrx/signals/entities';
 import { NamedEntitySignals } from '@ngrx/signals/entities/src/models';
 import { SignalStoreFeatureResult } from '@ngrx/signals/src/signal-store-models';
 import { StateSignal } from '@ngrx/signals/src/state-signal';
-import { NgxRxdbCollection, NgxRxdbCollectionService } from '@ngx-odm/rxdb/collection';
+import { RXDB_COLLECTION } from '@ngx-odm/rxdb';
+import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
 import { DEFAULT_LOCAL_DOCUMENT_ID } from '@ngx-odm/rxdb/config';
 import { Entity, EntityId, NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import { computedAsync } from 'ngxtension/computed-async';
@@ -258,7 +259,7 @@ export function withCollectionService<
   countQuery?: MangoQuerySelectorAndIndex<E>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }): SignalStoreFeature<any, any> {
-  let colService: NgxRxdbCollection<E>;
+  let colService: RxDBCollectionService<E>;
 
   const { collection: prefix, filter, query, countQuery } = options;
   const {
@@ -291,10 +292,10 @@ export function withCollectionService<
   };
 
   const ensureCollection = () => {
-    if (colService instanceof NgxRxdbCollection) return;
+    if (colService instanceof RxDBCollectionService) return;
     const injector = inject(Injector);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    colService = injector.get(NgxRxdbCollectionService) as NgxRxdbCollection<any>;
+    colService = injector.get(RXDB_COLLECTION) as RxDBCollectionService<any>;
   };
 
   return signalStoreFeature(

@@ -1,14 +1,42 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import { Observable, defer, lastValueFrom, switchMap } from 'rxjs';
+import { Observable, OperatorFunction, defer, lastValueFrom, switchMap } from 'rxjs';
 
-const { debug } = NgxRxdbUtils;
+const { debug, isEmptyObject, isFunction } = NgxRxdbUtils;
 
 type CollectionLike = {
   readonly initialized$: Observable<boolean>;
   readonly config: RxCollectionCreatorExtended;
 };
+
+export type ZoneLike = {
+  run<T>(fn: (...args: any[]) => T, applyThis?: any, applyArgs?: any[]): T;
+};
+
+function isZone(obj: any): obj is ZoneLike {
+  return !isEmptyObject(obj) && isFunction(obj.run);
+}
+
+/* eslint-disable prettier/prettier */
+/**
+ * Moves observable execution in and out of Angular zone.
+ * @param zone
+ */
+export function runInZone<T>(zone: ZoneLike): OperatorFunction<T, T> { // NOSONAR
+  if (!isZone(zone)) return source => source;
+
+  return source => { // NOSONAR
+    return new Observable(subscriber => { // NOSONAR
+      return source.subscribe(
+        (value: T) => zone.run(() => subscriber.next(value)),
+        (e: any) => zone.run(() => subscriber.error(e)),
+        () => zone.run(() => subscriber.complete()) // NOSONAR
+      );
+    });
+  };
+}
+/* eslint-enable prettier/prettier */
 
 /**
  * Collection method decorator for Observable return type

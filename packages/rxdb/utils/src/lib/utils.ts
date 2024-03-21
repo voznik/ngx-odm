@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, no-console */
-import { NgZone, isDevMode } from '@angular/core';
 import type { FilledMangoQuery, PreparedQuery, RxDocument, RxJsonSchema } from 'rxdb';
 import { prepareQuery } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
@@ -214,8 +213,11 @@ export namespace NgxRxdbUtils {
   export const isObject = (x: any): x is object =>
     Object.prototype.toString.call(x) === '[object Object]';
 
-  export function isNgZone(zone: unknown): zone is NgZone {
-    return zone instanceof NgZone;
+  export const isEmptyObject = (x: any): x is object =>
+    isNullOrUndefined(x) || (isObject(x) && isEmpty(x));
+
+  export function isDevMode(): boolean {
+    return typeof globalThis['ngDevMode'] === 'undefined' || !!globalThis['ngDevMode'];
   }
 
   export function isValidNumber(value: any): value is number {
@@ -228,6 +230,55 @@ export namespace NgxRxdbUtils {
 
   export function identity<T>(value: T): T {
     return value;
+  }
+
+  /**
+   * Invokes the iteratee `n` times, returning an array of the results of each invocation.
+   *
+   * Differences from lodash:
+   * - has undefined behavior when given a non natural number for `n`
+   * - does not provide a default for `iteratee`
+   *
+   * Contribution to minified bundle size, when it is the only function imported:
+   * - Lodash: 1,497 bytes
+   * - Micro-dash: 51 bytes
+   * @param n
+   * @param iteratee
+   */
+  export function times<T>(n: number, iteratee: (index: number) => T): T[] {
+    const result: T[] = [];
+    for (let i = 0; i < n; ++i) {
+      result[i] = iteratee(i);
+    }
+    return result;
+  }
+
+  /**
+   * Creates an array of numbers _(positive and/or negative)_ progressing from `start` up to, but not including, `end`. A `step` of `-1` is used if a negative `start` is specified without an `end` or `step`. If `end` is not specified, it's set to `start` with `start` then set to `0`.
+   *
+   * **Note:** JavaScript follows the IEEE-754 standard for resolving floating-point values which can produce unexpected results.
+   *
+   * Differences from lodash:
+   * - does not work as an iteratee for methods like `map`
+   *
+   * Contribution to minified bundle size, when it is the only function imported:
+   * - Lodash: 2,020 bytes
+   * - Micro-dash: 181 bytes
+   */
+
+  export function range(end: number): number[];
+  // tslint:disable-next-line:unified-signatures
+  export function range(start: number, end: number, step?: number): number[];
+
+  export function range(start: number, end?: number, step?: number): number[] {
+    if (isUndefined(end)) {
+      end = start;
+      start = 0;
+    }
+    if (isUndefined(step)) {
+      step = end < start ? -1 : 1;
+    }
+    return times(Math.abs((end - start) / (step || 1)), i => start + step! * i);
   }
 
   export function getMaybeId(entityOrId: object | string): string {
@@ -327,22 +378,6 @@ export namespace NgxRxdbUtils {
           },
         })
       );
-    };
-  }
-
-  /**
-   * Moves observable execution in and out of Angular zone.
-   * @param zone
-   */
-  export function runInZone<T>(zone: NgZone): OperatorFunction<T, T> {
-    return source => {
-      return new Observable(subscriber => {
-        return source.subscribe(
-          (value: T) => zone.run(() => subscriber.next(value)),
-          (e: any) => zone.run(() => subscriber.error(e)),
-          () => zone.run(() => subscriber.complete())
-        );
-      });
     };
   }
 

@@ -71,12 +71,21 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
-      "args": ["${relativeFile}"],
+      "runtimeArgs": [
+        "--nolazy",
+        "-r",
+        "ts-node/register"
+      ],
+      "args": [
+        "${relativeFile}"
+      ],
       "sourceMaps": true,
       "cwd": "${workspaceRoot}",
       "protocol": "inspector",
-      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "env": {
@@ -84,11 +93,44 @@
         "TS_NODE_TRANSPILE_ONLY": "true"
       },
       "disableOptimisticBPs": true
+    },
+    //
+    {
+      "name": "Python: Debug Test",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "${file}"
+      ],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Python: Debug Streamlit",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": [
+        "run",
+        "${file}",
+        "--server.headless=true",
+        "--browser.gatherUsageStats=false"
+      ],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "console": "integratedTerminal"
     }
   ],
   "inputs": [
     {
-      "options": ["rxdb", "kinto"],
+      "options": [
+        "rxdb",
+        "kinto"
+      ],
       "id": "libName",
       "type": "pickString",
       "default": "rxdb",

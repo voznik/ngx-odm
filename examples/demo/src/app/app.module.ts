@@ -5,6 +5,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { NgxRxdbModule } from '@ngx-odm/rxdb';
 import { getRxDatabaseCreator } from '@ngx-odm/rxdb/config';
 import { RxDBAttachmentsPlugin } from 'rxdb/plugins/attachments';
+import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
 import { AppComponent } from './app.component';
 
@@ -35,6 +36,7 @@ const routes: Routes = [
         options: {
           plugins: [
             // will be loaded by together with core plugins
+            RxDBDevModePlugin,
             RxDBAttachmentsPlugin,
             RxDBLeaderElectionPlugin,
           ],
