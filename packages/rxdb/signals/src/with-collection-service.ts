@@ -227,12 +227,12 @@ export function withCollectionService<
     // state: { callState: CallState } & NamedEntityState<E, Collection>,
     // state: NamedEntityState<E, Collection>,
 
-    signals: NamedEntitySignals<E, CName>;
+    computed: NamedEntitySignals<E, CName>;
     methods: Record<string, never>;
   },
   {
     state: NamedCollectionServiceState<E, F, CName>;
-    signals: NamedCollectionServiceSignals<E, CName>;
+    computed: NamedCollectionServiceSignals<E, CName>;
     methods: NamedCollectionServiceMethods<E, F, CName>;
   }
 >;
@@ -244,7 +244,7 @@ export function withCollectionService<E extends Entity, F extends Filter>(option
   SignalStoreFeatureResult,
   {
     state: CollectionServiceState<E, F>;
-    signals: CollectionServiceSignals<E>;
+    computed: CollectionServiceSignals<E>;
     methods: CollectionServiceMethods<E, F>;
   }
 >;
