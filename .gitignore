@@ -49,3 +49,9 @@ junit.xml
 Thumbs.db
 
 .nx/cache
+
+# AI-related files
+.claude/
+CLAUDE.md
+GEMINI.md
+UPDATE_GUIDE_ANGULAR.md
