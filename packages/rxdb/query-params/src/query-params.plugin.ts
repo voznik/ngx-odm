@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   MangoQueryParams,
   RxCollectionExtended as RxCollection,
@@ -41,7 +40,9 @@ export const RxDBPUseQueryParamsPlugin: RxPlugin = {
         useQueryParams = !!this.options?.useQueryParams;
         schema = this.schema;
 
-        if (!useQueryParams || initDone) return;
+        if (!useQueryParams || initDone) {
+          return;
+        }
         updateQueryParamsInLocationFn = _updateQueryParamsInLocationFn;
 
         currentUrl$
@@ -65,7 +66,9 @@ export const RxDBPUseQueryParamsPlugin: RxPlugin = {
         initDone = true;
       }
       function set(query: MangoQuery): void {
-        if (!useQueryParams) return;
+        if (!useQueryParams) {
+          return;
+        }
         const { selector, sort, limit, skip } = query;
         const queryParams: MangoQueryParams = { limit, skip };
         if (selector) {
@@ -77,7 +80,9 @@ export const RxDBPUseQueryParamsPlugin: RxPlugin = {
         updateQueryParamsInLocationFn(queryParams);
       }
       function patch(query: MangoQuery): void {
-        if (!useQueryParams) return;
+        if (!useQueryParams) {
+          return;
+        }
         const parsed = parseUrlToMangoQuery(currentUrl, schema);
         const queryParams: MangoQueryParams = {
           selector: stringifyParam(query.selector || parsed.selector),

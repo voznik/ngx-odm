@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* @typescript-eslint/no-non-null-assertion */
 import { RxCollectionExtended as RxCollection } from '@ngx-odm/rxdb/config';
 import {

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NgxRxdbUtils, getDefaultFetch } from '@ngx-odm/rxdb/utils';
 import {
   KintInfoResponse,

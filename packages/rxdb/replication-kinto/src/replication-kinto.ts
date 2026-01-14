@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import type {
   DocumentsWithCheckpoint,
@@ -54,7 +53,7 @@ import {
  * Depending on the context (latest first, readonly, etc.), there are several strategies to poll the server for changes.
  * @param options
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export function replicateKintoDB<RxDocType = any>(options: KintoReplicationOptions) {
   const {
     replicationIdentifier,
@@ -166,12 +165,10 @@ export function replicateKintoDB<RxDocType = any>(options: KintoReplicationOptio
         }
         if (results.published.length) {
           // Update local documents with the new published state.
-          return (
-            results.published
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .filter(({ data }: any) => !data.deleted)
-              .map(({ data }) => data)
-          );
+          return results.published
+
+            .filter(({ data }: any) => !data.deleted)
+            .map(({ data }) => data);
         }
         return results.conflicts.map(c => c.remote);
       },

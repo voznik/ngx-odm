@@ -1,5 +1,5 @@
 // INFO: we NEED to keep `any` here. only Typescript complains, but type resolution for consumers does work
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type {
   MangoQuery,
   RxCollection,
@@ -107,7 +107,6 @@ export type RxDatabaseCreatorExtended = Merge< RxDatabaseCreatorRequireOptions, 
  * @param config - Partial configuration options for the RxDatabase instance.
  */
 export function getRxDatabaseCreator(config: RxDatabaseCreatorExtended): RxDatabaseCreator {
-  // eslint-disable-next-line prefer-const
   let { name, options, storage, ...rest } = config;
   if (!storage) {
     switch (options.storageType) {

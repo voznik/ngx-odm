@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import type {
   RxCollectionExtended as RxCollection,
   RxCollectionCreatorExtended,
@@ -65,7 +64,6 @@ export const prepareCollections = async (
     for (const name in colConfigs) {
       const config = colConfigs[name];
       if (!config.schema && !!config.options?.schemaUrl) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         config.schema = (await fetchSchema(config.options.schemaUrl))!;
       }
       colCreators[config.name] = config as RxCollectionCreator;
@@ -247,7 +245,6 @@ const afterCreateRxCollection = async ({
 
   return;
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async function removeAllDocs() {
     await col.find().update({ $set: { _deleted: true } });
     await col.cleanup();

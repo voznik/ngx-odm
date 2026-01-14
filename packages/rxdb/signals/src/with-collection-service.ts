@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injector, Signal, computed, inject } from '@angular/core';
 import {
   getCallStateKeys,
@@ -252,7 +251,6 @@ export function withCollectionService<
   filter?: F;
   query?: MangoQuery<E>;
   countQuery?: MangoQuerySelectorAndIndex<E>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }): SignalStoreFeature<any, any> {
   let colService: RxDBCollectionService<E>;
 
@@ -287,9 +285,11 @@ export function withCollectionService<
   };
 
   const ensureCollection = () => {
-    if (colService instanceof RxDBCollectionService) return;
+    if (colService instanceof RxDBCollectionService) {
+      return;
+    }
     const injector = inject(Injector);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     colService = injector.get(RXDB_COLLECTION) as RxDBCollectionService<any>;
   };
 

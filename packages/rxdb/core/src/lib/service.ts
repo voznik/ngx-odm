@@ -22,7 +22,6 @@ export class RxDBService {
   private options!: RxDatabaseCreator;
 
   get db(): RxDatabase {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return this.dbInstance!;
   }
 
@@ -82,7 +81,6 @@ export class RxDBService {
   async initCollections(colConfigs: {
     [name: string]: RxCollectionCreatorExtended;
   }): Promise<CollectionsOfDatabase> {
-    // eslint-disable-next-line no-useless-catch
     try {
       const colCreators = await prepareCollections(colConfigs);
       return await this.db.addCollections(colCreators);

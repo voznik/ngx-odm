@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import { Observable, OperatorFunction, defer, lastValueFrom, switchMap } from 'rxjs';
@@ -24,7 +23,7 @@ function isZone(obj: any): obj is ZoneLike {
  * @param zone
  */
 export function runInZone<T>(zone: ZoneLike): OperatorFunction<T, T> { // NOSONAR
-  if (!isZone(zone)) return source => source;
+  if (!isZone(zone)) {return source => source;}
 
   return source => { // NOSONAR
     return new Observable(subscriber => { // NOSONAR

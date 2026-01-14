@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 (globalThis as any).ngJest = {
   testEnvironmentOptions: {
     errorOnUnknownElements: true,

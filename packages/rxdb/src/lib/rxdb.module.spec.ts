@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { ApplicationInitStatus } from '@angular/core';
 import { TestBed, inject } from '@angular/core/testing';
 import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';

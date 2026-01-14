@@ -34,7 +34,7 @@ module.exports = [
     languageOptions: {
       parser: typescriptEslintParser,
       parserOptions: {
-        project: 'tsconfig.json',
+        projectService: true,
         sourceType: 'module',
       },
       globals: { ...globals.browser, ...globals.es2020, ...globals.node },
@@ -51,7 +51,6 @@ module.exports = [
     .map(config => ({
       ...config,
       files: ['**/*.ts', '**/*.js'],
-      excludedFiles: [],
       rules: {
         'no-prototype-builtins': 0,
         curly: ['error', 'all'],

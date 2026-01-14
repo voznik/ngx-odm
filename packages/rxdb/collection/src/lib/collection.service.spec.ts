@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { TestBed } from '@angular/core/testing';
 import { RXDB_COLLECTION, RXDB, provideRxCollection } from '@ngx-odm/rxdb';
 import { RxDBService } from '@ngx-odm/rxdb/core';

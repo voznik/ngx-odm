@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, no-console */
+/* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, no-console */
 import type { FilledMangoQuery, PreparedQuery, RxDocument, RxJsonSchema } from 'rxdb';
 import { prepareQuery } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
@@ -319,16 +319,12 @@ export namespace NgxRxdbUtils {
   /** https://github.com/angular/components/blob/main/src/cdk/platform/features/test-environment.ts */
   export function isTestEnvironment(): boolean {
     return (
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       (typeof __karma__ !== 'undefined' && !!__karma__) ||
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       (typeof jasmine !== 'undefined' && !!jasmine) ||
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       (typeof jest !== 'undefined' && !!jest) ||
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       (typeof Mocha !== 'undefined' && !!Mocha)
     );

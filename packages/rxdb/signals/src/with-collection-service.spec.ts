@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { TestBed } from '@angular/core/testing';
 import { getState, signalStore } from '@ngrx/signals';
 import { withEntities } from '@ngrx/signals/entities';

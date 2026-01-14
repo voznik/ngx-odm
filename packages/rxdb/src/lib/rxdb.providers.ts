@@ -114,7 +114,7 @@ export function provideRxCollection(
     { provide: RXDB_CONFIG_COLLECTION, useValue: collectionConfig },
     {
       provide: RXDB_COLLECTION,
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
       // @ts-ignore // INFO: no need for typings here, nothing's exposed, but ts complains // NOSONAR
       useFactory: (config, dbService, ngZone, currentUrl, updateQueryParamsFn) =>
         new RxDBCollectionService(

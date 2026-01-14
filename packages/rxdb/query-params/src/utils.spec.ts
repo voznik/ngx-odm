@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { TEST_SCHEMA, TestDocType } from '@ngx-odm/rxdb/testing';
 import { RxSchema, MangoQuery } from 'rxdb';
 import { normalizeMangoQuery, parseUrlToMangoQuery } from './utils';
