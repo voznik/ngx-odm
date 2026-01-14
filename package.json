@@ -109,6 +109,8 @@
     "@commitlint/cli": "^17.0.0",
     "@commitlint/config-conventional": "^17.0.0",
     "@compodoc/compodoc": "1.1.23",
+    "@eslint/eslintrc": "^2.1.1",
+    "@eslint/js": "~8.48.0",
     "@jscutlery/semver": "4.2.0",
     "@nrwl/eslint-plugin-nx": "17.2.7",
     "@nrwl/jest": "17.2.7",

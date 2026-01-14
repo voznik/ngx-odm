@@ -1,4 +1,0 @@
-node_modules
-!.commitlintrc.json
-**/package.json
-tools/scripts
