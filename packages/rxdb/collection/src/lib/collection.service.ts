@@ -473,7 +473,7 @@ export class RxDBCollectionService<T extends Entity = { id: EntityId }> {
     if (!doc) {
       return null;
     }
-    return key ? doc?.get(key as string) : doc?.toJSON().data;
+    return key ? doc?.get(key as string) : (doc?.toJSON().data as any);
   }
 
   getLocal$<L extends Record<string, any>, K = keyof L>(

@@ -22,7 +22,8 @@
     />
     <label for="toggle-all" title="Mark all as complete">Mark all as complete</label>
     <ul [@listAnimation]="todoStore.filter()" class="todo-list">
-      <li *ngFor="let todo of todos; trackBy: trackByFn" [class.completed]="todo.completed">
+      @for (todo of todos; track trackByFn($index, todo)) {
+      <li [class.completed]="todo.completed">
         <div class="view">
           <input
             class="toggle"
@@ -47,16 +48,17 @@
           <button class="destroy" (click)="todoStore.removeTodo(todo)"></button>
         </div>
       </li>
+      }
     </ul>
   </main>
   <footer class="footer" [hidden]="todoStore.count() === 0">
-    <ng-container *ngIf="todoStore.remaining() as remaining">
-      <span class="todo-count" [ngPlural]="remaining">
-        <ng-template ngPluralCase="other">{{ remaining }} items left</ng-template>
-        <ng-template ngPluralCase="=1">one item left</ng-template>
-        <ng-template ngPluralCase="=0">no items left</ng-template>
-      </span>
-    </ng-container>
+    @if (todoStore.remaining(); as remaining) {
+    <span class="todo-count" [ngPlural]="remaining">
+      <ng-template ngPluralCase="other">{{ remaining }} items left</ng-template>
+      <ng-template ngPluralCase="=1">one item left</ng-template>
+      <ng-template ngPluralCase="=0">no items left</ng-template>
+    </span>
+    }
     <ul class="filters">
       <li>
         <a

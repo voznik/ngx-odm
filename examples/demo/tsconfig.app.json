@@ -2,7 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "types": ["node"]
+    "types": ["node"],
+    "moduleResolution": "bundler"
   },
   "include": ["../../typings.d.ts"],
   "files": ["src/main.ts", "src/polyfills.ts"],

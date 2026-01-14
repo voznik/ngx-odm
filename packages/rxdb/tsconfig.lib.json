@@ -5,7 +5,8 @@
     "lib": ["dom", "es2020"],
     "types": ["node"],
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "moduleResolution": "bundler"
   },
   "exclude": [
     "**/*.spec.ts",

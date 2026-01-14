@@ -28,11 +28,8 @@
     />
     <label for="toggle-all" title="Mark all as complete">Mark all as complete</label>
     <ul [@listAnimation]="$.filter" class="todo-list">
-      <li
-        *ngFor="let todo of $.todos | byStatus: $.filter; trackBy: trackByFn"
-        [class.completed]="todo.completed"
-        (contextmenu)="showContextMenu($event, todo)"
-      >
+      @for (todo of $.todos | byStatus: $.filter; track trackByFn($index, todo)) {
+      <li [class.completed]="todo.completed" (contextmenu)="showContextMenu($event, todo)">
         <div class="view">
           <input
             class="toggle"
@@ -54,6 +51,7 @@
           <button class="destroy" (click)="todosService.removeTodo(todo)"></button>
         </div>
       </li>
+      }
     </ul>
   </main>
   <footer
@@ -61,13 +59,13 @@
     [hidden]="$.count === 0"
     *ngrxLet="($.todos | byStatus: 'ACTIVE' : true)?.length; let remainig"
   >
-    <ng-container *ngIf="remainig">
-      <span class="todo-count" [ngPlural]="remainig">
-        <ng-template ngPluralCase="other">{{ remainig }} items left</ng-template>
-        <ng-template ngPluralCase="=1">one item left</ng-template>
-        <ng-template ngPluralCase="=0">no items left</ng-template>
-      </span>
-    </ng-container>
+    @if (remainig) {
+    <span class="todo-count" [ngPlural]="remainig">
+      <ng-template ngPluralCase="other">{{ remainig }} items left</ng-template>
+      <ng-template ngPluralCase="=1">one item left</ng-template>
+      <ng-template ngPluralCase="=0">no items left</ng-template>
+    </span>
+    }
     <ul class="filters">
       <li>
         <a href="javascript:void(0);" (click)="todosService.sortTodos('desc')">&#8675;</a>
@@ -116,8 +114,10 @@
 
 <dialog [open]="isDialogOpen" class="todo-dialog">
   <header>Attachments:</header>
-  <ul *ngIf="selectedTodo?._attachments">
-    <li *ngFor="let attachment of selectedTodo._attachments | keyvalue">
+  @if (selectedTodo?._attachments) {
+  <ul>
+    @for (attachment of selectedTodo._attachments | keyvalue; track attachment) {
+    <li>
       <a
         href="javascript:void(0);"
         (click)="todosService.downloadAttachment(selectedTodo.id, attachment.key)"
@@ -136,7 +136,9 @@
         🗙
       </button>
     </li>
+    }
   </ul>
+  }
   <form method="dialog" (ngSubmit)="selectedTodo = undefined; isDialogOpen = false">
     <button type="button" (click)="fileInput.click()">Upload attachment</button>
     <input

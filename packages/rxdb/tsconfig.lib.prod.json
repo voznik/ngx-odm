@@ -7,7 +7,8 @@
     "inlineSourceMap": false,
     "stripInternal": true,
     "removeComments": true,
-    "listEmittedFiles": true
+    "listEmittedFiles": true,
+    "moduleResolution": "bundler"
   },
   "angularCompilerOptions": {
     "compilationMode": "partial"
