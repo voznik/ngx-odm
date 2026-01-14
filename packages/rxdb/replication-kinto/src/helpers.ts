@@ -161,7 +161,7 @@ export function mergeAggregatedResponse(
   next: KintoAggregateResponse
 ): KintoAggregateResponse {
   for (const key in next) {
-    obj[key] = next[key];
+    (obj as any)[key] = (next as any)[key];
   }
   return obj;
 }

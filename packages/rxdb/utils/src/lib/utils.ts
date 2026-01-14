@@ -14,6 +14,8 @@ import {
   timer,
 } from 'rxjs';
 
+declare const ngDevMode: object | undefined;
+
 /** @internal */
 export type AnyObject = Record<string, any>;
 /** @internal */
@@ -217,7 +219,7 @@ export namespace NgxRxdbUtils {
     isNullOrUndefined(x) || (isObject(x) && isEmpty(x));
 
   export function isDevMode(): boolean {
-    return typeof globalThis['ngDevMode'] === 'undefined' || !!globalThis['ngDevMode'];
+    return typeof ngDevMode === 'undefined' || !!ngDevMode;
   }
 
   export function isValidNumber(value: any): value is number {
@@ -283,7 +285,7 @@ export namespace NgxRxdbUtils {
 
   export function getMaybeId(entityOrId: object | string): string {
     if (isObject(entityOrId)) {
-      return entityOrId['_id'];
+      return (entityOrId as any)['_id'];
     }
     return String(entityOrId);
   }

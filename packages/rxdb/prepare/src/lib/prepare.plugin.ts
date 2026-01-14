@@ -100,7 +100,7 @@ const prepareDbDump = async (
   for (const dc of dumpObj.collections) {
     const col = collections[dc.name];
     if (col) {
-      dc.schemaHash = col.schema['_hash'];
+      dc.schemaHash = await col.schema.hash;
     } else {
       throw new Error('no such collection as provided in dump');
     }
@@ -285,7 +285,8 @@ export const RxDBPreparePlugin: RxPlugin = {
           id: id || this.name,
           databaseName: this.database.name,
           collectionName: data?.name || this.name,
-          storageName: this.storageInstance.originalStorageInstance['storage'].name,
+          storageName: (this.storageInstance.originalStorageInstance as any)['storage']
+            .name,
           last_modified: _meta?.lwt ? Math.floor(_meta?.lwt) : Date.now(),
           rev: _rev ? Number(_rev?.at(0)) : 1,
           isFirstTimeInstantiated,

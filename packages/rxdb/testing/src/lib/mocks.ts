@@ -71,7 +71,7 @@ export const MOCK_DATA: TestDocType[] = [
 ];
 
 export const MOCK_DATA_MAP = MOCK_DATA.reduce((acc, cur) => {
-  acc[cur.id] = cur;
+  (acc as any)[cur.id] = cur;
   return acc;
 }, {});
 
@@ -122,7 +122,7 @@ export const getMockRxCollection = async (
     [colConfig.name]: colConfig,
   });
   Object.getOwnPropertyNames((collection as any).__proto__).forEach(key => {
-    if (typeof collection[key] === 'function') {
+    if (typeof (collection as any)[key] === 'function') {
       jest.spyOn(collection, key as any);
     }
   });
@@ -151,7 +151,7 @@ export const getMockRxdbService = async (
   });
   jest.spyOn(service, 'initCollections').mockImplementation(() => {
     (service as any).db = collection.database;
-    service.collections[colConfig.name] = collection;
+    (service.collections as any)[colConfig.name] = collection;
     return Promise.resolve(service.collections);
   });
   Object.setPrototypeOf(service, RxDBService.prototype);

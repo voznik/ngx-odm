@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import type {
   DocumentsWithCheckpoint,
@@ -140,9 +140,9 @@ export function replicateKintoDB<RxDocType = any>(options: KintoReplicationOptio
           const missing = results.skipped
             .filter(({ error }) => error.code == 404)
             .map(({ path }) => {
-              const doc = outgoing.find((d: RxDocType) => String(path).endsWith(d['id']));
+              const doc = outgoing.find((d: any) => String(path).endsWith(d['id']));
               if (doc) {
-                delete doc['last_modified'];
+                delete (doc as any)['last_modified'];
               }
               return doc;
             });
