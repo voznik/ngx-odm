@@ -10,6 +10,7 @@ import { TodosService } from './todos.service';
   styleUrls: ['./todos.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [todosListAnimation],
+  standalone: false,
 })
 export class TodosComponent {
   private title = inject(Title);

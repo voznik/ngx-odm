@@ -23,7 +23,8 @@
             "style": "kebab-case"
           }
         ],
-        "import/no-unresolved": 0
+        "import/no-unresolved": 0,
+        "@angular-eslint/prefer-standalone": "off"
       }
     },
     {

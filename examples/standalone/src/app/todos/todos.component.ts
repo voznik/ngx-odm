@@ -7,7 +7,6 @@ import { Todo, TODOS_COLLECTION_CONFIG, todosListAnimation } from '@shared';
 import { TodoStore } from './todos.store';
 
 @Component({
-  standalone: true,
   selector: 'demo-todos',
   templateUrl: './todos.component.html',
   styleUrls: ['./todos.component.css'],

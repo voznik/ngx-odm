@@ -10,7 +10,8 @@
       ],
       "rules": {
         "@angular-eslint/directive-selector": 2,
-        "@angular-eslint/component-selector": 2
+        "@angular-eslint/component-selector": 2,
+        "@angular-eslint/prefer-standalone": "off"
       }
     },
     {

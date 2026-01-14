@@ -5,7 +5,6 @@ import { RenderScheduler } from '@ngrx/component';
 import { filter } from 'rxjs';
 
 @Component({
-  standalone: true,
   imports: [RouterModule],
   selector: 'app-root',
   template: `
