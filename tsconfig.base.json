@@ -19,7 +19,6 @@
     "resolveJsonModule": true,
     "skipDefaultLibCheck": true,
     "skipLibCheck": true,
-    "ignoreDeprecations": "5.0",
     "target": "es2022",
     "typeRoots": ["node_modules/@types"],
     "types": ["node"],
