@@ -16,7 +16,7 @@ describe('RxDBPUseQueryParamsPlugin', () => {
     let plugin: RxPlugin;
     const mockUrlStream$ = new Subject<string>();
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       const colConfig = TEST_FEATURE_CONFIG_1;
       colConfig.options.useQueryParams = true;
       plugin = RxDBPUseQueryParamsPlugin;

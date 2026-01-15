@@ -27,10 +27,10 @@ describe('NgxRxdbModule', () => {
     });
 
     it(`should not provide 'RXDB_CONFIG' token & 'NgxRxdbService'`, () => {
-      expect(() => TestBed.inject(RXDB_CONFIG)).toThrowError(
+      expect(() => TestBed.inject(RXDB_CONFIG)).toThrow(
         /InjectionToken RxDatabaseCreator is not provided. Make sure you call the 'forRoot'/
       );
-      expect(() => TestBed.inject(RXDB)).toThrowError(
+      expect(() => TestBed.inject(RXDB)).toThrow(
         // /No provider for/
         /InjectionToken RxDatabaseCreator is not provided. Make sure you call the 'forRoot'/
       );
@@ -68,7 +68,7 @@ describe('NgxRxdbModule', () => {
     });
     it(`should not provide feature config token & collection service`, () => {
       expect(dbService.initCollections).not.toHaveBeenCalled();
-      expect(() => TestBed.inject(RXDB_COLLECTION)).toThrowError(/No provider for/);
+      expect(() => TestBed.inject(RXDB_COLLECTION)).toThrow(/No provider for/);
     });
   });
 

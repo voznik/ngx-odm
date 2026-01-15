@@ -476,7 +476,7 @@ export function withCollectionService<
           .subscribe();
       },
       onDestroy: () => {
-        colService.destroy();
+        colService.close();
       },
     })
   );

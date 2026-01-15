@@ -59,7 +59,7 @@ export const RxDBPUseQueryParamsPlugin: RxPlugin = {
             tap(queryParams => {
               logger.log('queryParams', queryParams);
             }),
-            takeWhile(() => !this.destroyed)
+            takeWhile(() => !this.closed)
           )
           .subscribe(_queryParams$);
 

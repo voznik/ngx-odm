@@ -1,13 +1,19 @@
-(globalThis as any).ngJest = {
-  testEnvironmentOptions: {
-    errorOnUnknownElements: true,
-    errorOnUnknownProperties: true,
-  },
-};
 (globalThis as any).structuredClone = (val: any) => JSON.parse(JSON.stringify(val));
 
 import 'setimmediate';
-import 'jest-preset-angular/setup-jest';
+import { webcrypto } from 'node:crypto';
+
+Object.defineProperty(global, 'crypto', {
+  value: webcrypto,
+});
+
+import { setupZoneTestEnv } from 'jest-preset-angular/setup-env/zone';
+
+setupZoneTestEnv({
+  errorOnUnknownElements: true,
+  errorOnUnknownProperties: true,
+});
+
 
 if (process.env['CI']) {
   const consoleMethods: string[] = [

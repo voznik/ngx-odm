@@ -89,10 +89,10 @@ export class RxDBCollectionService<T extends Entity = { id: EntityId }> {
   }
 
   /**
-   * Destroys the collection's object instance. This is to free up memory and stop all observers and replications.
+   * Closes the collection's object instance. This is to free up memory and stop all observers and replications.
    */
-  destroy(): void {
-    this.collection?.destroy();
+  close(): void {
+    this.collection?.close();
   }
 
   /**

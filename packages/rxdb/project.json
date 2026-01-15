@@ -24,7 +24,7 @@
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "packages/rxdb/jest.config.ts",
+        "jestConfig": "packages/rxdb/jest.config.cts",
         "tsConfig": "packages/rxdb/tsconfig.spec.json"
       }
     },

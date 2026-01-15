@@ -27,13 +27,14 @@
       "name": "Jest: Nx: All",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/node_modules/@angular/cli/bin/ng",
+      "program": "${workspaceFolder}/node_modules/.bin/nx",
       "args": [
         "test",
-        "${input:libName}",
+        "rxdb",
         "--runInBand=true",
         "--codeCoverage=false",
-        "--watch"
+        "--watch",
+        "--detectOpenHandles",
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
@@ -45,14 +46,15 @@
       "name": "Jest: Nx: Current File",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/node_modules/@angular/cli/bin/ng",
+      "program": "${workspaceFolder}/node_modules/.bin/nx",
       "args": [
         "test",
         // "${relativeFile}",
-        "${input:libName}",
+        "rxdb",
         "--codeCoverage=false",
         "--testFile=${fileBasenameNoExtension}",
         "--watchAll",
+        "--detectOpenHandles",
         "--colors"
       ],
       "env": {
@@ -129,7 +131,6 @@
     {
       "options": [
         "rxdb",
-        "kinto"
       ],
       "id": "libName",
       "type": "pickString",

@@ -7,7 +7,7 @@ import {
   RxDatabaseCreator,
   RxJsonSchema,
   createRxDatabase,
-  randomCouchString,
+  randomToken,
 } from 'rxdb';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 
@@ -88,14 +88,14 @@ export const TEST_DB_CONFIG_1: RxDatabaseCreator = {
   name: 'test',
   storage: getRxStorageMemory(),
   multiInstance: false,
-  ignoreDuplicate: true,
+  // ignoreDuplicate: true,
   localDocuments: true,
 };
 export const TEST_DB_CONFIG_2: RxDatabaseCreator = {
   name: 'test',
   storage: getRxStorageMemory(),
   multiInstance: false,
-  ignoreDuplicate: true,
+  // ignoreDuplicate: true,
   options: {
     storageType: 'dexie',
     schemas: {
@@ -108,13 +108,17 @@ export const getMockRxCollection = async (
   colConfig: RxCollectionCreatorExtended = TEST_FEATURE_CONFIG_1,
   randomName = false
 ) => {
-  await loadRxDBPlugins();
+  await loadRxDBPlugins([
+    // { name: 'test-plugin', rxdb: true, overwritable: { isDevMode: () => true } }
+  ]);
+
+  const storage = getRxStorageMemory();
 
   const database = await createRxDatabase({
-    name: randomName ? randomCouchString(6) : 'test',
-    storage: getRxStorageMemory(),
+    name: randomName ? randomToken(6) : 'test',
+    storage,
     multiInstance: false,
-    ignoreDuplicate: true,
+    // ignoreDuplicate: true,
     localDocuments: true,
   });
   const { test: collection } = await database.addCollections({

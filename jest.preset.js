@@ -1,3 +1,5 @@
+// TODO: DECIDE IF SHOULD BE DEPRECATED if using jest-preset-angular
+
 const nxPreset = require('@nx/jest/preset').default;
 
 const CI = process.env.CI === 'true' || true;

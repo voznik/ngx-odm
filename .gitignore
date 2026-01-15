@@ -51,3 +51,7 @@ Thumbs.db
 .nx/
 
 # AI-related files
+.claude/
+!.claude/settings.local.json
+.gemini/
+!.gemini/settings.json

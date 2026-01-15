@@ -1,4 +1,4 @@
-import { getMockRxCollection } from '@ngx-odm/rxdb/testing';
+import { getMockRxCollection } from '../../../testing/src';
 import { RxCollection, RxCollectionCreator, RxQuery } from 'rxdb';
 import { RxDBPreparePlugin } from './prepare.plugin';
 
@@ -9,7 +9,7 @@ describe('RxDBPreparePlugin', () => {
     let collectionCount: RxQuery;
     let createRxCollectionAfter: any; // RxPluginHooks['after']
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       collection = await getMockRxCollection();
       collectionCount = collection.count();
       creator = { options: {} } as RxCollectionCreator;

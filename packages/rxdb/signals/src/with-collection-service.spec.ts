@@ -30,7 +30,7 @@ describe('withCollectionService', () => {
     );
     let dbService: RxDBService;
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       dbService = await getMockRxdbService();
       TestBed.configureTestingModule({
         providers: [

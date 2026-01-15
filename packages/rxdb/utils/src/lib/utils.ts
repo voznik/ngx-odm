@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, no-console */
+/* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 import type { FilledMangoQuery, PreparedQuery, RxDocument, RxJsonSchema } from 'rxdb';
 import { prepareQuery } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
@@ -501,7 +501,7 @@ export function mapFindResultToJsonArray(
 ): OperatorFunction<any[] | Map<string, any>, any[]> {
   return map<RxDocument[] | Map<string, RxDocument>, any[]>(docs => {
     return (Array.isArray(docs) ? docs : [...docs.values()]).map(d => {
-      const data: any = { ...d._data };
+      const data: any = d._data ? NgxRxdbUtils.clone(d._data) : NgxRxdbUtils.clone(d);
       if (!withRevAndAttachments) {
         delete data._rev;
         delete data._attachments;

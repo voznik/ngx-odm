@@ -12,7 +12,7 @@ import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
 import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { RxDBService } from '@ngx-odm/rxdb/core';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import type { RxDatabaseCreator } from 'rxdb';
+import { RxDatabaseCreator } from 'rxdb';
 import {
   RXDB,
   RXDB_COLLECTION,

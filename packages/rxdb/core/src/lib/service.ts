@@ -36,11 +36,11 @@ export class RxDBService {
   async destroyDb() {
     try {
       await this.db.remove();
-      await this.db.destroy();
+      await this.db.close();
       (this.dbInstance as unknown) = null;
-      logger.log(`database destroy`);
+      logger.log(`database close`);
     } catch {
-      logger.log(`database destroy error`);
+      logger.log(`database close error`);
     }
   }
 

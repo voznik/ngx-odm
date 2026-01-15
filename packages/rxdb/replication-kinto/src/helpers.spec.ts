@@ -41,7 +41,7 @@ describe('helpers', () => {
       const req = createRequest('foo', {
         data: { id: 1 },
       });
-      expect(() => aggregate([resp], [req, req])).toThrowError();
+      expect(() => aggregate([resp], [req, req])).toThrow();
     });
 
     it('should return an object', () => {

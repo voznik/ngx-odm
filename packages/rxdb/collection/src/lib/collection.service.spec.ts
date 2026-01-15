@@ -38,7 +38,7 @@ describe(`RXDB_COLLECTION`, () => {
 
     afterEach(() => {
       jest.restoreAllMocks();
-      // await expect(result).rejects.toThrowError();
+      // await expect(result).rejects.toThrow();
     });
 
     it(`should provide Observable "initialized$" getter`, async () => {
