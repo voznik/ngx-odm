@@ -20,7 +20,7 @@ import { RXDB_COLLECTION } from '@ngx-odm/rxdb';
 import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
 import { DEFAULT_LOCAL_DOCUMENT_ID } from '@ngx-odm/rxdb/config';
 import { Entity, EntityId, NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import { computedAsync } from 'ngxtension/computed-async';
+import { derivedAsync } from 'ngxtension/derived-async';
 import type { MangoQuery, MangoQuerySelector, MangoQuerySelectorAndIndex } from 'rxdb';
 import { switchMap, tap } from 'rxjs';
 
@@ -220,13 +220,13 @@ export function withCollectionService<
     state: Record<string, never>;
     signals: any;
     methods: Record<string, never>;
-    computed: Record<string, never>;
+    props: Record<string, never>;
   },
   {
     state: NamedCollectionServiceState<E, F, CName>;
     signals: NamedCollectionServiceSignals<E, CName>;
     methods: NamedCollectionServiceMethods<E, F, CName>;
-    computed: Record<string, never>;
+    props: Record<string, never>;
   }
 >;
 export function withCollectionService<E extends Entity, F extends Filter>(options: {
@@ -239,7 +239,7 @@ export function withCollectionService<E extends Entity, F extends Filter>(option
     state: CollectionServiceState<E, F>;
     signals: CollectionServiceSignals<E>;
     methods: CollectionServiceMethods<E, F>;
-    computed: Record<string, never>;
+    props: Record<string, never>;
   }
 >;
 export function withCollectionService<
@@ -311,18 +311,18 @@ export function withCollectionService<
       return {
         [selectedEntitiesKey]: computed(() => entities().filter(e => selectedIds()[e.id])),
         [countKey]: computed(() => entities().length),
-        [countAllKey]: computedAsync(() => colService.count()),
-        [`countFiltered`]: computedAsync(() => colService.count(countQuery)),
+        [countAllKey]: derivedAsync(() => colService.count()),
+        [`countFiltered`]: derivedAsync(() => colService.count(countQuery)),
       };
     }),
-    withMethods((store: Record<string, unknown> & any) => {
+    withMethods((store: any) => {
       ensureWithEntities(store);
       ensureCollection();
       return {
         ['sync']: async (): Promise<void> => {
-          (store as any)[callStateKey] && patchState(store as any, setLoading(prefix));
+          store[callStateKey] && patchState(store, setLoading(prefix));
           await colService.sync();
-          (store as any)[callStateKey] && patchState(store as any, setLoaded(prefix));
+          store[callStateKey] && patchState(store, setLoaded(prefix));
         },
         [setQueryParamsKey]: (q: MangoQuery<E>): void => {
           colService.setQueryParams(q);
@@ -331,7 +331,7 @@ export function withCollectionService<
           colService.patchQueryParams(q);
         },
         [updateFilterKey]: async (filter: F): Promise<void> => {
-          (store as any)[callStateKey] && patchState(store as any, setLoading(prefix));
+          store[callStateKey] && patchState(store, setLoading(prefix));
           if (typeof filter === 'string') {
             await colService.setLocal<LocalDocument>(
               DEFAULT_LOCAL_DOCUMENT_ID,
@@ -339,13 +339,13 @@ export function withCollectionService<
               filter
             );
           } else {
-            await colService.upsertLocal(DEFAULT_LOCAL_DOCUMENT_ID, filter as any);
+            await colService.upsertLocal(DEFAULT_LOCAL_DOCUMENT_ID, filter);
           }
-          patchState(store as any, { [filterKey]: filter });
-          (store as any)[callStateKey] && patchState(store as any, setLoaded(prefix));
+          patchState(store, { [filterKey]: filter });
+          store[callStateKey] && patchState(store, setLoaded(prefix));
         },
         [updateSelectedKey]: (id: EntityId, selected: boolean): void => {
-          patchState(store as any, (state: Record<string, unknown>) => ({
+          patchState(store, (state: Record<string, unknown>) => ({
             [selectedIdsKey]: {
               ...(state[selectedIdsKey] as Record<EntityId, boolean>),
               [id]: selected,
@@ -353,35 +353,33 @@ export function withCollectionService<
           }));
         },
         [setCurrentKey]: (current: E): void => {
-          patchState(store as any, { [currentKey]: current });
+          patchState(store, { [currentKey]: current });
         },
         [insertKey]: async (entity: E): Promise<void> => {
-          (store as any)[callStateKey] && patchState(store as any, setLoading(prefix));
+          store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
             await colService.insert(entity);
             // INFO: here we don't need to update entity store because
             // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
-            (store as any)[callStateKey] && patchState(store as any, setLoaded(prefix));
+            store[callStateKey] && patchState(store, setLoaded(prefix));
           } catch (e) {
-            (store as any)[callStateKey] &&
-              patchState(store as any, setError(e as Error, prefix));
+            store[callStateKey] && patchState(store, setError(e as Error, prefix));
             throw e;
           }
         },
         [updateKey]: async (entity: E): Promise<void> => {
           // patchState(store, { [currentKey]: entity }); // TODO: if we need to use `current`
-          (store as any)[callStateKey] && patchState(store as any, setLoading(prefix));
+          store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
             await colService.upsert(entity);
             // INFO: here we don't need to update entity store because
             // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
-            (store as any)[callStateKey] && patchState(store as any, setLoaded(prefix));
+            store[callStateKey] && patchState(store, setLoaded(prefix));
             // patchState(store, { [currentKey]: undefined }); // TODO: if we need to use `current`
           } catch (e) {
-            (store as any)[callStateKey] &&
-              patchState(store as any, setError(e as Error, prefix));
+            store[callStateKey] && patchState(store, setError(e as Error, prefix));
             throw e;
           }
         },
@@ -389,44 +387,41 @@ export function withCollectionService<
           query: QuerySelect<E>,
           data: Partial<E>
         ): Promise<void> => {
-          (store as any)[callStateKey] && patchState(store as any, setLoading(prefix));
+          store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
             await colService.updateBulk(query, data);
             // INFO: here we don't need to update entity store because
             // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
-            (store as any)[callStateKey] && patchState(store as any, setLoaded(prefix));
+            store[callStateKey] && patchState(store, setLoaded(prefix));
           } catch (e) {
-            (store as any)[callStateKey] &&
-              patchState(store as any, setError(e as Error, prefix));
+            store[callStateKey] && patchState(store, setError(e as Error, prefix));
             throw e;
           }
         },
         [removeKey]: async (entity: E): Promise<void> => {
-          (store as any)[callStateKey] && patchState(store as any, setLoading(prefix));
+          store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
             await colService.remove(entity);
             // INFO: here we don't need to update entity store because
             // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
-            (store as any)[callStateKey] && patchState(store as any, setLoaded(prefix));
+            store[callStateKey] && patchState(store, setLoaded(prefix));
           } catch (e) {
-            (store as any)[callStateKey] &&
-              patchState(store as any, setError(e as Error, prefix));
+            store[callStateKey] && patchState(store, setError(e as Error, prefix));
             throw e;
           }
         },
         [removeAllByKey]: async (query: QuerySelect<E>): Promise<void> => {
-          (store as any)[callStateKey] && patchState(store as any, setLoading(prefix));
+          store[callStateKey] && patchState(store, setLoading(prefix));
 
           try {
             await colService.removeBulk(query);
             // INFO: here we don't need to update entity store because
             // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
-            (store as any)[callStateKey] && patchState(store as any, setLoaded(prefix));
+            store[callStateKey] && patchState(store, setLoaded(prefix));
           } catch (e) {
-            (store as any)[callStateKey] &&
-              patchState(store as any, setError(e as Error, prefix));
+            store[callStateKey] && patchState(store, setError(e as Error, prefix));
             throw e;
           }
         },
@@ -435,10 +430,14 @@ export function withCollectionService<
     withHooks({
       /**
        * Subscribe to RxDB documents to set signals/entities store
+       *
+       * TypeScript errors in the onInit hook were caused by type inference issues where the store was being inferred as only having query state, but we were trying to patch it with call state and entity state. The solution was to use explicit generic parameters on patchState to tell TypeScript what type to expect
+       *
        * @param store
        */
       onInit: async store => {
-        (store as any)[callStateKey] && patchState(store as any, setLoading(prefix));
+        store[callStateKey] &&
+          patchState<{ [key: string]: any }>(store, setLoading(prefix));
         colService.queryParams$
           .pipe(
             tapOnce(() => {
@@ -448,27 +447,30 @@ export function withCollectionService<
               }
             }),
             tap(queryParams => {
-              patchState(store as any, { query: queryParams }); // sync query to store
-              (store as any)[callStateKey] && patchState(store as any, setLoaded(prefix));
+              patchState(store, { query: queryParams }); // sync query to store
+              store[callStateKey] &&
+                patchState<{ [key: string]: any }>(store, setLoaded(prefix));
             }),
             switchMap(queryParams => colService.docs(queryParams)),
             tapResponse({
               next: result => {
-                (store as any)[callStateKey] && patchState(store as any, setLoaded(prefix));
-                return patchState(
-                  store as any,
+                store[callStateKey] &&
+                  patchState<{ [key: string]: any }>(store, setLoaded(prefix));
+                return patchState<{ [key: string]: any }>(
+                  store,
                   prefix
-                    ? (setAllEntities(result, { collection: prefix }) as any)
-                    : (setAllEntities(result) as any)
+                    ? setAllEntities(result, { collection: prefix })
+                    : setAllEntities(result)
                 );
               },
               error: e => {
                 logger.log(e);
-                (store as any)[callStateKey] &&
-                  patchState(store as any, setError(e, prefix));
+                store[callStateKey] &&
+                  patchState<{ [key: string]: any }>(store, setError(e, prefix));
               },
               finalize: () =>
-                (store as any)[callStateKey] && patchState(store as any, setLoaded(prefix)),
+                store[callStateKey] &&
+                patchState<{ [key: string]: any }>(store, setLoaded(prefix)),
             })
           )
           .subscribe();

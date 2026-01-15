@@ -13,5 +13,8 @@
   "python.defaultInterpreterPath": "/home/voznik/.cache/pypoetry/virtualenvs/streamlit-rxdb-dataframe-zuiqvGqO-py3.10",
   "flake8.args": ["--max-line-length=100"],
   "flake8.importStrategy": "fromEnvironment",
-  "black-formatter.args": ["--line-length=100"]
+  "black-formatter.args": [
+    "--line-length=100"
+  ],
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

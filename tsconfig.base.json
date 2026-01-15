@@ -63,6 +63,6 @@
       "@shared": ["examples/shared/index.ts"]
     }
   },
-  "include": ["eslint.config.js"],
+  "include": ["eslint.config.mjs"],
   "exclude": ["node_modules", "tmp"]
 }
