@@ -37,13 +37,13 @@ jobs:
           persist-credentials: false
       #
       - name: Build on Node.js # ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           #   node-version: ${{ matrix.node-version }}
           node-version: 18
       #
       - name: Cache node modules
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
           cache-name: cache-node-modules
         with:
@@ -78,7 +78,7 @@ jobs:
         # if: github.event.release.published
         run: npm run build
       - name: Archive production artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: dist-packages
           path:
@@ -90,44 +90,44 @@ jobs:
         run: npm run build:demo && npm run compodoc
       ###
       - name: Upload demo artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: 'dist/demo'
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v2 # or the latest "vX.X.X" version tag for this action
+        uses: actions/deploy-pages@v4 # or the latest "vX.X.X" version tag for this action
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           preview: false
 
-  # publish:
-  #   if: github.event.pull_request.merged || github.event.release.published
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     # - uses: actions/checkout@v2
-  #     # - name: Download all workflow run artifacts
-  #     # - uses: actions/cache@v2
-  #     - uses: actions/download-artifact@v2
-  #     - name: Version and publish
-  #       run: |
-  #         git config user.name $GITHUB_ACTOR
-  #         git config user.email gh-actions-${GITHUB_ACTOR}@github.com
-  #         git remote add gh-origin https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+  publish:
+    if: github.event.pull_request.merged || github.event.release.published
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # - uses: actions/checkout@v4
+      # - name: Download all workflow run artifacts
+      # - uses: actions/cache@v4
+      - uses: actions/download-artifact@v4
+      - name: Version and publish
+        run: |
+          git config user.name $GITHUB_ACTOR
+          git config user.email gh-actions-${GITHUB_ACTOR}@github.com
+          git remote add gh-origin https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
 
-  #         npm version minor --force -m "v%s" -m "build(*): release new version [build-skip]"
-  #         git push gh-origin HEAD:master --tags
-  #     - uses: actions/setup-node@v2
-  #       with:
-  #         node-version: 18
-  #         registry-url: 'https://registry.npmjs.org'
-  #     - run: |
-  #         npm run packages:publish:dev
-  #       env:
-  #         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-  #     - uses: actions/setup-node@v2
-  #       with:
-  #         registry-url: 'https://npm.pkg.github.com'
-  #     - run: |
-  #         npm run packages:publish:dev
-  #       env:
-  #         NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # https://docs.github.com/en/free-pro-team@latest/actions/reference/authentication-in-a-workflow#about-the-github_token-secret
+          npm version minor --force -m "v%s" -m "build(*): release new version [build-skip]"
+          git push gh-origin HEAD:master --tags
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          registry-url: 'https://registry.npmjs.org'
+      - run: |
+          npm run packages:publish:dev
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          registry-url: 'https://npm.pkg.github.com'
+      - run: |
+          npm run packages:publish:dev
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # https://docs.github.com/en/free-pro-team@latest/actions/reference/authentication-in-a-workflow#about-the-github_token-secret
