@@ -1,5 +1,6 @@
 // INFO: we NEED to keep `any` here. only Typescript complains, but type resolution for consumers does work
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import type {
   MangoQuery,
   RxCollection,
@@ -11,6 +12,7 @@ import type {
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
+import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
 import { Observable } from 'rxjs';
 import type { Merge, SetOptional, SetRequired } from 'type-fest';
 
@@ -121,6 +123,13 @@ export function getRxDatabaseCreator(config: RxDatabaseCreatorExtended): RxDatab
         break;
     }
   }
+
+  if (NgxRxdbUtils.isDevMode()) {
+    storage = wrappedValidateAjvStorage({
+      storage,
+    });
+  }
+
   // (storage as Writable<RxStorage<any, any>, 'name'>).name = name;
   const dbConfig: RxDatabaseCreator = {
     name,

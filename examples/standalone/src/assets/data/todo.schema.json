@@ -34,6 +34,5 @@
       "multipleOf": 1
     }
   },
-  "__indexes": ["createdAt"],
   "primaryKey": "id"
 }

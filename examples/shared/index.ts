@@ -6,4 +6,5 @@ export * from './todos.schema';
 export * from './todos.replication';
 export * from './todos.migration';
 export * from './environment';
+export * from './db-error-handler';
 // end:ng42.barrel

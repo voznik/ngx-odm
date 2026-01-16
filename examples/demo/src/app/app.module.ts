@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule, Routes } from '@angular/router';
@@ -7,6 +7,7 @@ import { getRxDatabaseCreator } from '@ngx-odm/rxdb/config';
 import { RxDBAttachmentsPlugin } from 'rxdb/plugins/attachments';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
+import { provideDbErrorHandler } from '@shared';
 import { AppComponent } from './app.component';
 
 const routes: Routes = [
@@ -46,7 +47,7 @@ const routes: Routes = [
       })
     ),
   ],
-  providers: [],
+  providers: [provideDbErrorHandler()],
   bootstrap: [AppComponent],
 })
 export class AppModule {}
