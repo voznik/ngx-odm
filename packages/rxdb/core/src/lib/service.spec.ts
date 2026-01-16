@@ -5,7 +5,7 @@ import { RxDBService } from './service';
 
 // FIXME: the only error left is for multiple databases. so probably destroy doesn't work properly
 
-xdescribe('NgxRxdbService', () => {
+describe('NgxRxdbService', () => {
   let service: RxDBService;
   beforeAll(async () => {
     TestBed.configureTestingModule({
@@ -18,8 +18,8 @@ xdescribe('NgxRxdbService', () => {
     // service = TestBed.inject(RXDB);
   });
 
-  afterEach(() => {
-    service.destroyDb();
+  afterEach(async () => {
+    await service.destroyDb();
   });
 
   describe(`:: init`, () => {
@@ -39,7 +39,7 @@ xdescribe('NgxRxdbService', () => {
       expect(service.db).toBeNull();
     });
 
-    xit('should throw an error if the database cannot be created', async () => {
+    it('should throw an error if the database cannot be created', async () => {
       const invalidConfig = { name: '', storage: null };
       let exception;
       try {
@@ -50,7 +50,7 @@ xdescribe('NgxRxdbService', () => {
       expect(exception).toBeDefined();
     });
 
-    xit('should initialize multiple collections from config', async () => {
+    it('should initialize multiple collections from config', async () => {
       const dbConfig = {
         ...TEST_DB_CONFIG_1,
         options: {
@@ -73,7 +73,7 @@ xdescribe('NgxRxdbService', () => {
       expect(service.collections['collection2']).toBeDefined();
     });
 
-    xit('should throw an error if the collections cannot be created', async () => {
+    it('should throw an error if the collections cannot be created', async () => {
       await service.initDb(TEST_DB_CONFIG_1);
       const invalidColConfigs = {
         collection1: {
@@ -88,7 +88,7 @@ xdescribe('NgxRxdbService', () => {
       };
       let exception;
       try {
-        await service.initDb(invalidColConfigs as any);
+        await service.initCollections(invalidColConfigs as any);
       } catch (e) {
         exception = e;
       }

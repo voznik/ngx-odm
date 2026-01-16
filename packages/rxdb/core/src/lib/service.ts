@@ -22,7 +22,7 @@ export class RxDBService {
   private options!: RxDatabaseCreator;
 
   get db(): RxDatabase {
-    return this.dbInstance!;
+    return this.dbInstance;
   }
 
   get dbOptions(): RxDatabaseCreator {
@@ -34,13 +34,17 @@ export class RxDBService {
   }
 
   async destroyDb() {
+    if (!this.dbInstance) {
+      return;
+    }
     try {
-      await this.db.remove();
-      await this.db.close();
-      (this.dbInstance as unknown) = null;
-      logger.log(`database close`);
-    } catch {
-      logger.log(`database close error`);
+      await this.dbInstance.remove();
+      await this.dbInstance.close();
+    } catch (err) {
+      logger.log(`database destroy error`, err);
+    } finally {
+      (this.dbInstance as any) = null;
+      logger.log(`database instance destroyed`);
     }
   }
 
