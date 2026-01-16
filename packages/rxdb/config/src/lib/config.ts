@@ -92,6 +92,7 @@ export type MangoQueryParams = {
 interface NgxRxdbConfigOptions {
   schemas?: Record<string, RxCollectionCreatorExtended>;
   storageType: 'dexie' | 'memory';
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   storageOptions?: {};
   dumpPath?: string;
   useQueryParams?: boolean;
@@ -109,6 +110,7 @@ export type RxDatabaseCreatorExtended = Merge< RxDatabaseCreatorRequireOptions, 
  * @param config - Partial configuration options for the RxDatabase instance.
  */
 export function getRxDatabaseCreator(config: RxDatabaseCreatorExtended): RxDatabaseCreator {
+  // eslint-disable-next-line prefer-const
   let { name, options, storage, ...rest } = config;
   if (!storage) {
     switch (options.storageType) {

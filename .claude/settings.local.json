@@ -11,9 +11,11 @@
       "Bash(gemini:*)",
       "Bash(npm run:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*",
+      "Bash(git status:*)",
       "Bash(npx nx migrate:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npx nx test:*)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": false
 }

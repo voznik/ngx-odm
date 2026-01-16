@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
 import {
   RxDatabaseCreatorExtended,
@@ -7,7 +6,10 @@ import {
 } from '@ngx-odm/rxdb/config';
 import { RxDBService } from '@ngx-odm/rxdb/core';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
+import equal from 'fast-deep-equal';
 import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { MangoQuery } from 'rxdb';
+import { BehaviorSubject, Subscription, distinctUntilChanged, withLatestFrom } from 'rxjs';
 import {
   ComponentProps,
   Streamlit,
@@ -16,14 +18,12 @@ import {
 import { RxDBDataframeArgs } from './RxDBDataframeArgs';
 import { useEditedState } from './useEditingState';
 import { useNullableRenderData } from './useNullableRenderData';
-import equal from 'fast-deep-equal';
-import { BehaviorSubject, Subscription, distinctUntilChanged, withLatestFrom } from 'rxjs';
-import { MangoQuery } from 'rxdb';
 
 const { logger, isEmptyObject, tapOnce } = NgxRxdbUtils;
 
 /**
  * Dataframe example using Apache Arrow.
+ * @param props
  */
 const RxDBDataframe: React.FC<ComponentProps> = props => {
   const [inited, setInited] = useState<boolean>();
@@ -85,17 +85,21 @@ const RxDBDataframe: React.FC<ComponentProps> = props => {
       subRef.current!.add(docssub);
       logger.log('Collection & docs subscription initialized, with', query, with_rev);
     },
-    [] // eslint-disable-line
+    []
   );
 
   useEffect(() => {
     if (!inited) {
       return;
     }
-    query && querySubjectRef.current!.next(query);
-  }, [inited, query]); // eslint-disable-line
+    if (query) {
+      querySubjectRef.current!.next(query);
+    }
+  }, [inited, query]);
 
-  if (isEmptyObject(renderData)) return null; // Don't do anything at all
+  if (isEmptyObject(renderData)) {
+    return null;
+  } // Don't do anything at all
 
   if (!inited) {
     initDb(db_config)
@@ -106,4 +110,4 @@ const RxDBDataframe: React.FC<ComponentProps> = props => {
   return props.args.element as ReactNode;
 };
 
-export default withStreamlitConnection(RxDBDataframe);
+export const RxDBDataframeComponent = withStreamlitConnection(RxDBDataframe);

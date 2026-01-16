@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
 /* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 import type { FilledMangoQuery, PreparedQuery, RxDocument, RxJsonSchema } from 'rxdb';
 import { prepareQuery } from 'rxdb';
@@ -45,25 +46,22 @@ export type IsRecord<T> = T extends object
   ? T extends unknown[]
     ? false
     : T extends Set<unknown>
-    ? false
-    : T extends Map<unknown, unknown>
-    ? false
-    : T extends Function
-    ? false
-    : true
+      ? false
+      : T extends Map<unknown, unknown>
+        ? false
+        : T extends Function
+          ? false
+          : true
   : false;
 /** @internal */
 export type IsUnknownRecord<T> = string extends keyof T
   ? true
   : number extends keyof T
-  ? true
-  : false;
+    ? true
+    : false;
 /** @internal */
-export type IsKnownRecord<T> = IsRecord<T> extends true
-  ? IsUnknownRecord<T> extends true
-    ? false
-    : true
-  : false;
+export type IsKnownRecord<T> =
+  IsRecord<T> extends true ? (IsUnknownRecord<T> extends true ? false : true) : false;
 export type EntityId = string;
 export type Entity = { id: EntityId };
 
@@ -316,6 +314,7 @@ export namespace NgxRxdbUtils {
     return localStorage['debug']?.includes(`@ngx-odm/rxdb`);
   }
 
+  /* eslint-disable @typescript-eslint/ban-ts-comment */
   /** https://github.com/angular/components/blob/main/src/cdk/platform/features/test-environment.ts */
   export function isTestEnvironment(): boolean {
     return (
@@ -329,6 +328,7 @@ export namespace NgxRxdbUtils {
       (typeof Mocha !== 'undefined' && !!Mocha)
     );
   }
+  /* eslint-enable @typescript-eslint/ban-ts-comment */
 
   /**
    * Internal logger for debugging

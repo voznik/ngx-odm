@@ -1,7 +1,9 @@
-(globalThis as any).structuredClone = (val: any) => JSON.parse(JSON.stringify(val));
-
+/* eslint-disable import/order */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import 'setimmediate';
 import { webcrypto } from 'node:crypto';
+
+(globalThis as any).structuredClone = (val: any) => JSON.parse(JSON.stringify(val));
 
 Object.defineProperty(global, 'crypto', {
   value: webcrypto,
@@ -13,7 +15,6 @@ setupZoneTestEnv({
   errorOnUnknownElements: true,
   errorOnUnknownProperties: true,
 });
-
 
 if (process.env['CI']) {
   const consoleMethods: string[] = [

@@ -1,3 +1,4 @@
+import type { RxCollectionExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import type {
   DocumentsWithCheckpoint,
@@ -34,7 +35,6 @@ import {
   KintoListResponse,
   KintoReplicationOptions,
 } from './types';
-import type { RxCollectionExtended } from '@ngx-odm/rxdb/config';
 
 /**
  * The basic idea is to keep a local database up to date with the Kinto server:
@@ -115,7 +115,9 @@ export function replicateKintoDB<RxDocType = any>(options: KintoReplicationOptio
   if (push) {
     _pushImplementation = {
       async handler(changes) {
-        const { last_modified: lwt } = await (collection as RxCollectionExtended).getMetadata();
+        const { last_modified: lwt } = await (
+          collection as RxCollectionExtended
+        ).getMetadata();
         const {
           data: { last_modified },
         } = await kintoCollection.info();

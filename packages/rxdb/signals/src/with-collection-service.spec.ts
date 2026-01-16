@@ -142,10 +142,20 @@ describe('withCollectionService', () => {
     });
     it(`should handle method "${insertKey}"`, async () => {
       await ensureCollectionFind();
-      await store[insertKey]({ ...MOCK_DATA[0], id: '4', title: 'Title 4' });
+      await store[insertKey]({
+        ...MOCK_DATA[0],
+        id: '4',
+        title: 'Title 4',
+        createdAt: 1546300800200,
+      });
       const entities = store.entities();
       expect(entities).toEqual(
-        MOCK_DATA.concat({ ...MOCK_DATA[0], id: '4', title: 'Title 4' })
+        MOCK_DATA.concat({
+          ...MOCK_DATA[0],
+          id: '4',
+          title: 'Title 4',
+          createdAt: 1546300800200,
+        })
       );
     });
     it(`should handle method "${updateKey}"`, async () => {

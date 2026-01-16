@@ -40,6 +40,7 @@
     "ts-node": "ts-node",
     "changelog": "conventional-changelog",
     "nyc": "nyc",
+    "eslint": "eslint",
     "prettier": "prettier",
     "start": "nx run demo:serve",
     "start:standalone": "nx run standalone:serve",
@@ -49,7 +50,7 @@
     "build:standalone:sourcemaps": "nx run standalone:build --configuration=production --sourceMap=true --statsJson",
     "test": "nx run rxdb:test --ci --run-in-band --parallel --pass-with-no-tests --collectCoverage && npm run test:merge",
     "test:merge": "./node_modules/.bin/lcov-result-merger 'coverage/packages/*.lcov' coverage/lcov.info",
-    "lint:all": "nx affected --base=master --head=HEAD -t lint --parallel --verbose --exclude tools",
+    "lint:all": "nx affected --base=master --head=HEAD -t lint --parallel --quiet --no-tui --exclude tools",
     "lint:fix": "node --max_old_space_size=8000 ./node_modules/.bin/eslint --  . --fix",
     "e2e": "ng e2e",
     "affected": "nx affected",
@@ -185,7 +186,7 @@
 
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=20"
   },
   "npmScope": "@ngx-odm",
   "packageScope": "@ngx-odm",

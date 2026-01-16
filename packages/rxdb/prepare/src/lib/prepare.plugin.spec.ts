@@ -1,4 +1,4 @@
-import { getMockRxCollection } from '../../../testing/src';
+import { getMockRxCollection } from '@ngx-odm/rxdb/testing';
 import { RxCollection, RxCollectionCreator, RxQuery } from 'rxdb';
 import { RxDBPreparePlugin } from './prepare.plugin';
 

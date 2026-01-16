@@ -5,7 +5,6 @@
       #newtodoInput
       class="new-todo"
       placeholder="What needs to be done?"
-      autofocus=""
       (keyup)="todoStore.newTodoChange(newtodoInput.value)"
       (keyup.enter)="todoStore.addTodo($event)"
       (keyup.escape)="newtodoInput.value = ''; todoStore.newTodoChange('')"
@@ -23,41 +22,41 @@
     <label for="toggle-all" title="Mark all as complete">Mark all as complete</label>
     <ul [@listAnimation]="todoStore.filter()" class="todo-list">
       @for (todo of todos; track trackByFn($index, todo)) {
-      <li [class.completed]="todo.completed">
-        <div class="view">
-          <input
-            class="toggle"
-            [class.editing]="todoStore.current()?.id === todo.id"
-            type="checkbox"
-            [checked]="todo.completed"
-            (change)="todoStore.toggleTodo(todo)"
-          />
-          <label
-            [class.editing]="todoStore.current()?.id === todo.id"
-            (dblclick)="todoStore.setEditinigTodo(todo, $event, true)"
-            (blur)="todoStore.setEditinigTodo(todo, $event, false)"
-            (keyup)="$event.preventDefault()"
-            (keydown.escape)="todoStore.setEditinigTodo(todo, $event, false)"
-            (keydown.enter)="todoStore.updateEditingTodo(todo, $event)"
-          >
-            {{ todo.title }}
-          </label>
-          <small class="last-modified">
-            Last modified: {{ todo.last_modified | date: 'short' }}
-          </small>
-          <button class="destroy" (click)="todoStore.removeTodo(todo)"></button>
-        </div>
-      </li>
+        <li [class.completed]="todo.completed">
+          <div class="view">
+            <input
+              class="toggle"
+              [class.editing]="todoStore.current()?.id === todo.id"
+              type="checkbox"
+              [checked]="todo.completed"
+              (change)="todoStore.toggleTodo(todo)"
+            />
+            <label
+              [class.editing]="todoStore.current()?.id === todo.id"
+              (dblclick)="todoStore.setEditinigTodo(todo, $event, true)"
+              (blur)="todoStore.setEditinigTodo(todo, $event, false)"
+              (keyup)="$event.preventDefault()"
+              (keydown.escape)="todoStore.setEditinigTodo(todo, $event, false)"
+              (keydown.enter)="todoStore.updateEditingTodo(todo, $event)"
+            >
+              {{ todo.title }}
+            </label>
+            <small class="last-modified">
+              Last modified: {{ todo.last_modified | date: 'short' }}
+            </small>
+            <button class="destroy" (click)="todoStore.removeTodo(todo)"></button>
+          </div>
+        </li>
       }
     </ul>
   </main>
   <footer class="footer" [hidden]="todoStore.count() === 0">
     @if (todoStore.remaining(); as remaining) {
-    <span class="todo-count" [ngPlural]="remaining">
-      <ng-template ngPluralCase="other">{{ remaining }} items left</ng-template>
-      <ng-template ngPluralCase="=1">one item left</ng-template>
-      <ng-template ngPluralCase="=0">no items left</ng-template>
-    </span>
+      <span class="todo-count" [ngPlural]="remaining">
+        <ng-template ngPluralCase="other">{{ remaining }} items left</ng-template>
+        <ng-template ngPluralCase="=1">one item left</ng-template>
+        <ng-template ngPluralCase="=0">no items left</ng-template>
+      </span>
     }
     <ul class="filters">
       <li>

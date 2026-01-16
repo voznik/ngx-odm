@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */ // for on-liners
 import { Injector, Signal, computed, inject } from '@angular/core';
 import {
   getCallStateKeys,

@@ -88,14 +88,14 @@ export const TEST_DB_CONFIG_1: RxDatabaseCreator = {
   name: 'test',
   storage: getRxStorageMemory(),
   multiInstance: false,
-  // ignoreDuplicate: true,
+  ignoreDuplicate: true,
   localDocuments: true,
 };
 export const TEST_DB_CONFIG_2: RxDatabaseCreator = {
   name: 'test',
   storage: getRxStorageMemory(),
   multiInstance: false,
-  // ignoreDuplicate: true,
+  ignoreDuplicate: true,
   options: {
     storageType: 'dexie',
     schemas: {

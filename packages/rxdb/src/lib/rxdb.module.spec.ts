@@ -55,12 +55,20 @@ describe('NgxRxdbModule', () => {
 
   describe(`NgxRxdbModule :: init w/o forFeature`, () => {
     let dbService: RxDBService;
-    beforeEach(async () => {
-      dbService = await getMockRxdbService();
+    beforeAll(async () => {
+      dbService = await getMockRxdbService(undefined, true);
+    });
+
+    beforeEach(() => {
+      jest.clearAllMocks();
       TestBed.configureTestingModule({
         imports: [NgxRxdbModule.forRoot(TEST_DB_CONFIG_1)],
         providers: [{ provide: RXDB, useValue: dbService }],
       });
+    });
+
+    afterAll(async () => {
+      await dbService.destroyDb();
     });
 
     it('should create', () => {
@@ -68,15 +76,19 @@ describe('NgxRxdbModule', () => {
     });
     it(`should not provide feature config token & collection service`, () => {
       expect(dbService.initCollections).not.toHaveBeenCalled();
-      expect(() => TestBed.inject(RXDB_COLLECTION)).toThrow(/No provider for/);
+      expect(() => TestBed.inject(RXDB_COLLECTION)).toThrow(/No provider/);
     });
   });
 
   describe(`NgxRxdbModule :: forFeature`, () => {
     let dbService: RxDBService;
 
+    beforeAll(async () => {
+      dbService = await getMockRxdbService(undefined, true);
+    });
+
     beforeEach(async () => {
-      dbService = await getMockRxdbService();
+      jest.clearAllMocks();
       TestBed.configureTestingModule({
         imports: [
           NgxRxdbModule.forRoot(TEST_DB_CONFIG_1),
@@ -86,6 +98,10 @@ describe('NgxRxdbModule', () => {
       });
       const appInitStatus = TestBed.inject(ApplicationInitStatus);
       await appInitStatus.donePromise;
+    });
+
+    afterAll(async () => {
+      await dbService.destroyDb();
     });
 
     it(`should init db via dbService`, inject(

@@ -1,13 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { NgxRxdbModule, RXDB } from '@ngx-odm/rxdb';
 import { TEST_DB_CONFIG_1, TEST_SCHEMA } from '@ngx-odm/rxdb/testing';
+import { addRxPlugin } from 'rxdb';
 import { RxDBService } from './service';
-
-// FIXME: the only error left is for multiple databases. so probably destroy doesn't work properly
 
 describe('NgxRxdbService', () => {
   let service: RxDBService;
   beforeAll(async () => {
+    // Override isDevMode to allow ignoreDuplicate in tests
+    addRxPlugin({
+      name: 'test-plugin',
+      rxdb: true,
+      overwritable: { isDevMode: () => true },
+    });
+
     TestBed.configureTestingModule({
       imports: [NgxRxdbModule.forRoot(TEST_DB_CONFIG_1)],
     });

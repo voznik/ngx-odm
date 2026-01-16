@@ -1,4 +1,3 @@
-
 import type {
   RxCollectionExtended as RxCollection,
   RxCollectionCreatorExtended,
@@ -327,7 +326,11 @@ export class RxDBCollectionService<T extends Entity = { id: EntityId }> {
    * @param data
    */
   @ensureCollection()
-  async updateBulk(query: MangoQuery<T>, data: Partial<T>): Promise<RxDocument<T, {}>[]> {
+  async updateBulk(
+    query: MangoQuery<T>,
+    data: Partial<T>
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  ): Promise<RxDocument<T, {}>[]> {
     return this.collection.find(query).update({ $set: data });
   }
 

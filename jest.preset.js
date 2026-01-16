@@ -7,7 +7,7 @@ const CI = process.env.CI === 'true' || true;
 /** @type {import('jest').Config} */
 const config = {
   ...nxPreset,
-  collectCoverage: CI,
+  coverage: CI,
   coverageReporters: [
     'html',
     'text-summary',

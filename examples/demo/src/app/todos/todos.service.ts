@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { Injectable, inject } from '@angular/core';
 import { RXDB_COLLECTION } from '@ngx-odm/rxdb';
 import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';

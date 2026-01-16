@@ -22,7 +22,7 @@ module.exports = {
   moduleFileExtensions: ['ts', 'js', 'html'],
   transformIgnorePatterns: [
     // Ignore Angular and other compiled modules
-    `node_modules/(?!.*\\.mjs$|${ignoredModules.join('|')})`
+    `node_modules/(?!.*\\.mjs$|${ignoredModules.join('|')})`,
   ],
   moduleNameMapper: {
     // Ensure tests use source files instead of dist
@@ -52,7 +52,6 @@ module.exports = {
     'jest-preset-angular/build/serializers/ng-snapshot',
     'jest-preset-angular/build/serializers/html-comment',
   ],
-  collectCoverage: process.env.CI ? true : false,
   coverageDirectory: `../../coverage/packages`,
   collectCoverageFrom: [
     '**/*.{ts,tsx}',

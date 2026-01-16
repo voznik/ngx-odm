@@ -3,7 +3,7 @@
   *ngrxLet="{
     todos: todos$,
     count: count$,
-    filter: filter$
+    filter: filter$,
   } as $"
 >
   <header class="header">
@@ -11,7 +11,6 @@
     <input
       class="new-todo"
       placeholder="What needs to be done?"
-      autofocus=""
       [(ngModel)]="todosService.newTodo"
       (keyup.enter)="todosService.addTodo()"
       (keyup.escape)="todosService.newTodo = ''"
@@ -29,28 +28,31 @@
     <label for="toggle-all" title="Mark all as complete">Mark all as complete</label>
     <ul [@listAnimation]="$.filter" class="todo-list">
       @for (todo of $.todos | byStatus: $.filter; track trackByFn($index, todo)) {
-      <li [class.completed]="todo.completed" (contextmenu)="showContextMenu($event, todo)">
-        <div class="view">
-          <input
-            class="toggle"
-            [class.editing]="todosService.current?.id === todo.id"
-            type="checkbox"
-            [checked]="todo.completed"
-            (change)="todosService.toggleTodo(todo)"
-          />
-          <label
-            [class.editing]="todosService.current?.id === todo.id"
-            (dblclick)="todosService.setEditinigTodo(todo, $event, true)"
-            (blur)="todosService.setEditinigTodo(todo, $event, false)"
-            (keyup)="$event.preventDefault()"
-            (keydown.escape)="todosService.setEditinigTodo(todo, $event, false)"
-            (keydown.enter)="todosService.updateEditingTodo(todo, $event)"
-          >
-            {{ todo.title }}
-          </label>
-          <button class="destroy" (click)="todosService.removeTodo(todo)"></button>
-        </div>
-      </li>
+        <li
+          [class.completed]="todo.completed"
+          (contextmenu)="showContextMenu($event, todo)"
+        >
+          <div class="view">
+            <input
+              class="toggle"
+              [class.editing]="todosService.current?.id === todo.id"
+              type="checkbox"
+              [checked]="todo.completed"
+              (change)="todosService.toggleTodo(todo)"
+            />
+            <label
+              [class.editing]="todosService.current?.id === todo.id"
+              (dblclick)="todosService.setEditinigTodo(todo, $event, true)"
+              (blur)="todosService.setEditinigTodo(todo, $event, false)"
+              (keyup)="$event.preventDefault()"
+              (keydown.escape)="todosService.setEditinigTodo(todo, $event, false)"
+              (keydown.enter)="todosService.updateEditingTodo(todo, $event)"
+            >
+              {{ todo.title }}
+            </label>
+            <button class="destroy" (click)="todosService.removeTodo(todo)"></button>
+          </div>
+        </li>
       }
     </ul>
   </main>
@@ -60,11 +62,11 @@
     *ngrxLet="($.todos | byStatus: 'ACTIVE' : true)?.length; let remainig"
   >
     @if (remainig) {
-    <span class="todo-count" [ngPlural]="remainig">
-      <ng-template ngPluralCase="other">{{ remainig }} items left</ng-template>
-      <ng-template ngPluralCase="=1">one item left</ng-template>
-      <ng-template ngPluralCase="=0">no items left</ng-template>
-    </span>
+      <span class="todo-count" [ngPlural]="remainig">
+        <ng-template ngPluralCase="other">{{ remainig }} items left</ng-template>
+        <ng-template ngPluralCase="=1">one item left</ng-template>
+        <ng-template ngPluralCase="=0">no items left</ng-template>
+      </span>
     }
     <ul class="filters">
       <li>
@@ -115,29 +117,29 @@
 <dialog [open]="isDialogOpen" class="todo-dialog">
   <header>Attachments:</header>
   @if (selectedTodo?._attachments) {
-  <ul>
-    @for (attachment of selectedTodo._attachments | keyvalue; track attachment) {
-    <li>
-      <a
-        href="javascript:void(0);"
-        (click)="todosService.downloadAttachment(selectedTodo.id, attachment.key)"
-      >
-        {{ attachment.key }} - {{ attachment.value.type }}
-      </a>
-      &nbsp;
-      <button
-        type="button"
-        class="destroy"
-        (click)="
-          todosService.removeAttachment(selectedTodo.id, attachment.key);
-          isDialogOpen = false
-        "
-      >
-        🗙
-      </button>
-    </li>
-    }
-  </ul>
+    <ul>
+      @for (attachment of selectedTodo._attachments | keyvalue; track attachment) {
+        <li>
+          <a
+            href="javascript:void(0);"
+            (click)="todosService.downloadAttachment(selectedTodo.id, attachment.key)"
+          >
+            {{ attachment.key }} - {{ attachment.value.type }}
+          </a>
+          &nbsp;
+          <button
+            type="button"
+            class="destroy"
+            (click)="
+              todosService.removeAttachment(selectedTodo.id, attachment.key);
+              isDialogOpen = false
+            "
+          >
+            🗙
+          </button>
+        </li>
+      }
+    </ul>
   }
   <form method="dialog" (ngSubmit)="selectedTodo = undefined; isDialogOpen = false">
     <button type="button" (click)="fileInput.click()">Upload attachment</button>

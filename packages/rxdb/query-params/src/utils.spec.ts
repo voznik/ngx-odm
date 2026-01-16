@@ -12,7 +12,7 @@ describe('query params utils', () => {
           completed: {
             $eq: true,
           },
-          // @ts-expect-error
+          // @ts-expect-error // test env
           unknownField: 'value',
         },
         sort: [],
@@ -48,6 +48,7 @@ describe('query params utils', () => {
         sort: [],
         limit: 'invalid',
         skip: 'invalid',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
 
       const result = normalizeMangoQuery(query, schema);

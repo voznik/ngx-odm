@@ -4,10 +4,10 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule, Routes } from '@angular/router';
 import { NgxRxdbModule } from '@ngx-odm/rxdb';
 import { getRxDatabaseCreator } from '@ngx-odm/rxdb/config';
+import { provideDbErrorHandler } from '@shared';
 import { RxDBAttachmentsPlugin } from 'rxdb/plugins/attachments';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
-import { provideDbErrorHandler } from '@shared';
 import { AppComponent } from './app.component';
 
 const routes: Routes = [
