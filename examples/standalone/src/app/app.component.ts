@@ -1,7 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
-import { RenderScheduler } from '@ngrx/component';
 import { filter } from 'rxjs';
 
 @Component({
@@ -10,11 +9,10 @@ import { filter } from 'rxjs';
   template: `
     <router-outlet></router-outlet>
   `,
-  providers: [RenderScheduler],
 })
 export class AppComponent {
   private router = inject(Router);
-  private renderScheduler = inject(RenderScheduler);
+  private cdr = inject(ChangeDetectorRef);
 
   constructor() {
     this.zonelessCD();
@@ -26,6 +24,6 @@ export class AppComponent {
         filter(event => event instanceof NavigationEnd),
         takeUntilDestroyed()
       )
-      .subscribe(() => this.renderScheduler.schedule());
+      .subscribe(() => this.cdr.detectChanges());
   }
 }

@@ -12,7 +12,7 @@ import { withEntities } from '@ngrx/signals/entities';
 import { withCollectionService } from '@ngx-odm/rxdb/signals';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import { Todo, TodosFilter } from '@shared';
-import { computedFrom } from 'ngxtension/computed-from';
+import { derivedFrom } from 'ngxtension/derived-from';
 import { firstPropertyValueOfObject } from 'rxdb/plugins/utils';
 import { map, pipe } from 'rxjs';
 import { v4 as uuid } from 'uuid';
@@ -37,7 +37,8 @@ export const TodoStore = signalStore(
   // Over the years, Angular developers have learned to avoid calling functions inside templates because a function re-runs every change detection and used pure pipes instead. This would cause expensive computations to run multiple times unnecessarily if the passed arguments did not change.
   // In a signal-based component, this idea no longer applies because the expressions will only re-evaluate as a result of a signal dependency change.
   // With signals, we no longer have to care about handling subscriptions. It is absolutely fine to call a signal function in the template since only the part that depends on that signal will be updated.
-  withComputed(({ countAll, countFiltered, entities, query, newTodo, filter }) => {
+  withComputed(store => {
+    const { countAll, countFiltered, entities, query, newTodo, filter } = store;
     const isAddTodoDisabled = computed(() => newTodo().length < 4);
 
     const filtered = computed(() => {
@@ -57,7 +58,7 @@ export const TodoStore = signalStore(
 
     const remaining = computed(() => countFiltered());
 
-    const title = computedFrom(
+    const title = derivedFrom(
       [countAll, remaining],
       pipe(
         map(([all, rem]) => {

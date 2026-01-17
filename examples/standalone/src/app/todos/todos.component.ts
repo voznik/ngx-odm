@@ -1,7 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  effect,
+  inject,
+} from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { RenderScheduler } from '@ngrx/component';
 import { provideRxCollection } from '@ngx-odm/rxdb';
 import { Todo, TODOS_COLLECTION_CONFIG, todosListAnimation } from '@shared';
 import { TodoStore } from './todos.store';
@@ -16,11 +21,10 @@ import { TodoStore } from './todos.store';
   providers: [
     provideRxCollection(TODOS_COLLECTION_CONFIG), // Collection will be created via this injection
     TodoStore,
-    RenderScheduler,
   ],
 })
 export class TodosComponent {
-  private renderScheduler = inject(RenderScheduler);
+  private cdr = inject(ChangeDetectorRef);
   private titleService = inject(Title);
   readonly todoStore = inject(TodoStore);
   todos: Todo[] = []; // Copy todos from store inside effect to properly trigger zoneless change detection
@@ -37,7 +41,7 @@ export class TodosComponent {
       this.titleService.setTitle(titleString);
 
       // INFO: Angular 17 doesn't provide way to detect changes with `signals` ONLY and no zone
-      this.renderScheduler.schedule();
+      this.cdr.detectChanges();
     });
   }
 }

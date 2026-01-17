@@ -131,3 +131,44 @@ New format: `"NG0201: No provider found for \`InjectionToken ...\`"`
 - **Stricter duplicate detection** (DB8/DB9 errors)
 - **Schema validation enforcement** in dev-mode (DVM1 error if storage not wrapped)
 - **Destroyed databases tracked** in memory (can't recreate same name)
+
+---
+
+## TypeScript Inference in SignalStore Features
+
+### Problem: Index Signature Pollution in `SignalStore`
+
+When creating custom `signalStoreFeature`s that involve dynamic keys (like `withCollectionService` which accepts an optional collection name), it's common to use mapped types or index signatures (e.g., `[key: string]: any`) to represent the dynamic state.
+
+However, if a feature returns a type with an index signature, `SignalStore` (via `@ngrx/signals`) may merge this signature with other features. This causes "pollution" where strictly typed signals (e.g., `newTodo: Signal<string>`) are widened to the union of the index signature's values (e.g., `Signal<string | number | Todo[]>`). This breaks type safety and autocomplete in consumers.
+
+### Solution: Conditional Types & Literal Defaults
+
+To resolve this in `withCollectionService`:
+
+1.  **Default to Literal Type:** We changed the generic default for the collection name from `string` to `''` (empty string literal).
+
+    ```typescript
+    export function withCollectionService<..., CName extends string = ''>(...)
+    ```
+
+    This allows TypeScript to distinguish between a "generic/dynamic" usage (where `CName` is `string`) and the "default/strict" usage (where `CName` is `''`).
+
+2.  **Conditional Return Types:** We explicitly cast the internal parts (`withState`, `withComputed`, `withMethods`) using conditional types:
+
+    ```typescript
+    as CName extends '' ? CollectionServiceState<E, F> : NamedCollectionServiceState<E, F, CName>
+    ```
+
+    - `CollectionServiceState` (for `''`): Uses **strict keys** (e.g., `filter`, `query`) and **NO index signature**.
+    - `NamedCollectionServiceState` (for `string`): Uses **mapped types** (e.g., `[K in CName as ...]`) which inevitably produce an index signature.
+
+    This ensures that in the most common case (single collection, no prefix), the store remains strictly typed without pollution.
+
+3.  **Signal Type Compatibility:**
+    - `derivedAsync` (from `ngxtension`) returns `Signal<T | undefined>` by default.
+    - Our interfaces expected `Signal<number>`.
+    - **Fix:** Added `{ initialValue: 0 }` to `derivedAsync` calls and cast to `Signal<number>` to align implementation with the interface.
+
+4.  **Internal Casting:**
+    - Due to the complexity of conditional types, strict internal type checking inside the library was bypassed using `as any` / `unknown` casts (e.g., for `store[callStateKey]`). This prioritizes correct _consumer_ types over strict _internal_ library typing.

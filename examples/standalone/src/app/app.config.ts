@@ -4,11 +4,10 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { provideRouter, withRouterConfig } from '@angular/router';
 import { provideRxDatabase } from '@ngx-odm/rxdb';
 import { getRxDatabaseCreator } from '@ngx-odm/rxdb/config';
+import { environment, provideDbErrorHandler } from '@shared';
 import { addRxPlugin } from 'rxdb';
 import { RxDBAttachmentsPlugin } from 'rxdb/plugins/attachments';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
-import { environment } from '../../shared/environment';
-import { provideDbErrorHandler } from '../../shared/db-error-handler';
 import { appRoutes } from './app.routes';
 
 if (!environment.production) {
