@@ -1,10 +1,6 @@
-import type {
-  RxConflictHandler,
-  RxConflictHandlerInput,
-  RxConflictHandlerOutput,
-} from 'rxdb';
+import type { RxConflictHandler, RxConflictHandlerInput, WithDeleted } from 'rxdb';
 import { deepEqual } from 'rxdb';
-import { Todo } from './todos.model';
+import type { Todo } from './todos.model';
 
 /**
  * The default conflict handler is a function that gets called when a conflict is detected.
@@ -12,16 +8,19 @@ import { Todo } from './todos.model';
  * @param i
  * @see https://rxdb.info/replication.html#conflict-handling
  */
-export const todosConflictHandler: RxConflictHandler<Todo> = function (
-  i: RxConflictHandlerInput<Todo>
-): Promise<RxConflictHandlerOutput<Todo>> {
-  if (deepEqual(i.newDocumentState, i.realMasterState)) {
-    return Promise.resolve({
-      isEqual: true,
-    });
-  }
-  return Promise.resolve({
-    isEqual: false,
-    documentData: i.realMasterState,
-  });
+export const todosConflictHandler: RxConflictHandler<Todo> = {
+  isEqual(
+    a: WithDeleted<Todo>,
+    b: WithDeleted<Todo>
+    // context: string
+  ) {
+    return deepEqual(a, b);
+  },
+  resolve(
+    i: RxConflictHandlerInput<Todo>
+    // context: string
+  ): Promise<WithDeleted<Todo>> {
+    // always use the master state
+    return Promise.resolve(i.realMasterState);
+  },
 };

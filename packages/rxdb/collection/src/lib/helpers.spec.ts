@@ -33,7 +33,7 @@ describe('ensureCollection', () => {
   it('should throw an error if the collection is not initialized', async () => {
     const errorMessage = `Collection "testCollection" was not initialized. Please check RxDB errors.`;
     initialized.complete();
-    await expect(testInstance.asyncMethod()).rejects.toThrowError(errorMessage);
+    await expect(testInstance.asyncMethod()).rejects.toThrow(errorMessage);
   });
 
   it('should call async method after the collection was initialized', async () => {

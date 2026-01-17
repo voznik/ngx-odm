@@ -36,7 +36,6 @@
       "title": "Last Modified Date"
     }
   },
-  "__indexes": ["createdAt"],
   "primaryKey": "id",
   "attachments": {
     "encrypted": false

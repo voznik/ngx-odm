@@ -54,7 +54,6 @@ Custom `streamlit` component connecting local browser `indexedDB` database as `R
       "title": "Last Modified Date"
     }
   },
-  "__indexes": ["createdAt"],
   "primaryKey": "id",
   "attachments": {
     "encrypted": false

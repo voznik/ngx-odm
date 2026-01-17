@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */ // for on-liners
 import { Injector, Signal, computed, inject } from '@angular/core';
 import {
   getCallStateKeys,
@@ -16,16 +17,11 @@ import {
   withState,
 } from '@ngrx/signals';
 import { setAllEntities } from '@ngrx/signals/entities';
-import { NamedEntitySignals } from '@ngrx/signals/entities/src/models';
-import { SignalStoreFeatureResult } from '@ngrx/signals/src/signal-store-models';
-import { StateSignal } from '@ngrx/signals/src/state-signal';
 import { RXDB_COLLECTION } from '@ngx-odm/rxdb';
 import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
 import { DEFAULT_LOCAL_DOCUMENT_ID } from '@ngx-odm/rxdb/config';
 import { Entity, EntityId, NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
-import { computedAsync } from 'ngxtension/computed-async';
-// import { computedFrom } from 'ngxtension/computed-from';
-// import { rxMethod } from '@ngrx/signals/rxjs-interop';
+import { derivedAsync } from 'ngxtension/derived-async';
 import type { MangoQuery, MangoQuerySelector, MangoQuerySelectorAndIndex } from 'rxdb';
 import { switchMap, tap } from 'rxjs';
 
@@ -223,17 +219,15 @@ export function withCollectionService<
 }): SignalStoreFeature<
   {
     state: Record<string, never>;
-    // These alternatives break type inference:
-    // state: { callState: CallState } & NamedEntityState<E, Collection>,
-    // state: NamedEntityState<E, Collection>,
-
-    signals: NamedEntitySignals<E, CName>;
+    signals: any;
     methods: Record<string, never>;
+    props: Record<string, never>;
   },
   {
     state: NamedCollectionServiceState<E, F, CName>;
     signals: NamedCollectionServiceSignals<E, CName>;
     methods: NamedCollectionServiceMethods<E, F, CName>;
+    props: Record<string, never>;
   }
 >;
 export function withCollectionService<E extends Entity, F extends Filter>(options: {
@@ -241,11 +235,12 @@ export function withCollectionService<E extends Entity, F extends Filter>(option
   query?: MangoQuery<E>;
   countQuery?: MangoQuerySelectorAndIndex<E>;
 }): SignalStoreFeature<
-  SignalStoreFeatureResult,
+  any,
   {
     state: CollectionServiceState<E, F>;
     signals: CollectionServiceSignals<E>;
     methods: CollectionServiceMethods<E, F>;
+    props: Record<string, never>;
   }
 >;
 export function withCollectionService<
@@ -257,7 +252,6 @@ export function withCollectionService<
   filter?: F;
   query?: MangoQuery<E>;
   countQuery?: MangoQuerySelectorAndIndex<E>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }): SignalStoreFeature<any, any> {
   let colService: RxDBCollectionService<E>;
 
@@ -292,9 +286,11 @@ export function withCollectionService<
   };
 
   const ensureCollection = () => {
-    if (colService instanceof RxDBCollectionService) return;
+    if (colService instanceof RxDBCollectionService) {
+      return;
+    }
     const injector = inject(Injector);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     colService = injector.get(RXDB_COLLECTION) as RxDBCollectionService<any>;
   };
 
@@ -316,11 +312,11 @@ export function withCollectionService<
       return {
         [selectedEntitiesKey]: computed(() => entities().filter(e => selectedIds()[e.id])),
         [countKey]: computed(() => entities().length),
-        [countAllKey]: computedAsync(() => colService.count()),
-        [`countFiltered`]: computedAsync(() => colService.count(countQuery)),
+        [countAllKey]: derivedAsync(() => colService.count()),
+        [`countFiltered`]: derivedAsync(() => colService.count(countQuery)),
       };
     }),
-    withMethods((store: Record<string, unknown> & StateSignal<object>) => {
+    withMethods((store: any) => {
       ensureWithEntities(store);
       ensureCollection();
       return {
@@ -369,7 +365,7 @@ export function withCollectionService<
             // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
             store[callStateKey] && patchState(store, setLoaded(prefix));
           } catch (e) {
-            store[callStateKey] && patchState(store, setError(e, prefix));
+            store[callStateKey] && patchState(store, setError(e as Error, prefix));
             throw e;
           }
         },
@@ -384,7 +380,7 @@ export function withCollectionService<
             store[callStateKey] && patchState(store, setLoaded(prefix));
             // patchState(store, { [currentKey]: undefined }); // TODO: if we need to use `current`
           } catch (e) {
-            store[callStateKey] && patchState(store, setError(e, prefix));
+            store[callStateKey] && patchState(store, setError(e as Error, prefix));
             throw e;
           }
         },
@@ -400,7 +396,7 @@ export function withCollectionService<
             // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
             store[callStateKey] && patchState(store, setLoaded(prefix));
           } catch (e) {
-            store[callStateKey] && patchState(store, setError(e, prefix));
+            store[callStateKey] && patchState(store, setError(e as Error, prefix));
             throw e;
           }
         },
@@ -413,7 +409,7 @@ export function withCollectionService<
             // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
             store[callStateKey] && patchState(store, setLoaded(prefix));
           } catch (e) {
-            store[callStateKey] && patchState(store, setError(e, prefix));
+            store[callStateKey] && patchState(store, setError(e as Error, prefix));
             throw e;
           }
         },
@@ -426,7 +422,7 @@ export function withCollectionService<
             // the store already updated by susbcription to the collection and its handler in  `findAllDocs`
             store[callStateKey] && patchState(store, setLoaded(prefix));
           } catch (e) {
-            store[callStateKey] && patchState(store, setError(e, prefix));
+            store[callStateKey] && patchState(store, setError(e as Error, prefix));
             throw e;
           }
         },
@@ -435,10 +431,13 @@ export function withCollectionService<
     withHooks({
       /**
        * Subscribe to RxDB documents to set signals/entities store
+       *
+       * TypeScript errors in the onInit hook were caused by type inference issues where the store was being inferred as only having query state, but we were trying to patch it with call state and entity state. The solution was to use explicit generic parameters on patchState to tell TypeScript what type to expect
        * @param store
        */
       onInit: async store => {
-        store[callStateKey] && patchState(store, setLoading(prefix));
+        store[callStateKey] &&
+          patchState<{ [key: string]: any }>(store, setLoading(prefix));
         colService.queryParams$
           .pipe(
             tapOnce(() => {
@@ -449,13 +448,15 @@ export function withCollectionService<
             }),
             tap(queryParams => {
               patchState(store, { query: queryParams }); // sync query to store
-              store[callStateKey] && patchState(store, setLoaded(prefix));
+              store[callStateKey] &&
+                patchState<{ [key: string]: any }>(store, setLoaded(prefix));
             }),
             switchMap(queryParams => colService.docs(queryParams)),
             tapResponse({
               next: result => {
-                store[callStateKey] && patchState(store, setLoaded(prefix));
-                return patchState(
+                store[callStateKey] &&
+                  patchState<{ [key: string]: any }>(store, setLoaded(prefix));
+                return patchState<{ [key: string]: any }>(
                   store,
                   prefix
                     ? setAllEntities(result, { collection: prefix })
@@ -464,15 +465,18 @@ export function withCollectionService<
               },
               error: e => {
                 logger.log(e);
-                store[callStateKey] && patchState(store, setError(e, prefix));
+                store[callStateKey] &&
+                  patchState<{ [key: string]: any }>(store, setError(e, prefix));
               },
-              finalize: () => store[callStateKey] && patchState(store, setLoaded(prefix)),
+              finalize: () =>
+                store[callStateKey] &&
+                patchState<{ [key: string]: any }>(store, setLoaded(prefix)),
             })
           )
           .subscribe();
       },
       onDestroy: () => {
-        colService.destroy();
+        colService.close();
       },
     })
   );

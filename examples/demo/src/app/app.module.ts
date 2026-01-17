@@ -1,9 +1,10 @@
-import { NgModule } from '@angular/core';
+import { ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule, Routes } from '@angular/router';
 import { NgxRxdbModule } from '@ngx-odm/rxdb';
 import { getRxDatabaseCreator } from '@ngx-odm/rxdb/config';
+import { provideDbErrorHandler } from '@shared';
 import { RxDBAttachmentsPlugin } from 'rxdb/plugins/attachments';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
@@ -46,7 +47,7 @@ const routes: Routes = [
       })
     ),
   ],
-  providers: [],
+  providers: [provideDbErrorHandler()],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

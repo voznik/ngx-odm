@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* @typescript-eslint/no-non-null-assertion */
 import { RxCollectionExtended as RxCollection } from '@ngx-odm/rxdb/config';
 import {
@@ -17,7 +16,7 @@ describe('RxDBPUseQueryParamsPlugin', () => {
     let plugin: RxPlugin;
     const mockUrlStream$ = new Subject<string>();
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       const colConfig = TEST_FEATURE_CONFIG_1;
       colConfig.options.useQueryParams = true;
       plugin = RxDBPUseQueryParamsPlugin;

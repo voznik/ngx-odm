@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { TestBed } from '@angular/core/testing';
+import { flush, tick } from '@angular/core/testing';
 import { RXDB_COLLECTION, RXDB, provideRxCollection } from '@ngx-odm/rxdb';
 import { RxDBService } from '@ngx-odm/rxdb/core';
 import {
@@ -26,8 +26,12 @@ describe(`RXDB_COLLECTION`, () => {
     let dbService: RxDBService;
     let service: RxDBCollectionService<TestDocType>;
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       dbService = await getMockRxdbService();
+    });
+
+    beforeEach(async () => {
+      jest.clearAllMocks();
       TestBed.configureTestingModule({
         providers: [
           { provide: RXDB, useValue: dbService },
@@ -37,9 +41,13 @@ describe(`RXDB_COLLECTION`, () => {
       service = TestBed.inject(RXDB_COLLECTION) as any;
     });
 
-    afterEach(() => {
+    afterEach(async () => {
+      // Don't destroy db after each test since we create it once in beforeAll
+    });
+
+    afterAll(async () => {
+      await dbService.destroyDb();
       jest.restoreAllMocks();
-      // await expect(result).rejects.toThrowError();
     });
 
     it(`should provide Observable "initialized$" getter`, async () => {
@@ -70,9 +78,9 @@ describe(`RXDB_COLLECTION`, () => {
     });
 
     it('should destroy collection', async () => {
-      jest.spyOn(service.collection, 'destroy').mockResolvedValue(null as any);
-      await service.destroy();
-      expect(service.collection.destroy).toHaveBeenCalled();
+      jest.spyOn(service.collection, 'close').mockResolvedValue(null as any);
+      await service.close();
+      expect(service.collection.close).toHaveBeenCalled();
     });
 
     it('should clear collection', async () => {
@@ -163,6 +171,7 @@ describe(`RXDB_COLLECTION`, () => {
     it('should import docs into collection', async () => {
       const docs = [{ id: '1' }, { id: '2' }] as TestDocType[];
       await service.import(docs);
+      // await Promise.resolve(setTimeout(() => 1000));
       expect(service.collection.importJSON).toHaveBeenCalledWith({
         name: 'test',
         schemaHash: expect.any(String),

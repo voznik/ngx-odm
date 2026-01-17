@@ -2,7 +2,10 @@ import { Pipe, PipeTransform, inject } from '@angular/core';
 import { RXDB_CONFIG_COLLECTION } from '@ngx-odm/rxdb';
 import { Todo, TodosFilter } from '@shared';
 
-@Pipe({ name: 'byStatus' })
+@Pipe({
+  name: 'byStatus',
+  standalone: false,
+})
 export class TodosPipe implements PipeTransform {
   colConfig = inject(RXDB_CONFIG_COLLECTION);
   transform(value: Todo[], status: TodosFilter, force = false): Todo[] {

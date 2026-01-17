@@ -9,15 +9,14 @@
       "executor": "@nx/angular:package",
       "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
       "options": {
-        "project": "packages/rxdb/ng-package.json"
+        "project": "packages/rxdb/ng-package.json",
+        "tsConfig": "packages/rxdb/tsconfig.lib.json"
       },
       "configurations": {
         "production": {
           "tsConfig": "packages/rxdb/tsconfig.lib.prod.json"
         },
-        "development": {
-          "tsConfig": "packages/rxdb/tsconfig.lib.json"
-        }
+        "development": {}
       },
       "defaultConfiguration": "production"
     },
@@ -25,12 +24,9 @@
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "packages/rxdb/jest.config.ts"
+        "jestConfig": "packages/rxdb/jest.config.cts",
+        "tsConfig": "packages/rxdb/tsconfig.spec.json"
       }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
     },
     "version": {
       "executor": "@jscutlery/semver:version",

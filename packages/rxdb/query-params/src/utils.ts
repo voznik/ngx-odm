@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import { includeKeys } from 'filter-obj';
 import queryString from 'query-string';
@@ -65,6 +65,8 @@ export const parseUrlToMangoQuery = (url: string, schema: RxSchema): MangoQuery<
 export const stringifyParam = (
   param: MangoQuerySelector<any> | MangoQuerySortPart<any>[] | undefined
 ): string => {
-  if (isNullOrUndefined(param)) return '';
+  if (isNullOrUndefined(param)) {
+    return '';
+  }
   return JSON.stringify(param);
 };

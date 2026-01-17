@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /// <reference types="jest" />
 
 import { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
@@ -8,7 +7,7 @@ import {
   RxDatabaseCreator,
   RxJsonSchema,
   createRxDatabase,
-  randomCouchString,
+  randomToken,
 } from 'rxdb';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 
@@ -71,7 +70,7 @@ export const MOCK_DATA: TestDocType[] = [
 ];
 
 export const MOCK_DATA_MAP = MOCK_DATA.reduce((acc, cur) => {
-  acc[cur.id] = cur;
+  (acc as any)[cur.id] = cur;
   return acc;
 }, {});
 
@@ -109,20 +108,24 @@ export const getMockRxCollection = async (
   colConfig: RxCollectionCreatorExtended = TEST_FEATURE_CONFIG_1,
   randomName = false
 ) => {
-  await loadRxDBPlugins();
+  await loadRxDBPlugins([
+    // { name: 'test-plugin', rxdb: true, overwritable: { isDevMode: () => true } }
+  ]);
+
+  const storage = getRxStorageMemory();
 
   const database = await createRxDatabase({
-    name: randomName ? randomCouchString(6) : 'test',
-    storage: getRxStorageMemory(),
+    name: randomName ? randomToken(6) : 'test',
+    storage,
     multiInstance: false,
-    ignoreDuplicate: true,
+    // ignoreDuplicate: true,
     localDocuments: true,
   });
   const { test: collection } = await database.addCollections({
     [colConfig.name]: colConfig,
   });
   Object.getOwnPropertyNames((collection as any).__proto__).forEach(key => {
-    if (typeof collection[key] === 'function') {
+    if (typeof (collection as any)[key] === 'function') {
       jest.spyOn(collection, key as any);
     }
   });
@@ -151,7 +154,7 @@ export const getMockRxdbService = async (
   });
   jest.spyOn(service, 'initCollections').mockImplementation(() => {
     (service as any).db = collection.database;
-    service.collections[colConfig.name] = collection;
+    (service.collections as any)[colConfig.name] = collection;
     return Promise.resolve(service.collections);
   });
   Object.setPrototypeOf(service, RxDBService.prototype);

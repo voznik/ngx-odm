@@ -1,5 +1,12 @@
 import { Location } from '@angular/common';
-import { APP_INITIALIZER, InjectionToken, NgZone, Provider, inject } from '@angular/core';
+import {
+  EnvironmentProviders,
+  InjectionToken,
+  NgZone,
+  Provider,
+  inject,
+  provideAppInitializer,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { RxDBCollectionService } from '@ngx-odm/rxdb/collection';
 import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
@@ -68,15 +75,15 @@ function dbInitializerFactory(
  * });
  * ```
  */
-export function provideRxDatabase(config: RxDatabaseCreator): Provider[] {
+export function provideRxDatabase(
+  config: RxDatabaseCreator
+): (Provider | EnvironmentProviders)[] {
   return [
     { provide: RXDB_CONFIG, useValue: config },
-    {
-      provide: APP_INITIALIZER,
-      useFactory: dbInitializerFactory,
-      deps: [RXDB, RXDB_CONFIG],
-      multi: true,
-    },
+    provideAppInitializer(() => {
+      const initializerFn = dbInitializerFactory(inject(RXDB), inject(RXDB_CONFIG));
+      return initializerFn();
+    }),
   ];
 }
 
@@ -107,8 +114,8 @@ export function provideRxCollection(
     { provide: RXDB_CONFIG_COLLECTION, useValue: collectionConfig },
     {
       provide: RXDB_COLLECTION,
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore // INFO: no need for typings here, nothing's exposed, but ts complains // NOSONAR
+
+      // @ts-expect-error // INFO: no need for typings here, nothing's exposed, but ts complains // NOSONAR
       useFactory: (config, dbService, ngZone, currentUrl, updateQueryParamsFn) =>
         new RxDBCollectionService(
           config,

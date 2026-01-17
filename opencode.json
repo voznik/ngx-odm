@@ -1,0 +1,43 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "plan",
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "grep *": "allow",
+      "git *": "ask",
+      "ls *": "allow",
+      "find *": "allow",
+      "head *": "allow",
+      "tail *": "allow",
+      "fd *": "allow",
+      "npm run *": "allow",
+      "rm *": "deny"
+    },
+    "list": "allow",
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow"
+    },
+    "edit": "ask"
+  },
+  "mcp": {
+    "context7": {
+      "enabled": true
+    },
+    "basic-memory": {
+      "enabled": false
+    }
+  },
+  "lsp": {
+    "typescript": {
+      "command": ["node_modules/typescript/bin/tsc"]
+    },
+    "eslint": {
+      "command": ["node_modules/eslint/bin/eslint.js"]
+    }
+  },
+  "instructions": ["AGENTS.md", "~/.ai/AGENTS.md", ".cursor/rules/*.md"]
+}

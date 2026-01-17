@@ -33,7 +33,6 @@ export const TODO_SCHEMA = {
       multipleOf: 1,
     },
   },
-  __indexes: ['createdAt'],
   primaryKey: 'id',
   attachments: {
     encrypted: false,

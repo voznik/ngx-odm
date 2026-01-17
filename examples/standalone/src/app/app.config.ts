@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { provideHttpClient } from '@angular/common/http';
 import { ApplicationConfig, NgZone, ɵNoopNgZone } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -8,6 +7,7 @@ import { getRxDatabaseCreator } from '@ngx-odm/rxdb/config';
 import { RxDBAttachmentsPlugin } from 'rxdb/plugins/attachments';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
+import { provideDbErrorHandler } from '../../shared/db-error-handler';
 import { appRoutes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -36,5 +36,6 @@ export const appConfig: ApplicationConfig = {
         },
       })
     ),
+    provideDbErrorHandler(),
   ],
 };

@@ -22,8 +22,7 @@ export class RxDBService {
   private options!: RxDatabaseCreator;
 
   get db(): RxDatabase {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return this.dbInstance!;
+    return this.dbInstance;
   }
 
   get dbOptions(): RxDatabaseCreator {
@@ -35,13 +34,17 @@ export class RxDBService {
   }
 
   async destroyDb() {
+    if (!this.dbInstance) {
+      return;
+    }
     try {
-      await this.db.remove();
-      await this.db.destroy();
-      (this.dbInstance as unknown) = null;
-      logger.log(`database destroy`);
-    } catch {
-      logger.log(`database destroy error`);
+      await this.dbInstance.remove();
+      await this.dbInstance.close();
+    } catch (err) {
+      logger.log(`database destroy error`, err);
+    } finally {
+      (this.dbInstance as any) = null;
+      logger.log(`database instance destroyed`);
     }
   }
 
@@ -82,7 +85,6 @@ export class RxDBService {
   async initCollections(colConfigs: {
     [name: string]: RxCollectionCreatorExtended;
   }): Promise<CollectionsOfDatabase> {
-    // eslint-disable-next-line no-useless-catch
     try {
       const colCreators = await prepareCollections(colConfigs);
       return await this.db.addCollections(colCreators);

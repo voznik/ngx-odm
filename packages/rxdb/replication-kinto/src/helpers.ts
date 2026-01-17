@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NgxRxdbUtils, getDefaultFetch } from '@ngx-odm/rxdb/utils';
 import {
   KintInfoResponse,
@@ -161,7 +160,7 @@ export function mergeAggregatedResponse(
   next: KintoAggregateResponse
 ): KintoAggregateResponse {
   for (const key in next) {
-    obj[key] = next[key];
+    (obj as any)[key] = (next as any)[key];
   }
   return obj;
 }
@@ -213,7 +212,9 @@ export function kintoCollectionFactory(
       // ETag header values are quoted (because of * and W/"foo").
       const last_modified = etag ? etag.replace(/"/g, '') : etag;
       const { data } = await response.json();
-      NgxRxdbUtils.logger.log('replication:kinto:since', response.status, last_modified);
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      NgxRxdbUtils?.logger &&
+        NgxRxdbUtils.logger.log('replication:kinto:since', response.status, last_modified);
       return {
         data,
         hasNextPage: !!nextPage,
@@ -274,7 +275,9 @@ export function kintoCollectionFactory(
         method: 'POST',
         body: bodyString,
       });
-      NgxRxdbUtils.logger.log('replication:kinto:batch', response.status);
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      NgxRxdbUtils?.logger &&
+        NgxRxdbUtils.logger.log('replication:kinto:batch', response.status);
 
       const { responses, requests } = await response.json();
       const result = aggregate(responses, requests || body.requests);

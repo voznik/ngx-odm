@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, no-console */
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
+/* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 import type { FilledMangoQuery, PreparedQuery, RxDocument, RxJsonSchema } from 'rxdb';
 import { prepareQuery } from 'rxdb';
 import { RxReplicationState } from 'rxdb/plugins/replication';
@@ -13,6 +14,8 @@ import {
   tap,
   timer,
 } from 'rxjs';
+
+declare const ngDevMode: object | undefined;
 
 /** @internal */
 export type AnyObject = Record<string, any>;
@@ -43,25 +46,22 @@ export type IsRecord<T> = T extends object
   ? T extends unknown[]
     ? false
     : T extends Set<unknown>
-    ? false
-    : T extends Map<unknown, unknown>
-    ? false
-    : T extends Function
-    ? false
-    : true
+      ? false
+      : T extends Map<unknown, unknown>
+        ? false
+        : T extends Function
+          ? false
+          : true
   : false;
 /** @internal */
 export type IsUnknownRecord<T> = string extends keyof T
   ? true
   : number extends keyof T
-  ? true
-  : false;
+    ? true
+    : false;
 /** @internal */
-export type IsKnownRecord<T> = IsRecord<T> extends true
-  ? IsUnknownRecord<T> extends true
-    ? false
-    : true
-  : false;
+export type IsKnownRecord<T> =
+  IsRecord<T> extends true ? (IsUnknownRecord<T> extends true ? false : true) : false;
 export type EntityId = string;
 export type Entity = { id: EntityId };
 
@@ -217,7 +217,7 @@ export namespace NgxRxdbUtils {
     isNullOrUndefined(x) || (isObject(x) && isEmpty(x));
 
   export function isDevMode(): boolean {
-    return typeof globalThis['ngDevMode'] === 'undefined' || !!globalThis['ngDevMode'];
+    return typeof ngDevMode === 'undefined' || !!ngDevMode;
   }
 
   export function isValidNumber(value: any): value is number {
@@ -283,7 +283,7 @@ export namespace NgxRxdbUtils {
 
   export function getMaybeId(entityOrId: object | string): string {
     if (isObject(entityOrId)) {
-      return entityOrId['_id'];
+      return (entityOrId as any)['_id'];
     }
     return String(entityOrId);
   }
@@ -314,23 +314,21 @@ export namespace NgxRxdbUtils {
     return localStorage['debug']?.includes(`@ngx-odm/rxdb`);
   }
 
+  /* eslint-disable @typescript-eslint/ban-ts-comment */
   /** https://github.com/angular/components/blob/main/src/cdk/platform/features/test-environment.ts */
   export function isTestEnvironment(): boolean {
     return (
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       (typeof __karma__ !== 'undefined' && !!__karma__) ||
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       (typeof jasmine !== 'undefined' && !!jasmine) ||
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       (typeof jest !== 'undefined' && !!jest) ||
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       (typeof Mocha !== 'undefined' && !!Mocha)
     );
   }
+  /* eslint-enable @typescript-eslint/ban-ts-comment */
 
   /**
    * Internal logger for debugging
@@ -503,7 +501,7 @@ export function mapFindResultToJsonArray(
 ): OperatorFunction<any[] | Map<string, any>, any[]> {
   return map<RxDocument[] | Map<string, RxDocument>, any[]>(docs => {
     return (Array.isArray(docs) ? docs : [...docs.values()]).map(d => {
-      const data: any = { ...d._data };
+      const data: any = d._data ? NgxRxdbUtils.clone(d._data) : NgxRxdbUtils.clone(d);
       if (!withRevAndAttachments) {
         delete data._rev;
         delete data._attachments;

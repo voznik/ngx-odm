@@ -27,13 +27,14 @@
       "name": "Jest: Nx: All",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/node_modules/@angular/cli/bin/ng",
+      "program": "${workspaceFolder}/node_modules/.bin/nx",
       "args": [
         "test",
-        "${input:libName}",
+        "rxdb",
         "--runInBand=true",
         "--codeCoverage=false",
-        "--watch"
+        "--watch",
+        "--detectOpenHandles"
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
@@ -45,14 +46,15 @@
       "name": "Jest: Nx: Current File",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/node_modules/@angular/cli/bin/ng",
+      "program": "${workspaceFolder}/node_modules/.bin/nx",
       "args": [
         "test",
         // "${relativeFile}",
-        "${input:libName}",
+        "rxdb",
         "--codeCoverage=false",
         "--testFile=${fileBasenameNoExtension}",
         "--watchAll",
+        "--detectOpenHandles",
         "--colors"
       ],
       "env": {
@@ -71,21 +73,12 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "--nolazy",
-        "-r",
-        "ts-node/register"
-      ],
-      "args": [
-        "${relativeFile}"
-      ],
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+      "args": ["${relativeFile}"],
       "sourceMaps": true,
       "cwd": "${workspaceRoot}",
       "protocol": "inspector",
-      "skipFiles": [
-        "<node_internals>/**",
-        "node_modules/**"
-      ],
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "env": {
@@ -100,9 +93,7 @@
       "type": "debugpy",
       "request": "launch",
       "module": "pytest",
-      "args": [
-        "${file}"
-      ],
+      "args": ["${file}"],
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       },
@@ -127,10 +118,7 @@
   ],
   "inputs": [
     {
-      "options": [
-        "rxdb",
-        "kinto"
-      ],
+      "options": ["rxdb"],
       "id": "libName",
       "type": "pickString",
       "default": "rxdb",

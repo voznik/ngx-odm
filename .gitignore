@@ -48,4 +48,10 @@ junit.xml
 .DS_Store
 Thumbs.db
 
-.nx/cache
+.nx/
+
+# AI-related files
+.claude/
+!.claude/settings.local.json
+.gemini/
+!.gemini/settings.json

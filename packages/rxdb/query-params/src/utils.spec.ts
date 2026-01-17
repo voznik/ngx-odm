@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { TEST_SCHEMA, TestDocType } from '@ngx-odm/rxdb/testing';
 import { RxSchema, MangoQuery } from 'rxdb';
 import { normalizeMangoQuery, parseUrlToMangoQuery } from './utils';
@@ -13,7 +12,7 @@ describe('query params utils', () => {
           completed: {
             $eq: true,
           },
-          // @ts-expect-error
+          // @ts-expect-error // test env
           unknownField: 'value',
         },
         sort: [],
@@ -49,6 +48,7 @@ describe('query params utils', () => {
         sort: [],
         limit: 'invalid',
         skip: 'invalid',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
 
       const result = normalizeMangoQuery(query, schema);

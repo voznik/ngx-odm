@@ -1,4 +1,3 @@
-/* eslint-disable import/no-default-export, @typescript-eslint/no-var-requires */
 import { writeFile } from 'fs';
 import { getPackages } from './utils';
 
@@ -33,9 +32,8 @@ export async function setMetadata(dev = false) {
     // set all the packages peerDependencies to be the same as root package.json version
     for (const packageInfo of packages) {
       if (packPackage.peerDependencies[packageInfo.packageName]) {
-        packPackage.peerDependencies[
-          packageInfo.packageName
-        ] = `^${rootJson.version} || ^${rootJson.version}-dev`;
+        packPackage.peerDependencies[packageInfo.packageName] =
+          `^${rootJson.version} || ^${rootJson.version}-dev`;
       }
     }
 

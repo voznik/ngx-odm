@@ -1,20 +1,31 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { TestBed } from '@angular/core/testing';
 import { NgxRxdbModule, RXDB } from '@ngx-odm/rxdb';
 import { TEST_DB_CONFIG_1, TEST_SCHEMA } from '@ngx-odm/rxdb/testing';
+import { addRxPlugin } from 'rxdb';
 import { RxDBService } from './service';
 
 describe('NgxRxdbService', () => {
   let service: RxDBService;
-  beforeEach(async () => {
+  beforeAll(async () => {
+    // Override isDevMode to allow ignoreDuplicate in tests
+    addRxPlugin({
+      name: 'test-plugin',
+      rxdb: true,
+      overwritable: { isDevMode: () => true },
+    });
+
     TestBed.configureTestingModule({
       imports: [NgxRxdbModule.forRoot(TEST_DB_CONFIG_1)],
     });
     service = TestBed.inject(RXDB);
   });
 
-  afterEach(() => {
-    (service as any) = null;
+  beforeEach(async () => {
+    // service = TestBed.inject(RXDB);
+  });
+
+  afterEach(async () => {
+    await service.destroyDb();
   });
 
   describe(`:: init`, () => {
@@ -25,15 +36,16 @@ describe('NgxRxdbService', () => {
     });
 
     it('should destroy the database', async () => {
+      await service.initDb(TEST_DB_CONFIG_1);
       const spyRemove = jest.spyOn(service.db, 'remove');
-      const spyDestroy = jest.spyOn(service.db, 'destroy');
+      const spyDestroy = jest.spyOn(service.db, 'close');
       await service.destroyDb();
       expect(spyRemove).toHaveBeenCalled();
       expect(spyDestroy).toHaveBeenCalled();
       expect(service.db).toBeNull();
     });
 
-    xit('should throw an error if the database cannot be created', async () => {
+    it('should throw an error if the database cannot be created', async () => {
       const invalidConfig = { name: '', storage: null };
       let exception;
       try {
@@ -44,7 +56,7 @@ describe('NgxRxdbService', () => {
       expect(exception).toBeDefined();
     });
 
-    xit('should initialize multiple collections from config', async () => {
+    it('should initialize multiple collections from config', async () => {
       const dbConfig = {
         ...TEST_DB_CONFIG_1,
         options: {
@@ -67,7 +79,7 @@ describe('NgxRxdbService', () => {
       expect(service.collections['collection2']).toBeDefined();
     });
 
-    xit('should throw an error if the collections cannot be created', async () => {
+    it('should throw an error if the collections cannot be created', async () => {
       await service.initDb(TEST_DB_CONFIG_1);
       const invalidColConfigs = {
         collection1: {
@@ -82,7 +94,7 @@ describe('NgxRxdbService', () => {
       };
       let exception;
       try {
-        await service.initDb(invalidColConfigs as any);
+        await service.initCollections(invalidColConfigs as any);
       } catch (e) {
         exception = e;
       }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { RxCollectionCreatorExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import { Observable, OperatorFunction, defer, lastValueFrom, switchMap } from 'rxjs';
@@ -23,11 +22,16 @@ function isZone(obj: any): obj is ZoneLike {
  * Moves observable execution in and out of Angular zone.
  * @param zone
  */
-export function runInZone<T>(zone: ZoneLike): OperatorFunction<T, T> { // NOSONAR
-  if (!isZone(zone)) return source => source;
+export function runInZone<T>(zone: ZoneLike): OperatorFunction<T, T> {
+  // NOSONAR
+  if (!isZone(zone)) {
+    return source => source;
+  }
 
-  return source => { // NOSONAR
-    return new Observable(subscriber => { // NOSONAR
+  return source => {
+    // NOSONAR
+    return new Observable(subscriber => {
+      // NOSONAR
       return source.subscribe(
         (value: T) => zone.run(() => subscriber.next(value)),
         (e: any) => zone.run(() => subscriber.error(e)),
@@ -71,7 +75,9 @@ export function ensureCollection() {
     descriptor.value = async function (this: CollectionLike, ...args: any[]) {
       await lastValueFrom(this.initialized$).catch(() => {
         // eslint-disable-next-line prettier/prettier
-        throw new Error(`Collection "${this.config.name}" was not initialized. Please check RxDB errors.`);
+        throw new Error(
+          `Collection "${this.config.name}" was not initialized. Please check RxDB errors.`
+        );
       });
 
       return originalMethod.apply(this, args);

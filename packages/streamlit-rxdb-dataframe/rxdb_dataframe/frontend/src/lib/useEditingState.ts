@@ -41,7 +41,9 @@ export const useEditedState = (
         createdAt: new Date().toISOString(),
         last_modified: Date.now(),
       }));
-      if (!docs.length) return;
+      if (!docs.length) {
+        return;
+      }
       collectionService.upsertBulk(docs).catch(error => logger.log('upsertBulk', error));
     }
 
@@ -53,7 +55,9 @@ export const useEditedState = (
           ids.push(entity.id);
         }
       });
-      if (!ids.length) return;
+      if (!ids.length) {
+        return;
+      }
       collectionService.removeBulk(ids).catch(error => logger.log('removeBulk', error));
     }
 
@@ -66,7 +70,9 @@ export const useEditedState = (
           last_modified: Date.now(),
         };
       });
-      if (!docs.length) return;
+      if (!docs.length) {
+        return;
+      }
       collectionService.upsertBulk(docs).catch(error => logger.log('upsertBulk', error));
     }
   }, [editingState, entities, collectionService]);

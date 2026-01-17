@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/google-gemini/gemini-cli/refs/heads/main/schemas/settings.schema.json",
+  "context": {
+    "fileName": [
+      "AGENTS.md",
+      "GEMINI.md"
+    ],
+    "includeDirectories": [],
+    "fileFiltering": {
+      "respectGitIgnore": false
+    }
+  },
+  "advanced": {
+    "excludedEnvVars": [
+      "DEBUG",
+      "DEBUG_MODE",
+      "NODE_ENV"
+    ]
+  },
+  "mcpServers": {
+
+  }
+}

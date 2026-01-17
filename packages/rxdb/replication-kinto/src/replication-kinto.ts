@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+import type { RxCollectionExtended } from '@ngx-odm/rxdb/config';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import type {
   DocumentsWithCheckpoint,
@@ -54,7 +54,7 @@ import {
  * Depending on the context (latest first, readonly, etc.), there are several strategies to poll the server for changes.
  * @param options
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export function replicateKintoDB<RxDocType = any>(options: KintoReplicationOptions) {
   const {
     replicationIdentifier,
@@ -115,7 +115,9 @@ export function replicateKintoDB<RxDocType = any>(options: KintoReplicationOptio
   if (push) {
     _pushImplementation = {
       async handler(changes) {
-        const { last_modified: lwt } = await collection.getMetadata();
+        const { last_modified: lwt } = await (
+          collection as RxCollectionExtended
+        ).getMetadata();
         const {
           data: { last_modified },
         } = await kintoCollection.info();
@@ -140,9 +142,9 @@ export function replicateKintoDB<RxDocType = any>(options: KintoReplicationOptio
           const missing = results.skipped
             .filter(({ error }) => error.code == 404)
             .map(({ path }) => {
-              const doc = outgoing.find((d: RxDocType) => String(path).endsWith(d['id']));
+              const doc = outgoing.find((d: any) => String(path).endsWith(d['id']));
               if (doc) {
-                delete doc['last_modified'];
+                delete (doc as any)['last_modified'];
               }
               return doc;
             });
@@ -166,12 +168,10 @@ export function replicateKintoDB<RxDocType = any>(options: KintoReplicationOptio
         }
         if (results.published.length) {
           // Update local documents with the new published state.
-          return (
-            results.published
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .filter(({ data }: any) => !data.deleted)
-              .map(({ data }) => data)
-          );
+          return results.published
+
+            .filter(({ data }: any) => !data.deleted)
+            .map(({ data }) => data);
         }
         return results.conflicts.map(c => c.remote);
       },

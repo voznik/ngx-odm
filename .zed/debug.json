@@ -1,0 +1,28 @@
+// Project-local debug tasks
+//
+// For more documentation on how to configure debug tasks,
+// see: https://zed.dev/docs/debugger
+[
+  {
+    "label": "Jest: Debug Single Test File",
+    "adapter": "JavaScript",
+    "request": "launch",
+    "program": "${ZED_WORKTREE_ROOT}/node_modules/.bin/nx",
+    "args": [
+      "test",
+      "rxdb",
+      "--codeCoverage=false",
+      "--testFile=${ZED_FILE}",
+      "--watchAll",
+      "--detectOpenHandles",
+      "--colors"
+    ],
+    "env": {
+      "NODE_ENV": "development",
+      "DEBUG": "true",
+      "TEST": "true"
+    },
+    "cwd": "${ZED_WORKTREE_ROOT}",
+    "skipFiles": ["<node_internals>/**"]
+  }
+]

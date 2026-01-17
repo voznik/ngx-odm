@@ -1,0 +1,5 @@
+.claude/
+!.claude/settings.local.json
+.gemini/
+!.gemini/settings.json
+node_modules/

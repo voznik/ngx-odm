@@ -1,6 +1,6 @@
 # @ngx-odm/rxdb
 
-> Angular 14+ wrapper for **RxDB** - A realtime Database for the Web
+> Angular 17+ wrapper for **RxDB** - A realtime Database for the Web
 
 ## Demo
 
@@ -36,7 +36,7 @@ If you don't want to setup RxDB manually in your next Angular project - just imp
 
 ## Technologies
 
-| RxDB                                                                                                     | Angular 14+                                                                                   |
+| RxDB 16+                                                                                                 | Angular 17+                                                                                   |
 | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | [![RxDB](https://cdn.rawgit.com/pubkey/rxdb/ba7c9b80/docs/files/logo/logo_text.svg)](https://rxdb.info/) | [![Angular](https://angular.io/assets/images/logos/angular/angular.svg)](https://angular.io/) |
 

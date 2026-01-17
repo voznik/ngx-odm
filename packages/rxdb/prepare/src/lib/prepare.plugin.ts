@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import type {
   RxCollectionExtended as RxCollection,
   RxCollectionCreatorExtended,
@@ -65,7 +64,6 @@ export const prepareCollections = async (
     for (const name in colConfigs) {
       const config = colConfigs[name];
       if (!config.schema && !!config.options?.schemaUrl) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         config.schema = (await fetchSchema(config.options.schemaUrl))!;
       }
       colCreators[config.name] = config as RxCollectionCreator;
@@ -100,7 +98,7 @@ const prepareDbDump = async (
   for (const dc of dumpObj.collections) {
     const col = collections[dc.name];
     if (col) {
-      dc.schemaHash = col.schema['_hash'];
+      dc.schemaHash = await col.schema.hash;
     } else {
       throw new Error('no such collection as provided in dump');
     }
@@ -247,7 +245,6 @@ const afterCreateRxCollection = async ({
 
   return;
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async function removeAllDocs() {
     await col.find().update({ $set: { _deleted: true } });
     await col.cleanup();
@@ -285,7 +282,8 @@ export const RxDBPreparePlugin: RxPlugin = {
           id: id || this.name,
           databaseName: this.database.name,
           collectionName: data?.name || this.name,
-          storageName: this.storageInstance.originalStorageInstance['storage'].name,
+          storageName: (this.storageInstance.originalStorageInstance as any)['storage']
+            .name,
           last_modified: _meta?.lwt ? Math.floor(_meta?.lwt) : Date.now(),
           rev: _rev ? Number(_rev?.at(0)) : 1,
           isFirstTimeInstantiated,

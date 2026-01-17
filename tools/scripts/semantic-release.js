@@ -1,4 +1,4 @@
-const parser = require('git-log-parser'); // eslint-disable-line
+const parser = require('git-log-parser');
 
 // this is hack which allows to use semantic-release for monorepo
 // https://github.com/semantic-release/semantic-release/issues/193#issuecomment-578436666

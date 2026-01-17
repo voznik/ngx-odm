@@ -1,241 +1,87 @@
 {
   "migrations": [
     {
-      "cli": "nx",
-      "version": "17.0.0-beta.1",
-      "description": "Updates the default cache directory to .nx/cache",
-      "implementation": "./src/migrations/update-17-0-0/move-cache-directory",
-      "package": "nx",
-      "name": "17.0.0-move-cache-directory"
-    },
-    {
-      "cli": "nx",
-      "version": "17.0.0-beta.3",
-      "description": "Use minimal config for tasksRunnerOptions",
-      "implementation": "./src/migrations/update-17-0-0/use-minimal-config-for-tasks-runner-options",
-      "package": "nx",
-      "name": "17.0.0-use-minimal-config-for-tasks-runner-options"
-    },
-    {
-      "version": "17.0.0-rc.1",
-      "description": "Migration for v17.0.0-rc.1",
-      "implementation": "./src/migrations/update-17-0-0/rm-default-collection-npm-scope",
-      "package": "nx",
-      "name": "rm-default-collection-npm-scope"
-    },
-    {
-      "cli": "nx",
-      "version": "17.1.0-beta.5",
-      "requires": {
-        "@angular/core": ">=17.0.0"
-      },
-      "description": "Update the @angular/cli package version to ~17.0.0.",
-      "factory": "./src/migrations/update-17-1-0/update-angular-cli",
+      "version": "22.3.0-beta.0",
+      "requires": { "@angular/core": ">=21.0.0" },
+      "description": "Updates webpack-based SSR configuration to use preserve module format and bundler module resolution.",
+      "factory": "./src/migrations/update-22-3-0/update-ssr-webpack-config",
       "package": "@nx/angular",
-      "name": "update-angular-cli-version-17-0-0"
+      "name": "update-ssr-webpack-config-22-2-0"
     },
     {
-      "cli": "nx",
-      "version": "17.1.0-beta.5",
-      "requires": {
-        "@angular/core": ">=17.0.0"
-      },
-      "description": "Rename 'browserTarget' to 'buildTarget'.",
-      "factory": "./src/migrations/update-17-1-0/browser-target-to-build-target",
+      "version": "22.3.0-beta.0",
+      "requires": { "@angular/core": ">=21.0.0-rc.3" },
+      "description": "Update 'module' to 'preserve' and 'moduleResolution' to 'bundler' in TypeScript configurations for Angular projects.",
+      "factory": "./src/migrations/update-22-3-0/update-module-resolution",
       "package": "@nx/angular",
-      "name": "rename-browser-target-to-build-target"
+      "name": "update-module-resolution-22-2-0"
     },
     {
-      "cli": "nx",
-      "version": "17.1.0-beta.5",
-      "requires": {
-        "@angular/core": ">=17.0.0"
-      },
-      "description": "Replace usages of '@nguniversal/builders' with '@angular-devkit/build-angular'.",
-      "factory": "./src/migrations/update-17-1-0/replace-nguniversal-builders",
+      "version": "22.3.0-beta.0",
+      "requires": { "@angular/core": ">=21.0.0" },
+      "description": "Updates the 'lib' property in tsconfig files to use 'es2022' or a more modern version.",
+      "factory": "./src/migrations/update-22-3-0/update-typescript-lib",
       "package": "@nx/angular",
-      "name": "replace-nguniversal-builders"
+      "name": "update-typescript-lib-22-2-0"
     },
     {
-      "cli": "nx",
-      "version": "17.1.0-beta.5",
-      "requires": {
-        "@angular/core": ">=17.0.0"
-      },
-      "description": "Replace usages of '@nguniversal/' packages with '@angular/ssr'.",
-      "factory": "./src/migrations/update-17-1-0/replace-nguniversal-engines",
+      "version": "22.3.0-beta.0",
+      "requires": { "@angular/core": ">=21.0.0" },
+      "description": "Update 'vitest' unit test runner option to 'vitest-analog' in generator defaults.",
+      "factory": "./src/migrations/update-22-3-0/update-unit-test-runner-option",
       "package": "@nx/angular",
-      "name": "replace-nguniversal-engines"
+      "name": "update-unit-test-runner-option"
     },
     {
-      "cli": "nx",
-      "version": "17.1.0-beta.5",
-      "requires": {
-        "@angular/core": ">=17.0.0"
-      },
-      "description": "Replace the deep imports from 'zone.js/dist/zone' and 'zone.js/dist/zone-testing' with 'zone.js' and 'zone.js/testing'.",
-      "factory": "./src/migrations/update-17-1-0/update-zone-js-deep-import",
+      "version": "22.3.0-beta.3",
+      "requires": { "@angular/core": ">=21.0.0" },
+      "description": "Set 'isolatedModules' to 'true' in TypeScript test configurations for Angular projects.",
+      "factory": "./src/migrations/update-22-3-0/set-isolated-modules",
       "package": "@nx/angular",
-      "name": "update-zone-js-deep-import"
+      "name": "set-isolated-modules-22-3-0"
     },
     {
-      "cli": "nx",
-      "version": "17.2.0-beta.2",
-      "description": "Rename '@nx/angular:webpack-dev-server' executor to '@nx/angular:dev-server'",
-      "factory": "./src/migrations/update-17-2-0/rename-webpack-dev-server",
-      "package": "@nx/angular",
-      "name": "rename-webpack-dev-server-executor"
-    },
-    {
-      "version": "17.1.0-beta.2",
-      "description": "Move jest executor options to nx.json targetDefaults",
-      "implementation": "./src/migrations/update-17-1-0/move-options-to-target-defaults",
-      "package": "@nx/jest",
-      "name": "move-options-to-target-defaults"
-    },
-    {
-      "cli": "nx",
-      "version": "17-2-6-beta.1",
-      "description": "Rename workspace rules from @nx/workspace/name to @nx/workspace-name",
-      "implementation": "./src/migrations/update-17-2-6-rename-workspace-rules/rename-workspace-rules",
-      "package": "@nx/eslint-plugin",
-      "name": "update-17-2-6-rename-workspace-rules"
-    },
-    {
-      "cli": "nx",
-      "version": "16.8.2-beta.0",
-      "description": "Remove invalid options (strict, noInterop) for ES6 type modules.",
-      "factory": "./src/migrations/update-16-8-2/update-swcrc",
-      "package": "@nx/js",
-      "name": "16-8-2-update-swcrc"
-    },
-    {
-      "cli": "nx",
-      "version": "17.0.2",
-      "description": "Remove deprecated build options",
-      "implementation": "./src/migrations/update-17-0-0/remove-deprecated-build-options",
-      "package": "@nx/js",
-      "name": "update-17-0-0-remove-deprecated-build-options"
-    },
-    {
-      "version": "17.0.0-beta.7",
-      "description": "update-17-0-0-rename-to-eslint",
-      "implementation": "./src/migrations/update-17-0-0-rename-to-eslint/update-17-0-0-rename-to-eslint",
-      "package": "@nx/eslint",
-      "name": "update-17-0-0-rename-to-eslint"
-    },
-    {
-      "version": "17.1.0-beta.1",
-      "description": "Updates for @typescript-utils/utils v6.9.1+",
-      "implementation": "./src/migrations/update-17-1-0/update-typescript-eslint",
-      "package": "@nx/eslint",
-      "name": "update-typescript-eslint"
-    },
-    {
-      "version": "17.2.0-beta.0",
-      "description": "Simplify eslintFilePatterns",
-      "implementation": "./src/migrations/update-17-2-0/simplify-eslint-patterns",
-      "package": "@nx/eslint",
-      "name": "simplify-eslint-patterns"
-    },
-    {
-      "cli": "nx",
-      "version": "17-2-6-beta.1",
-      "description": "Rename workspace rules from @nx/workspace/name to @nx/workspace-name",
-      "implementation": "./src/migrations/update-17-2-6-rename-workspace-rules/rename-workspace-rules",
-      "package": "@nrwl/eslint-plugin-nx",
-      "name": "update-17-2-6-rename-workspace-rules"
-    },
-    {
-      "version": "17.1.0-beta.2",
-      "description": "Move jest executor options to nx.json targetDefaults",
-      "implementation": "./src/migrations/update-17-1-0/move-options-to-target-defaults",
-      "package": "@nrwl/jest",
-      "name": "move-options-to-target-defaults"
-    },
-    {
-      "cli": "nx",
-      "version": "17.1.0-beta.5",
-      "requires": {
-        "@angular/core": ">=17.0.0"
-      },
-      "description": "Update the @angular/cli package version to ~17.0.0.",
-      "factory": "./src/migrations/update-17-1-0/update-angular-cli",
-      "package": "@nrwl/angular",
-      "name": "update-angular-cli-version-17-0-0"
-    },
-    {
-      "cli": "nx",
-      "version": "17.1.0-beta.5",
-      "requires": {
-        "@angular/core": ">=17.0.0"
-      },
-      "description": "Rename 'browserTarget' to 'buildTarget'.",
-      "factory": "./src/migrations/update-17-1-0/browser-target-to-build-target",
-      "package": "@nrwl/angular",
-      "name": "rename-browser-target-to-build-target"
-    },
-    {
-      "cli": "nx",
-      "version": "17.1.0-beta.5",
-      "requires": {
-        "@angular/core": ">=17.0.0"
-      },
-      "description": "Replace usages of '@nguniversal/builders' with '@angular-devkit/build-angular'.",
-      "factory": "./src/migrations/update-17-1-0/replace-nguniversal-builders",
-      "package": "@nrwl/angular",
-      "name": "replace-nguniversal-builders"
-    },
-    {
-      "cli": "nx",
-      "version": "17.1.0-beta.5",
-      "requires": {
-        "@angular/core": ">=17.0.0"
-      },
-      "description": "Replace usages of '@nguniversal/' packages with '@angular/ssr'.",
-      "factory": "./src/migrations/update-17-1-0/replace-nguniversal-engines",
-      "package": "@nrwl/angular",
-      "name": "replace-nguniversal-engines"
-    },
-    {
-      "cli": "nx",
-      "version": "17.1.0-beta.5",
-      "requires": {
-        "@angular/core": ">=17.0.0"
-      },
-      "description": "Replace the deep imports from 'zone.js/dist/zone' and 'zone.js/dist/zone-testing' with 'zone.js' and 'zone.js/testing'.",
-      "factory": "./src/migrations/update-17-1-0/update-zone-js-deep-import",
-      "package": "@nrwl/angular",
-      "name": "update-zone-js-deep-import"
-    },
-    {
-      "cli": "nx",
-      "version": "17.2.0-beta.2",
-      "description": "Rename '@nx/angular:webpack-dev-server' executor to '@nx/angular:dev-server'",
-      "factory": "./src/migrations/update-17-2-0/rename-webpack-dev-server",
-      "package": "@nrwl/angular",
-      "name": "rename-webpack-dev-server-executor"
-    },
-    {
-      "version": "17.0.0",
-      "description": "Angular v17 introduces a new control flow syntax that uses the @ and } characters. This migration replaces the existing usages with their corresponding HTML entities.",
-      "factory": "./migrations/block-template-entities/bundle",
+      "version": "21.0.0",
+      "description": "Converts the entire application to block control flow syntax",
+      "factory": "./bundles/control-flow-migration.cjs#migrate",
       "package": "@angular/core",
-      "name": "block-template-entities"
+      "name": "control-flow-migration"
     },
     {
-      "version": "17.0.0",
-      "description": "CompilerOption.useJit and CompilerOption.missingTranslation are unused under Ivy. This migration removes their usage",
-      "factory": "./migrations/compiler-options/bundle",
+      "version": "21.0.0",
+      "description": "Replaces usages of the deprecated Router.getCurrentNavigation method with the Router.currentNavigation signal",
+      "factory": "./bundles/router-current-navigation.cjs#migrate",
+      "optional": true,
       "package": "@angular/core",
-      "name": "migration-v17-compiler-options"
+      "name": "router-current-navigation"
     },
     {
-      "version": "17.0.0",
-      "description": "Updates `TransferState`, `makeStateKey`, `StateKey` imports from `@angular/platform-browser` to `@angular/core`.",
-      "factory": "./migrations/transfer-state/bundle",
+      "version": "21.0.0",
+      "description": "Ensures that the Router.lastSuccessfulNavigation signal is now invoked",
+      "factory": "./bundles/router-last-successful-navigation.cjs#migrate",
       "package": "@angular/core",
-      "name": "migration-transfer-state"
+      "name": "router-last-successful-navigation"
+    },
+    {
+      "version": "21.0.0",
+      "description": "Moves imports of `ApplicationConfig` from `@angular/platform-browser` to `@angular/core`",
+      "factory": "./bundles/application-config-core.cjs#migrate",
+      "package": "@angular/core",
+      "name": "application-config-core"
+    },
+    {
+      "version": "21.0.0",
+      "description": "Adds `BootstrapContext` to `bootstrapApplication` calls in `main.server.ts` to support server rendering.",
+      "factory": "./bundles/add-bootstrap-context-to-server-main.cjs#migrate",
+      "package": "@angular/core",
+      "name": "add-bootstrap-context-to-server-main"
+    },
+    {
+      "version": "21.0.0",
+      "description": "Migrates deprecated bootstrap options to providers.",
+      "factory": "./bundles/bootstrap-options-migration.cjs#migrate",
+      "package": "@angular/core",
+      "name": "bootstrap-options-migration"
     }
   ]
 }

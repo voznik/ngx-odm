@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-types */
 import type {
   RxCollectionExtended as RxCollection,
   RxCollectionCreatorExtended,
@@ -81,18 +80,18 @@ export class RxDBCollectionService<T extends Entity = { id: EntityId }> {
   constructor(
     public readonly config: RxCollectionCreatorExtended,
     protected readonly dbService: RxDBService,
-    protected readonly ngZone: ZoneLike = {} as any, // eslint-disable-line
+    protected readonly ngZone: ZoneLike = {} as any,
     protected readonly currentUrl$: Observable<string> = of(''),
-    protected readonly updateQueryParamsFn: any = noop // eslint-disable-line
+    protected readonly updateQueryParamsFn: any = noop
   ) {
     this.init(config);
   }
 
   /**
-   * Destroys the collection's object instance. This is to free up memory and stop all observers and replications.
+   * Closes the collection's object instance. This is to free up memory and stop all observers and replications.
    */
-  destroy(): void {
-    this.collection?.destroy();
+  close(): void {
+    this.collection?.close();
   }
 
   /**
@@ -327,7 +326,11 @@ export class RxDBCollectionService<T extends Entity = { id: EntityId }> {
    * @param data
    */
   @ensureCollection()
-  async updateBulk(query: MangoQuery<T>, data: Partial<T>): Promise<RxDocument<T, {}>[]> {
+  async updateBulk(
+    query: MangoQuery<T>,
+    data: Partial<T>
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  ): Promise<RxDocument<T, {}>[]> {
     return this.collection.find(query).update({ $set: data });
   }
 
@@ -450,14 +453,13 @@ export class RxDBCollectionService<T extends Entity = { id: EntityId }> {
     parralel = false
   ): Promise<void> {
     // Type 'RxCollectionHookNoInstanceCallback<T, {}>' is not assignable to type 'RxCollectionHookCallback<T, {}>'.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     this.collection[hook](handler as any, parralel);
   }
 
   // ---------------------------------------------------------------------------
   // Local Documents wrappers @see https://rxdb.info/rx-local-document.html
   // ---------------------------------------------------------------------------
-  /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-constraint */
 
   async getLocal<L extends Record<string, any>>(id: string): Promise<L | null>;
   async getLocal<L extends Record<string, any>, K = keyof L>(
@@ -473,7 +475,7 @@ export class RxDBCollectionService<T extends Entity = { id: EntityId }> {
     if (!doc) {
       return null;
     }
-    return key ? doc?.get(key as string) : doc?.toJSON().data;
+    return key ? doc?.get(key as string) : (doc?.toJSON().data as any);
   }
 
   getLocal$<L extends Record<string, any>, K = keyof L>(
@@ -548,7 +550,6 @@ export class RxDBCollectionService<T extends Entity = { id: EntityId }> {
     const doc: RxLocalDocument<unknown> | null = await this.collection.getLocal(id);
     await doc?.remove();
   }
-  /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-constraint */
 
   private async init(config: RxCollectionCreatorExtended) {
     const { name, options } = config;

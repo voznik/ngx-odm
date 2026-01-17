@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/no-non-null-assertion */
 import { getMockRxCollection } from '@ngx-odm/rxdb/testing';
 import { RxCollection, RxCollectionCreator, RxQuery } from 'rxdb';
 import { RxDBPreparePlugin } from './prepare.plugin';
@@ -10,7 +9,7 @@ describe('RxDBPreparePlugin', () => {
     let collectionCount: RxQuery;
     let createRxCollectionAfter: any; // RxPluginHooks['after']
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       collection = await getMockRxCollection();
       collectionCount = collection.count();
       creator = { options: {} } as RxCollectionCreator;
