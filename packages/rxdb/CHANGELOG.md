@@ -2,8 +2,7 @@
 
 This file was generated using [@jscutlery/semver](https://github.com/jscutlery/semver).
 
-## <small>6.0.1 (2024-03-21)</small>
-
+# [7.0.0-dev.0](https://github.com/voznik/ngx-odm/compare/v6.0.1...v7.0.0-dev.0) (2026-01-17)
 
 
 
