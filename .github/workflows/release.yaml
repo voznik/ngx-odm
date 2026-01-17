@@ -33,8 +33,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # persist-credentials: false
-          token: ${{secrets.PA_TOKEN}}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       # Configure Git
       - name: Git configuration
@@ -68,7 +67,7 @@ jobs:
           # echo "RELEASE_TAG=latest" >> $GITHUB_ENV
           npx nx run rxdb:version --releaseAs=$RELEASE_TYPE
         env:
-          GITHUB_TOKEN: ${{ secrets.PA_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TYPE: ${{ github.event.inputs.release-type }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -83,7 +82,7 @@ jobs:
           # echo "RELEASE_TAG=dev" >> $GITHUB_ENV
           npx nx run rxdb:version --releaseAs=$RELEASE_TYPE --preid=dev
         env:
-          GITHUB_TOKEN: ${{ secrets.PA_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TYPE: ${{ github.event.inputs.release-type }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
