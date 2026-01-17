@@ -1,18 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" data-beasties-container>
   <head>
-    <meta charset="utf-8"/>
+    <meta charset="utf-8">
     <title>Demo</title>
-    <base href="https://voznik.github.io/ngx-odm/"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+    <base href="/ngx-odm/">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <style>
       #bottom {
         position: absolute;
         bottom: 1rem;
-        right: 1rem;
+        right: 0;
+        width: 100vw;
         display: flex;
-        justify-content: end;
+        justify-content: space-between;
         font-size: 0.75rem;
         color: #4d4d4d;
       }
@@ -20,21 +21,71 @@
         padding: 0 2px;
       }
     </style>
-  <link rel="stylesheet" href="https://voznik.github.io/ngx-odm/styles.0f0fdb2067483971ff00.css"></head>
+    <script>
+      document.addEventListener('DOMContentLoaded', event => {
+        const selectStorage = document.getElementById('storage');
+        const selectReplication = document.getElementById('replication');
+        const useQueryParams = document.getElementById('queryParams');
+        selectStorage.value = localStorage['_ngx_rxdb_storage'] =
+          localStorage['_ngx_rxdb_storage'] ?? 'dexie';
+        selectReplication.value = localStorage['_ngx_rxdb_replication'] =
+          localStorage['_ngx_rxdb_replication'] ?? '';
+        useQueryParams.checked = localStorage['_ngx_rxdb_queryparams'] === 'true';
+        selectStorage.addEventListener('change', function () {
+          localStorage.setItem('_ngx_rxdb_storage', this.value);
+          window.location.reload();
+        });
+        selectReplication.addEventListener('change', function () {
+          localStorage.setItem('_ngx_rxdb_replication', this.value);
+          window.location.reload();
+        });
+        useQueryParams.addEventListener('change', function () {
+          localStorage.setItem('_ngx_rxdb_queryparams', this.checked);
+          window.history.replaceState({}, '', window.location.pathname);
+          window.location.reload();
+        });
+      });
+    </script>
+  <style>html,body{margin:0;padding:0}body{font:14px Helvetica Neue,Helvetica,Arial,sans-serif;line-height:1.4em;background:#f5f5f5;color:#111;min-width:230px;max-width:550px;margin:0 auto;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-weight:300}</style><link rel="stylesheet" href="styles.3ae18292be9b8ef4.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="styles.3ae18292be9b8ef4.css"></noscript></head>
   <body>
     <demo-root></demo-root>
     <div id="bottom">
-      <!-- Place this tag in your head or just before your close body tag. -->
-      <script async="" defer="" src="https://buttons.github.io/buttons.js"></script>
-      <a href="">
-        <img alt="GitHub issues" src="https://img.shields.io/github/package-json/v/voznik/ngx-odm"/>
-      </a>
-      <a href="">
-        <img alt="GitHub issues" src="https://img.shields.io/github/issues/voznik/ngx-odm"/>
-      </a>
-      <a href="documentation/index.html">
-        <img alt="Documentation" src="https://img.shields.io/badge/documentation-view-lightgrey"/>
-      </a>
+      <div>
+        <select name="storage" id="storage">
+          <option value="dexie" selected>dexie</option>
+          <option value="memory">memory</option>
+        </select>
+        &nbsp;
+        <select name="replication" id="replication">
+          <option value selected>none</option>
+          <option value="couchdb">couchdb</option>
+          <option value="kinto">kinto</option>
+        </select>
+        <input type="checkbox" name="queryParams" value="true" id="queryParams">
+        <label for="queryParams">use "query-params-plugin"</label>
+      </div>
+      <div>
+        <!-- Place this tag in your head or just before your close body tag. -->
+        <script async defer src="https://buttons.github.io/buttons.js"></script>
+        <a href>
+          <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/voznik/ngx-odm?style=social">
+        </a>
+        <a href>
+          <img alt="Quality Gate Status" src="https://sonarcloud.io/api/project_badges/measure?project=voznik_ngx-odm&amp;metric=alert_status">
+        </a>
+        <a href>
+          <img alt="Coveralls Coverage" src="https://img.shields.io/coverallsCoverage/github/voznik/ngx-odm">
+        </a>
+        <a href>
+          <img alt="npm (scoped)" src="https://img.shields.io/npm/v/%40ngx-odm/rxdb">
+        </a>
+        <a href>
+          <img alt="GitHub issues" src="https://img.shields.io/github/issues/voznik/ngx-odm">
+        </a>
+        <a href="documentation/index.html">
+          <img alt="Documentation" src="https://img.shields.io/badge/documentation-view-lightgrey">
+        </a>
+      </div>
     </div>
-  <script src="https://voznik.github.io/ngx-odm/runtime-es2015.38e5594f2db53049c8fa.js" type="module"></script><script src="https://voznik.github.io/ngx-odm/runtime-es5.38e5594f2db53049c8fa.js" nomodule defer></script><script src="https://voznik.github.io/ngx-odm/polyfills-es5.72dcb6f683623904a4de.js" nomodule defer></script><script src="https://voznik.github.io/ngx-odm/polyfills-es2015.c01d434c78e4d6d182e5.js" type="module"></script><script src="https://voznik.github.io/ngx-odm/vendor-es2015.d1b23a1d943689ba417d.js" type="module"></script><script src="https://voznik.github.io/ngx-odm/vendor-es5.d1b23a1d943689ba417d.js" nomodule defer></script><script src="https://voznik.github.io/ngx-odm/main-es2015.28b9adb18d9ab8aec000.js" type="module"></script><script src="https://voznik.github.io/ngx-odm/main-es5.28b9adb18d9ab8aec000.js" nomodule defer></script></body>
+  <script src="runtime.bcd17270afcb9f94.js" type="module"></script><script src="polyfills.af244f45e28303cd.js" type="module"></script><script src="vendor.bbcdb0d38ec4aa1b.js" type="module"></script><script src="main.497492bd6321f796.js" type="module"></script></body>
 </html>

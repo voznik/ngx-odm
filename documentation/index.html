@@ -3,18 +3,85 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="x-ua-compatible" content="ie=edge">
-        <title>ngx-odm</title>
+        <title>@ngx-odm documentation</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
-	      <link rel="stylesheet" href="./styles/style.css">
+	   <link rel="stylesheet" href="./styles/style.css">
+        <link rel="stylesheet" href="./styles/dark.css">
+        <link rel="stylesheet" href="./styles/readthedocs.css">
     </head>
     <body>
+          <script>
+               // Blocking script to avoid flickering dark mode
+               // Dark mode toggle button
+               var useDark = window.matchMedia('(prefers-color-scheme: dark)');
+               var darkModeState = useDark.matches;
+               var $darkModeToggleSwitchers = document.querySelectorAll('.dark-mode-switch input');
+               var $darkModeToggles = document.querySelectorAll('.dark-mode-switch');
+               var darkModeStateLocal = localStorage.getItem('compodoc_darkmode-state');
 
-        <div class="navbar navbar-default navbar-fixed-top visible-xs">
-            <a href="./" class="navbar-brand">ngx-odm</a>
-            <button type="button" class="btn btn-default btn-menu ion-ios-menu" id="btn-menu"></button>
+               function checkToggle(check) {
+                    for (var i = 0; i < $darkModeToggleSwitchers.length; i++) {
+                         $darkModeToggleSwitchers[i].checked = check;
+                    }
+               }
+
+               function toggleDarkMode(state) {
+                    if (window.localStorage) {
+                         localStorage.setItem('compodoc_darkmode-state', state);
+                    }
+
+                    checkToggle(state);
+
+                    const hasClass = document.body.classList.contains('dark');
+
+                    if (state) {
+                         for (var i = 0; i < $darkModeToggles.length; i++) {
+                              $darkModeToggles[i].classList.add('dark');
+                         }
+                         if (!hasClass) {
+                              document.body.classList.add('dark');
+                         }
+                    } else {
+                         for (var i = 0; i < $darkModeToggles.length; i++) {
+                              $darkModeToggles[i].classList.remove('dark');
+                         }
+                         if (hasClass) {
+                              document.body.classList.remove('dark');
+                         }
+                    }
+               }
+
+               useDark.addEventListener('change', function (evt) {
+                    toggleDarkMode(evt.matches);
+               });
+               if (darkModeStateLocal) {
+                    darkModeState = darkModeStateLocal === 'true';
+               }
+               toggleDarkMode(darkModeState);
+          </script>
+          <script>
+              // --- Iframe navigation tracking for Template Playground ---
+              function sendCurrentUrlToParent() {
+                  if (window.parent && window.parent !== window) {
+                      window.parent.postMessage({
+                          type: 'compodoc-iframe-navigate',
+                          url: window.location.pathname + window.location.hash
+                      }, '*');
+                  }
+              }
+              window.addEventListener('hashchange', sendCurrentUrlToParent, false);
+              window.addEventListener('popstate', sendCurrentUrlToParent, false);
+              window.addEventListener('DOMContentLoaded', sendCurrentUrlToParent, false);
+          </script>
+
+        <div class="navbar navbar-default navbar-fixed-top d-md-none p-0">
+               <div class="d-flex">
+                    <a href="./" class="navbar-brand">@ngx-odm documentation</a>
+                    <button type="button" class="btn btn-default btn-menu ion-ios-menu" id="btn-menu"></button>
+               </div>
         </div>
 
         <div class="xs-menu menu" id="mobile-menu">
@@ -23,52 +90,57 @@
 
         <div class="container-fluid main">
            <div class="row main">
-               <div class="hidden-xs menu">
+               <div class="d-none d-md-block menu">
                    <compodoc-menu mode="normal"></compodoc-menu>
                </div>
                <!-- START CONTENT -->
-               <div class="content getting-started">
+               <div class="content readme">
                    <div class="content-data">
 
-<h1 id="ngx-odmrxdb">@ngx-odm/rxdb</h1>
+
+<h1>@ngx-odm/rxdb</h1>
 <blockquote>
-<p>Angular 10+ wrapper for <strong>RxDB</strong> - A realtime Database for the Web</p>
+<p>Angular 14+ wrapper for <strong>RxDB</strong> - A realtime Database for the Web</p>
 </blockquote>
-<h2 id="demo">Demo</h2>
-<p><a href="https://voznik.github.io/ngx-odm/">demo</a></p>
-<h2 id="table-of-contents">Table of contents</h2>
+<h2>Demo</h2>
+<p><img src="examples/screencast.gif" alt="Example Screencast" class="img-responsive"></p>
+<p><a href="https://voznik.github.io/ngx-odm/">demo</a> - based on TodoMVC</p>
+<h2>Table of contents</h2>
 <ul>
 <li><a href="#ngx-odmrxdb">@ngx-odm/rxdb</a><ul>
 <li><a href="#demo">Demo</a></li>
 <li><a href="#table-of-contents">Table of contents</a></li>
 <li><a href="#general-info">General info</a></li>
-<li><a href="#screenshots">Screenshots</a></li>
 <li><a href="#technologies">Technologies</a></li>
 <li><a href="#install">Install</a></li>
-<li><a href="#usage">Usage</a><ul>
+<li><a href="#usage-ngmodule">Usage (NgModule)</a><ul>
 <li><a href="#in-your-appmodule">In your <code>AppModule</code></a></li>
 <li><a href="#in-your-featuremodule">In your <code>FeatureModule</code></a></li>
 <li><a href="#in-your-featureservice">In your <code>FeatureService</code></a></li>
-<li><a href="#aot">AOT</a></li>
+</ul>
+</li>
+<li><a href="#usage-standalone">Usage (Standalone)</a><ul>
+<li><a href="#in-your-maints">In your <code>main.ts</code></a></li>
+<li><a href="#in-your-component">In your <code>Component</code></a></li>
+<li><a href="#using-sginals--signalstore-from-ngrxsignals">Using <code>sginals</code> &amp; <code>signalStore</code> from <code>@ngrx/signals</code></a></li>
 </ul>
 </li>
 <li><a href="#features">Features</a></li>
 <li><a href="#status">Status</a></li>
 <li><a href="#inspiration">Inspiration</a></li>
+<li><a href="#notes">Notes</a></li>
 <li><a href="#contact">Contact</a></li>
 </ul>
 </li>
 </ul>
-<h2 id="general-info">General info</h2>
-<p>If you don&#39;t want to setup RxDB manually in your next Angular project - just import <code>NgxRxdbModule</code></p>
-<h2 id="screenshots">Screenshots</h2>
-<p><img src="./apps/demo/src/assets/images/screenshot.png" alt="Example screenshot" class="img-responsive"></p>
-<h2 id="technologies">Technologies</h2>
+<h2>General info</h2>
+<p>If you don&#39;t want to setup RxDB manually in your next Angular project - just import <code>NgxRxdbModule</code> or go with <code>provideRxDatabase</code> and <code>provideRxCollection</code> if standalone component is your choice.</p>
+<h2>Technologies</h2>
 <table class="table table-bordered compodoc-table">
 <thead>
 <tr>
-<th>RxDB</th>
-<th>Angular 10+</th>
+<th>RxDB 16+</th>
+<th>Angular 17+</th>
 </tr>
 </thead>
 <tbody>
@@ -78,47 +150,59 @@
 </tr>
 </tbody>
 </table>
-<h2 id="install">Install</h2>
-<p>Describe how to install / setup your local environement / add link to demo version.</p>
-<h2 id="usage">Usage</h2>
-<h3 id="in-your-appmodule">In your <code>AppModule</code></h3>
-<div><pre class="line-numbers"><code class="language-typescript">&#64;NgModule({
+<h2>Install</h2>
+<p><code>npm install @ngx-odm/rxdb</code></p>
+<h2>Usage (NgModule)</h2>
+<h3>In your <code>AppModule</code></h3>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-typescript">import { NgxRxdbModule } from &#39;&#64;ngx-odm/rxdb&#39;;
+import { getRxDatabaseCreator } from &#39;&#64;ngx-odm/rxdb/config&#39;;
+
+&#64;NgModule({
   imports: [
     // ... other imports
-    // ...
-    NgxRxdbModule.forRoot({
-      // optional, NgxRxdbConfig extends RxDatabaseCreator, will be merged with default config
-      name: &#39;ngx&#39;,                        // &lt;- name (required, &#39;ngx&#39;)
-      adapter: &#39;idb&#39;,                     // &lt;- storage-adapter (required, default: &#39;idb&#39;)
-      password: &#39;123456789&#39;,              // &lt;- password (optional)
-      multiInstance: true,                // &lt;- multiInstance (optional, default: true)
-      queryChangeDetection: false,        // &lt;- queryChangeDetection (optional, default: false)
-      options: {                          // NgxRxdb options (optional)
-        schemas: [ ...CollectionConfigs], // array of NgxRxdbCollectionConfig (optional)
-        dumpPath: &#39;assets/dump.json&#39;      // path to datbase dump file (optional)
-      }
-    }),
+    NgxRxdbModule.forRoot(
+      getRxDatabaseCreator({
+        name: &#39;demo&#39;, // &lt;- name (required, &#39;ngx&#39;)
+        storage: getRxStorageDexie(), // &lt;- storage (not required, &#39;dexie&#39;)
+        localDocuments: true,
+        multiInstance: true, // &lt;- multiInstance (optional, default: true)
+        ignoreDuplicate: false,
+        options: {
+          plugins: [
+            // will be loaded by together with core plugins
+            RxDBDevModePlugin, // &lt;- add only for development
+            RxDBAttachmentsPlugin,
+            RxDBLeaderElectionPlugin,
+          ],
+          storageType: &#39;dexie|memory&#39;, // &lt;- storageType (optional, use if you want defaults provided automatically)
+          dumpPath: &#39;assets/dump.json&#39;, // path to datbase dump file (optional)
+        },
+      })
+    ),
   ],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
-export class AppModule { }</code></pre></div><h3 id="in-your-featuremodule">In your <code>FeatureModule</code></h3>
+export class AppModule {}</code></pre></div><h3>In your <code>FeatureModule</code></h3>
 <blockquote>
 <p>Schemas define how your data looks. Which field should be used as primary, which fields should be used as indexes and what should be encrypted. The schema also validates that every inserted document of your collections conforms to the schema. Every collection has its own schema. With RxDB, schemas are defined with the jsonschema-standard which you might know from other projects.
 <a href="https://rxdb.info/rx-schema.html">https://rxdb.info/rx-schema.html</a></p>
 </blockquote>
-<div><pre class="line-numbers"><code class="language-typescript">// create or import your schema
+<b>Example :</b><div><pre class="line-numbers"><code class="language-typescript">import type { RxCollectionCreatorExtended } from &#39;&#64;ngx-odm/rxdb/config&#39;;
+// create or import your schema
 const todoSchema: RxSchema = require(&#39;../../../assets/data/todo.schema.json&#39;);
 // create config
-// NgxRxdbCollectionConfig extends RxCollectionCreator
-const todoCollectionConfig: NgxRxdbCollectionConfig = {
-  name: &#39;todo&#39;,                           // &lt;- name (required)
-  schema: todoSchema,                     // &lt;- name (required)
-  statics: {},                            // &lt;- collection methods (optional)
-  methods: {},                            // &lt;- instance-methods methods (optional)
+const todoCollectionConfig: RxCollectionCreatorExtended = {
+  name: &#39;todo&#39;, // &lt;- name (required)
+  schema: todoSchema, // &lt;- schema (not required, see below)
+  localDocuments: true,
   options: {
-    initialDocs: [] // docs to be imported into empty collection (optional)
-  }
+    initialDocs: [], // docs to be imported into empty collection (optional)
+    schemaUrl: &#39;assets/data/todo.schema.json&#39;, // load schema from remote url (optional)
+    replicationStateFactory: collection =&gt; {
+      // provide replication state (optional)
+    },
+  },
 };
 
 &#64;NgModule({
@@ -126,74 +210,168 @@ const todoCollectionConfig: NgxRxdbCollectionConfig = {
     // ... other imports
     NgxRxdbModule.forFeature(todoCollectionConfig),
   ],
-  // declarations
-  // providers
 })
-export class TodosModule {}</code></pre></div><h3 id="in-your-featureservice">In your <code>FeatureService</code></h3>
-<div><pre class="line-numbers"><code class="language-typescript">&#64;Injectable()
-export class TodosService {
-  // ...
-  filter$ = new BehaviorSubject&lt;TodosFilter&gt;(&#39;ALL&#39;);
-  constructor(private collectionService: NgxRxdbCollectionService&lt;Todo&gt;) {}
-  // get documents from collection as observable using `RxQuery` mango-queries
-  selectTodos(): Observable&lt;Todo[]&gt; {
-    return this.filter$.pipe(
-      switchMap(filterValue =&gt; {
-        const queryObj = {
-          selector: {
-            createdAt: {
-              $gt: null,
-            },
-            completed: filterValue === &#39;COMPLETED&#39;,
-          },
-          sort: [{ createdAt: &#39;desc&#39; } as any],
-        };
-        return this.collectionService.docs(queryObj);
-      })
-    );
+export class TodosModule {
+  constructor(
+    &#64;Inject(RXDB_COLLECTION) private collectionService: RxDBCollectionService&lt;Todo&gt;
+  ) {
+    this.collectionService.sync(); // INFO: collection is ready
   }
+}</code></pre></div><h3>In your <code>FeatureService</code></h3>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-typescript">import { RXDB_COLLECTION } from &#39;&#64;ngx-odm/rxdb&#39;;
+import { RxDBCollectionService } from &#39;&#64;ngx-odm/rxdb/collection&#39;;
+
+&#64;Injectable()
+export class TodosService {
+  private collectionService: RxDBCollectionService&lt;Todo&gt; =
+    inject&lt;RxDBCollectionService&lt;Todo&gt;&gt;(RXDB_COLLECTION);
+  // store &amp; get filter as property of a `local` document
+  filter$ = this.collectionService
+    .getLocal(&#39;local&#39;, &#39;filterValue&#39;)
+    .pipe(startWith(&#39;ALL&#39;), distinctUntilChanged());
+  // get count of documents in collection as observable
+  count$ = this.collectionService.count();
+
+  // get documents from collection as observable
+  // optionally using `RxQuery` mango-queries
+  todos$: Observable&lt;Todo[]&gt; = this.collectionService.docs();
 
   // add new document
   add(name: string): void {
     const payload: Todo = { guid: uuid(), name, done: false, dateCreated: Date.now() };
-    this.collectionService.insert(payload).subscribe(doc =&gt; console.log(doc));
+    this.collectionService.insert(payload);
   }
 
-  // update prop od existing document
+  // update property of single document
   toggle(guid: string, done: boolean): void {
-    this.collectionService.update(guid, { done }).subscribe(doc =&gt; console.log(doc));
+    this.collectionService.set(guid, { done });
   }
 
-  // use `pouchdb.bulkDocs` to delete all dcouments by qeury
-  removeDoneTodos(): void {
-    const rulesObject = { done: { $eq: true } };
-    this.collectionService.removeBulkBy(rulesObject).subscribe(res =&gt; this.changeFilter(&#39;ALL&#39;));
+  // update many documents with partial data by query
+  toggleAllTodos(completed: boolean) {
+    this.collectionService.updateBulk(
+      { selector: { completed: { $eq: !completed } } },
+      { completed }
+    );
+  }
+
+  // remove many dcouments by qeury
+  removeCompletedTodos(): void {
+    this.collectionService.removeBulk({ selector: { completed: true } });
   }
   // ...
-}</code></pre></div><h3 id="aot">AOT</h3>
-<p>ATM, set <strong>&quot;buildOptimizer&quot;: false</strong> in your <code>angular.json</code> <em>production</em> configuration</p>
-<h2 id="features">Features</h2>
-<p>By using this module you can</p>
+}</code></pre></div><h2>Usage (Standalone)</h2>
+<h3>In your <code>main.ts</code></h3>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-typescript">import { provideRxDatabase } from &#39;&#64;ngx-odm/rxdb&#39;;
+import { getRxDatabaseCreator } from &#39;&#64;ngx-odm/rxdb/config&#39;;
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    // ... other providers
+    provideRxDatabase(
+      getRxDatabaseCreator({
+        name: &#39;demo&#39;,
+        localDocuments: true,
+        multiInstance: true,
+        ignoreDuplicate: false,
+        storage: getRxStorageDexie(),
+        plugins: [
+          // will be loaded by together with core plugins
+          RxDBDevModePlugin, // &lt;- add only for development
+          RxDBAttachmentsPlugin,
+          RxDBLeaderElectionPlugin,
+        ],
+      })
+    ),
+  ],
+};
+
+bootstrapApplication(AppComponent, appConfig).catch(err =&gt; console.error(err));</code></pre></div><h3>In your <code>Component</code></h3>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-typescript">import { provideRxCollection } from &#39;&#64;ngx-odm/rxdb&#39;;
+
+&#64;Component({
+  standalone: true,
+  // ...
+  providers: [provideRxCollection(config)],
+})
+export class StandaloneComponent {
+  readonly todoCollection = inject(NgxRxdbCollectionService&lt;Todo&gt;);
+}</code></pre></div><h3>Using <code>sginals</code> &amp; <code>signalStore</code> from <code>@ngrx/signals</code></h3>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-typescript">import { signalStore } from &#39;&#64;ngrx/signals&#39;;
+import { withEntities } from &#39;&#64;ngrx/signals/entities&#39;;
+import { withCollectionService } from &#39;&#64;ngx-odm/rxdb/signals&#39;;
+import { withDevtools } from &#39;&#64;angular-architects/ngrx-toolkit&#39;;
+
+export const TodoStore = signalStore(
+  { providedIn: &#39;root&#39; },
+  withDevtools(&#39;todo&#39;),
+  withEntities&lt;Todo&gt;(),
+  // INFO: an instance of RxCollection will be provided by this
+  withCollectionService&lt;Todo, TodosFilter, RxCollectionCreatorExtended&gt;({
+    filter: &#39;ALL&#39; as TodosFilter,
+    collectionConfig: TodosCollectionConfig,
+  }),
+  ...
+);
+
+&#64;Component({
+  standalone: true,
+  // ...
+  providers: [TodoStore],
+})
+export class StandaloneComponent {
+  readonly todoStore = inject(TodoStore);
+
+  constructor() {
+    effect(() =&gt; {
+      const { filter, entities } = this.todoStore;
+    });
+  }
+}</code></pre></div><h2>Features</h2>
+<p>By using this module you can simplify your work with RxDB in Angular application:</p>
 <ul>
-<li>Automatically initialize db with settings, optionally provide db dumb to pre-fill with collections &amp; documents</li>
-<li>Automatically initialize RxCollection for each <em>lazy-loaded Feature module</em> with config</li>
-<li>Work straight with <code>db.collection</code> or via <em>NgxRxdbCollectionService</em> wrapper with some helper methods</li>
+<li>Automatically initialize db with settings<ul>
+<li>optionally provide db dumb to pre-fill collections</li>
+<li>optionally provide array of initial documents to pre-fill collection</li>
+<li>optionally provide remote location for schema and fetch it automatically before create collection (e.g. to maintain single source of truth for schema)</li>
+<li>optionally provide syncronization with remote db (CouchDB, Kinto etc.) as DB options</li>
 </ul>
-<p>To-do list:</p>
-<ul>
-<li>Enable sync</li>
-<li>...</li>
+</li>
+<li>Automatically initialize RxCollection for each <em>lazy-loaded Feature module / standalone component</em> with config</li>
+<li>Work with documents via <em>NgxRxdbCollectionService</em> with unified methods instead of using <em>RxCollection</em> directly (though you still have access to <em>RxCollection</em> and <em>RxDatabase</em> instance)<ul>
+<li>simple methods to work database &amp; documents (with queries)</li>
+<li>simple methods to work with local documents</li>
+<li>simple methods to work with attachments</li>
+<li>simple replication sync initialization</li>
 </ul>
-<h2 id="status">Status</h2>
+</li>
+<li>Work with signals and entities with <code>@ngrx/signals</code> and <code>@ngrx/entity</code> (optionally <em>zoneless</em>) (see <a href="examples/standalone/src/app/todos/todos.store.ts">example</a>)</li>
+<li>Persist collection query (<a href="https://github.com/cloudant/mango">mango-query-syntax</a>) in URL with new plugin <code>query-params-plugin</code> (in demo, set localStorage <code>_ngx_rxdb_queryparams</code> )<ul>
+<li>provide Observable of current URL (automatically for Angular)</li>
+<li>simple methods to set or patch filter, sort, limit, skip</li>
+</ul>
+</li>
+</ul>
+<!-- ## Diagrams
+
+![NgxRxdbModule Initialization UML](examples/uml.NgxRxdbModule.png)
+NgxRxdbModule Initialization UML
+
+![NgxRxdbService Sequence UML](examples/uml.NgxRxdbService.png)
+NgxRxdbModule Initialization UML -->
+
+<h2>Status</h2>
 <p>Project is: <em>in progress</em></p>
-<h2 id="inspiration">Inspiration</h2>
+<h2>Inspiration</h2>
 <p>Project inspired by</p>
 <ul>
 <li><a href="https://github.com/pubkey/rxdb/blob/master/examples/angular2/README.md#rxdb-angular2-example">rxdb-angular2-example</a></li>
 <li><a href="https://tomastrajan.github.io/angular-ngrx-material-starter#/examples/todos">Angular NgRx Material Starter</a></li>
 <li><em>The Angular Library Series</em> from <a href="https://blog.angularindepth.com/">Angular In Depth</a></li>
+<li><a href="https://github.com/angular-architects/ngrx-toolkit/blob/main/libs/ngrx-toolkit/src/lib/with-data-service.ts">NgRx Toolkit</a> - inspired by Manfred Steyer and created singnals tool by analogy of <code>withDataService</code> from <a href="https://angulararchitects.io/">Angular Architects</a></li>
 </ul>
-<h2 id="contact">Contact</h2>
+<h2>Notes</h2>
+<h2>Contact</h2>
 <p>Created by <a href="https://github.com/voznik">@voznik</a> - feel free to contact me!</p>
 
 
@@ -209,14 +387,19 @@ export class TodosService {
 
 
 
-                   
+
+
+
+
+
+
 
 
 
 
                    </div><div class="search-results">
     <div class="has-results">
-        <h1 class="search-results-title"><span class='search-results-count'></span> result-matching "<span class='search-query'></span>"</h1>
+        <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
         <ul class="search-results-list"></ul>
     </div>
     <div class="no-results">
@@ -228,25 +411,46 @@ export class TodosService {
            </div>
        </div>
 
+          <label class="dark-mode-switch">
+               <input type="checkbox">
+               <span class="slider">
+                    <svg class="slider-icon" viewBox="0 0 24 24" fill="none" height="20" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" width="20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
+                    </svg>
+               </span>
+          </label>
+
        <script>
             var COMPODOC_CURRENT_PAGE_DEPTH = 0;
-            var COMPODOC_CURRENT_PAGE_CONTEXT = 'getting-started';
+            var COMPODOC_CURRENT_PAGE_CONTEXT = 'readme';
             var COMPODOC_CURRENT_PAGE_URL = 'index.html';
             var MAX_SEARCH_RESULTS = 15;
        </script>
 
+       <script>
+               $darkModeToggleSwitchers = document.querySelectorAll('.dark-mode-switch input');
+               checkToggle(darkModeState);
+               if ($darkModeToggleSwitchers.length > 0) {
+                    for (var i = 0; i < $darkModeToggleSwitchers.length; i++) {
+                         $darkModeToggleSwitchers[i].addEventListener('change', function (event) {
+                              darkModeState = !darkModeState;
+                              toggleDarkMode(darkModeState);
+                         });
+                    }
+               }
+          </script>
+
        <script src="./js/libs/custom-elements.min.js"></script>
        <script src="./js/libs/lit-html.js"></script>
-       <!-- Required to polyfill modern browsers as code is ES5 for IE... -->
-       <script src="./js/libs/custom-elements-es5-adapter.js" charset="utf-8" defer></script>
+
        <script src="./js/menu-wc.js" defer></script>
+       <script nomodule src="./js/menu-wc_es5.js" defer></script>
 
        <script src="./js/libs/bootstrap-native.js"></script>
 
        <script src="./js/libs/es6-shim.min.js"></script>
        <script src="./js/libs/EventDispatcher.js"></script>
        <script src="./js/libs/promise.min.js"></script>
-       <script src="./js/libs/zepto.min.js"></script>
 
        <script src="./js/compodoc.js"></script>
 
