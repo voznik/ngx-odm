@@ -84,7 +84,8 @@ export class RxDBCollectionService<T extends Entity = { id: EntityId }> {
     protected readonly currentUrl$: Observable<string> = of(''),
     protected readonly updateQueryParamsFn: any = noop
   ) {
-    this.init(config);
+    // Async-in-constructor: intentional for automatic initialization - all public methods are guarded by @ensureCollection decorators
+    this.init(config).catch(err => this._init$.error(err)); // NOSONAR
   }
 
   /**
@@ -579,7 +580,6 @@ export class RxDBCollectionService<T extends Entity = { id: EntityId }> {
         await removeRxDatabase(this.db.name, this.db.storage);
         window?.location?.reload?.();
       } else {
-        this._init$.complete();
         throw err;
       }
     }

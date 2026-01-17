@@ -36,6 +36,12 @@
               "maximumError": "4kb"
             }
           ],
+          "fileReplacements": [
+            {
+              "replace": "examples/shared/environment.ts",
+              "with": "examples/shared/environment.prod.ts"
+            }
+          ],
           "outputHashing": "all",
           "extractLicenses": false
         },

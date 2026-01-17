@@ -4,11 +4,16 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { provideRouter, withRouterConfig } from '@angular/router';
 import { provideRxDatabase } from '@ngx-odm/rxdb';
 import { getRxDatabaseCreator } from '@ngx-odm/rxdb/config';
+import { addRxPlugin } from 'rxdb';
 import { RxDBAttachmentsPlugin } from 'rxdb/plugins/attachments';
-import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
+import { environment } from '../../shared/environment';
 import { provideDbErrorHandler } from '../../shared/db-error-handler';
 import { appRoutes } from './app.routes';
+
+if (!environment.production) {
+  import('rxdb/plugins/dev-mode').then(m => addRxPlugin(m.RxDBDevModePlugin));
+}
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -26,8 +31,7 @@ export const appConfig: ApplicationConfig = {
         // storage: getRxStorageDexie(), // INFO: can be ommited, will be provide by `storageType` string
         options: {
           plugins: [
-            // will be loaded by together with core plugins
-            RxDBDevModePlugin,
+            // RxDBDevModePlugin is loaded dynamically above in dev mode only
             RxDBAttachmentsPlugin,
             RxDBLeaderElectionPlugin,
           ],

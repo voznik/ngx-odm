@@ -4,11 +4,15 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule, Routes } from '@angular/router';
 import { NgxRxdbModule } from '@ngx-odm/rxdb';
 import { getRxDatabaseCreator } from '@ngx-odm/rxdb/config';
-import { provideDbErrorHandler } from '@shared';
+import { environment, provideDbErrorHandler } from '@shared';
+import { addRxPlugin } from 'rxdb';
 import { RxDBAttachmentsPlugin } from 'rxdb/plugins/attachments';
-import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
 import { AppComponent } from './app.component';
+
+if (!environment.production) {
+  import('rxdb/plugins/dev-mode').then(m => addRxPlugin(m.RxDBDevModePlugin));
+}
 
 const routes: Routes = [
   {
@@ -36,8 +40,7 @@ const routes: Routes = [
         ignoreDuplicate: false,
         options: {
           plugins: [
-            // will be loaded by together with core plugins
-            RxDBDevModePlugin,
+            // RxDBDevModePlugin is loaded dynamically above in dev mode only
             RxDBAttachmentsPlugin,
             RxDBLeaderElectionPlugin,
           ],
