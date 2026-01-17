@@ -433,7 +433,6 @@ export function withCollectionService<
        * Subscribe to RxDB documents to set signals/entities store
        *
        * TypeScript errors in the onInit hook were caused by type inference issues where the store was being inferred as only having query state, but we were trying to patch it with call state and entity state. The solution was to use explicit generic parameters on patchState to tell TypeScript what type to expect
-       *
        * @param store
        */
       onInit: async store => {

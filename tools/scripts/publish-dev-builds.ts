@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-var-requires, @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { parse, SemVer } from 'semver';
 import { setMetadata } from './set-metadata';
 import { execute, publishAllPackagesToNpm } from './utils';

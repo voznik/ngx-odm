@@ -50,8 +50,8 @@
     "build:standalone:sourcemaps": "nx run standalone:build --configuration=production --sourceMap=true --statsJson",
     "test": "nx run rxdb:test --ci --run-in-band --parallel --pass-with-no-tests --collectCoverage && npm run test:merge",
     "test:merge": "./node_modules/.bin/lcov-result-merger 'coverage/packages/*.lcov' coverage/lcov.info",
-    "lint:all": "nx affected --base=master --head=HEAD -t lint --parallel --quiet --no-tui --exclude tools",
-    "lint:fix": "node --max_old_space_size=8000 ./node_modules/.bin/eslint --  . --fix",
+    "lint:all": "nx affected --base=master --head=HEAD -t lint --parallel --quiet --no-tui",
+    "lint:fix": "nx run-many --target=lint --all --quiet --no-tui --fix && nx format:write",
     "e2e": "ng e2e",
     "affected": "nx affected",
     "format": "nx format:write",
@@ -64,7 +64,8 @@
     "analyze:streamlit": "node --max_old_space_size=8000 ./node_modules/.bin/source-map-explorer packages/streamlit-rxdb-dataframe/rxdb_dataframe/frontend/build/index.js{,.map} -m --no-border-checks",
     "analyze:file": "node --max_old_space_size=8000 ./node_modules/.bin/source-map-explorer dist/demo/{vendor,main}.*.js{,.map} -m --no-border-checks --html dist/out/result.html",
     "changelog:write": "conventional-changelog -p angular -i CHANGELOG.md -s --config=tools/scripts/conventional-changelog-config.js --skip-unstable",
-    "compodoc": "nx run tools:compodoc"
+    "compodoc": "nx run tools:compodoc",
+    "prepare": "husky"
   },
   "dependencies": {
     "@angular-architects/ngrx-toolkit": "^20.6.0",
@@ -159,7 +160,6 @@
     "jsdom": "~26.0.0",
     "jsonc-eslint-parser": "^2.4.2",
     "lcov-result-merger": "^3.1.0",
-    "lint-staged": "^16.2.7",
     "ng-packagr": "21.1.0",
     "nx": "^22.3.3",
     "nyc": "^15.1.0",
@@ -182,9 +182,7 @@
     "vite-plugin-dts": "~2.3.0",
     "vitest": "^4.0.17"
   },
-  "optionalDependencies": {
-
-  },
+  "optionalDependencies": {},
   "engines": {
     "node": ">=20"
   },

@@ -1,8 +1,4 @@
-import type {
-  RxConflictHandler,
-  RxConflictHandlerInput,
-  WithDeleted,
-} from 'rxdb';
+import type { RxConflictHandler, RxConflictHandlerInput, WithDeleted } from 'rxdb';
 import { deepEqual } from 'rxdb';
 import type { Todo } from './todos.model';
 

@@ -10,9 +10,7 @@
     "isolatedModules": true,
     "emitDecoratorMetadata": false
   },
-  "files": [
-    "src/test-setup.ts"
-  ],
+  "files": ["src/test-setup.ts"],
   "include": [
     "jest.config.ts",
     "jest.config.cts",

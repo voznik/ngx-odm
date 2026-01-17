@@ -1,43 +1,23 @@
-import { FlatCompat } from '@eslint/eslintrc';
-import js from '@eslint/js';
 import nx from '@nx/eslint-plugin';
 import eslintPluginJsdoc from 'eslint-plugin-jsdoc';
-import eslintPluginPrettier from 'eslint-plugin-prettier';
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslintPluginImport from 'eslint-plugin-import';
-
-
-const compat = new FlatCompat({
-  baseDirectory: '.', // __dirname,
-  recommendedConfig: js.configs.recommended,
-});
-
-const prettierConfig = compat.extends('plugin:prettier/recommended').map(config => ({
-  ...config,
-  files: [
-    '**/*.ts',
-    '**/*.tsx',
-    '**/*.js',
-    '**/*.jsx',
-    '**/*.cjs',
-    '**/*.mjs',
-    '**/*.cts',
-    '**/*.mts',
-  ],
-}));
 
 export default [
   ...nx.configs['flat/base'],
   ...nx.configs['flat/typescript'],
   ...nx.configs['flat/javascript'],
-  ...prettierConfig,
   {
     ignores: ['**/dist', '**/build'],
+  },
+  // Apply jsdoc only to JS/TS files
+  {
+    ...eslintPluginJsdoc.configs['flat/recommended'],
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx', '**/*.mjs', '**/*.cjs'],
   },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     plugins: {
-      jsdoc: eslintPluginJsdoc,
-      prettier: eslintPluginPrettier,
       import: eslintPluginImport,
     },
     settings: {
@@ -125,20 +105,13 @@ export default [
           groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
         },
       ],
-
     },
   },
   {
-    files: [
-      '**/*.ts',
-      '**/*.tsx',
-      '**/*.cts',
-      '**/*.mts',
-      '**/*.js',
-      '**/*.jsx',
-      '**/*.cjs',
-      '**/*.mjs',
-    ],
+    files: ['**/*.html'],
     rules: {},
   },
+  // { files: ['**/*.json'], rules: {}, }, // JSON better be formatted with `nx format` command - it captures even non-statged files
+  // Prettier must be last to override other configs
+  eslintPluginPrettierRecommended,
 ];

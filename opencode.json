@@ -36,12 +36,8 @@
       "command": ["node_modules/typescript/bin/tsc"]
     },
     "eslint": {
-      "command": ["node_modules/eslint/bin/eslint.js"],
+      "command": ["node_modules/eslint/bin/eslint.js"]
     }
   },
-  "instructions": [
-    "AGENTS.md",
-    "~/.ai/AGENTS.md",
-    ".cursor/rules/*.md"
-  ]
+  "instructions": ["AGENTS.md", "~/.ai/AGENTS.md", ".cursor/rules/*.md"]
 }

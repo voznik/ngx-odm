@@ -34,7 +34,7 @@
         "--runInBand=true",
         "--codeCoverage=false",
         "--watch",
-        "--detectOpenHandles",
+        "--detectOpenHandles"
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
@@ -73,21 +73,12 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "--nolazy",
-        "-r",
-        "ts-node/register"
-      ],
-      "args": [
-        "${relativeFile}"
-      ],
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+      "args": ["${relativeFile}"],
       "sourceMaps": true,
       "cwd": "${workspaceRoot}",
       "protocol": "inspector",
-      "skipFiles": [
-        "<node_internals>/**",
-        "node_modules/**"
-      ],
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "env": {
@@ -102,9 +93,7 @@
       "type": "debugpy",
       "request": "launch",
       "module": "pytest",
-      "args": [
-        "${file}"
-      ],
+      "args": ["${file}"],
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       },
@@ -129,9 +118,7 @@
   ],
   "inputs": [
     {
-      "options": [
-        "rxdb",
-      ],
+      "options": ["rxdb"],
       "id": "libName",
       "type": "pickString",
       "default": "rxdb",

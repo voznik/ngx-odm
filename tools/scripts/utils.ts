@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-var-requires, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { exec, ExecOptions } from 'child_process';
 import { resolve } from 'path';
 
@@ -61,7 +61,6 @@ export async function publishAllPackagesToNpm(version: any, tag: string) {
 async function publishPackage(pack: Package, version: any, tag: string) {
   const packageDescription = `${pack.buildPath} ${version} @${tag}`;
   try {
-    // eslint-disable-next-line max-len
     const script = `npm publish --access public --non-interactive --no-git-tag-version --tag ${tag}`;
     const output = await execute(script, { cwd: pack.buildPath });
     console.log(`Published ${packageDescription} /r/n -> ${output}`);

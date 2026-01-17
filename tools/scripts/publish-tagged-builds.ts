@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { setMetadata } from './set-metadata';
 import { publishAllPackagesToNpm } from './utils';
 
