@@ -42,6 +42,8 @@ testem.log
 /typings
 *.bak
 .env
+.secrets
+.act.env
 junit.xml
 
 # System Files

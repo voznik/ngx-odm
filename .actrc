@@ -1,0 +1,17 @@
+# Act configuration for local GitHub Actions testing
+# https://nektosact.com/
+
+# Use medium-sized Ubuntu image (good balance for Node.js projects)
+-P ubuntu-latest=catthehacker/ubuntu:act-22.04
+
+# Load secrets from .secrets file
+--secret-file .secrets
+
+# Load environment variables from .act.env
+--env-file .act.env
+
+# Enable artifact server for upload/download actions
+--artifact-server-path /tmp/act-artifacts
+
+# Verbose output for debugging
+--verbose

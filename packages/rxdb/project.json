@@ -27,67 +27,6 @@
         "jestConfig": "packages/rxdb/jest.config.cts",
         "tsConfig": "packages/rxdb/tsconfig.spec.json"
       }
-    },
-    "version": {
-      "executor": "@jscutlery/semver:version",
-      "options": {
-        "preset": "angular",
-        "tagPrefix": "v",
-        "noVerify": true,
-        "baseBranch": "master",
-        "push": true,
-        "syncVersions": false,
-        "commitMessageFormat": "release(ngx-odm/rxdb): new version ${version}",
-        "skipCommitTypes": ["docs", "ci"],
-        "postTargets": ["rxdb:github"],
-        "types": [
-          {
-            "type": "feat",
-            "section": "Features"
-          },
-          {
-            "type": "fix",
-            "section": "Bug Fixes"
-          },
-          {
-            "type": "chore",
-            "hidden": false
-          },
-          {
-            "type": "docs",
-            "hidden": false
-          },
-          {
-            "type": "style",
-            "hidden": false
-          },
-          {
-            "type": "refactor",
-            "section": "Features",
-            "hidden": false
-          },
-          {
-            "type": "perf",
-            "section": "Features",
-            "hidden": false
-          },
-          {
-            "type": "test",
-            "hidden": true
-          },
-          {
-            "type": "build",
-            "hidden": true
-          }
-        ]
-      }
-    },
-    "github": {
-      "executor": "@jscutlery/semver:github",
-      "options": {
-        "tag": "{tag}",
-        "notes": "{notes}"
-      }
     }
   }
 }
