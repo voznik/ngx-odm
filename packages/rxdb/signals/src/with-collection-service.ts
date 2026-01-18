@@ -210,49 +210,13 @@ export type CollectionServiceMethods<E extends Entity, F extends Filter> = {
 export function withCollectionService<
   E extends Entity,
   F extends Filter,
-  CName extends string,
->(options: {
-  collection: CName;
-  filter: F;
-  query?: MangoQuery<E>;
-  countQuery?: MangoQuerySelectorAndIndex<E>;
-}): SignalStoreFeature<
-  {
-    state: Record<string, never>;
-    signals: any;
-    methods: Record<string, never>;
-    props: Record<string, never>;
-  },
-  {
-    state: NamedCollectionServiceState<E, F, CName>;
-    signals: NamedCollectionServiceSignals<E, CName>;
-    methods: NamedCollectionServiceMethods<E, F, CName>;
-    props: Record<string, never>;
-  }
->;
-export function withCollectionService<E extends Entity, F extends Filter>(options: {
-  filter: F;
-  query?: MangoQuery<E>;
-  countQuery?: MangoQuerySelectorAndIndex<E>;
-}): SignalStoreFeature<
-  any,
-  {
-    state: CollectionServiceState<E, F>;
-    signals: CollectionServiceSignals<E>;
-    methods: CollectionServiceMethods<E, F>;
-    props: Record<string, never>;
-  }
->;
-export function withCollectionService<
-  E extends Entity,
-  F extends Filter,
-  CName extends string,
+  CName extends string = '',
 >(options: {
   collection?: CName;
   filter?: F;
   query?: MangoQuery<E>;
   countQuery?: MangoQuerySelectorAndIndex<E>;
-}): SignalStoreFeature<any, any> {
+}) {
   let colService: RxDBCollectionService<E>;
 
   const { collection: prefix, filter, query, countQuery } = options;
@@ -301,7 +265,9 @@ export function withCollectionService<
         [selectedIdsKey]: {} as Record<EntityId, boolean>,
         [currentKey]: undefined as E | undefined,
         [queryKey]: query || {},
-      };
+      } as CName extends ''
+        ? CollectionServiceState<E, F>
+        : NamedCollectionServiceState<E, F, CName>;
     }),
     withComputed((store: Record<string, unknown>) => {
       ensureWithEntities(store);
@@ -312,9 +278,15 @@ export function withCollectionService<
       return {
         [selectedEntitiesKey]: computed(() => entities().filter(e => selectedIds()[e.id])),
         [countKey]: computed(() => entities().length),
-        [countAllKey]: derivedAsync(() => colService.count()),
-        [`countFiltered`]: derivedAsync(() => colService.count(countQuery)),
-      };
+        [countAllKey]: derivedAsync(() => colService.count(), {
+          initialValue: 0,
+        }) as Signal<number>,
+        [`countFiltered`]: derivedAsync(() => colService.count(countQuery), {
+          initialValue: 0,
+        }) as Signal<number>,
+      } as CName extends ''
+        ? CollectionServiceSignals<E>
+        : NamedCollectionServiceSignals<E, CName>;
     }),
     withMethods((store: any) => {
       ensureWithEntities(store);
@@ -426,7 +398,9 @@ export function withCollectionService<
             throw e;
           }
         },
-      };
+      } as unknown as CName extends ''
+        ? CollectionServiceMethods<E, F>
+        : NamedCollectionServiceMethods<E, F, CName>;
     }),
     withHooks({
       /**
@@ -436,7 +410,7 @@ export function withCollectionService<
        * @param store
        */
       onInit: async store => {
-        store[callStateKey] &&
+        (store as any)[callStateKey] &&
           patchState<{ [key: string]: any }>(store, setLoading(prefix));
         colService.queryParams$
           .pipe(
@@ -447,14 +421,14 @@ export function withCollectionService<
               }
             }),
             tap(queryParams => {
-              patchState(store, { query: queryParams }); // sync query to store
-              store[callStateKey] &&
+              patchState(store as any, { query: queryParams }); // sync query to store
+              (store as any)[callStateKey] &&
                 patchState<{ [key: string]: any }>(store, setLoaded(prefix));
             }),
             switchMap(queryParams => colService.docs(queryParams)),
             tapResponse({
               next: result => {
-                store[callStateKey] &&
+                (store as any)[callStateKey] &&
                   patchState<{ [key: string]: any }>(store, setLoaded(prefix));
                 return patchState<{ [key: string]: any }>(
                   store,
@@ -465,11 +439,11 @@ export function withCollectionService<
               },
               error: e => {
                 logger.log(e);
-                store[callStateKey] &&
+                (store as any)[callStateKey] &&
                   patchState<{ [key: string]: any }>(store, setError(e, prefix));
               },
               finalize: () =>
-                store[callStateKey] &&
+                (store as any)[callStateKey] &&
                 patchState<{ [key: string]: any }>(store, setLoaded(prefix)),
             })
           )

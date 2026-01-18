@@ -1,111 +1,143 @@
-# @see https://superface.ai/blog/npm-publish-gh-actions-changelog
-name: Release package
+# NX Release Workflow
+# Triggered when tags matching v*.*.* are pushed
+# Handles both regular releases (v1.0.0) and pre-releases (v1.0.0-dev.0)
+name: Release & Publish
+
 on:
+  push:
+    tags:
+      - 'v*.*.*'
   workflow_dispatch:
     inputs:
-      release-type:
-        type: 'choice'
-        description: 'The release type. It can be one of: major, minor, patch, premajor, preminor, prepatch, or prerelease. Defaults to "patch"'
+      tag:
+        description: 'Git tag to release (e.g., v7.0.0-dev.1)'
         required: true
-        default: 'patch'
-        options:
-          - major
-          - minor
-          - patch
-          - premajor
-          - preminor
-          - prepatch
-          - prerelease
-      git_bot_token:
-        description: Git Bot token used to push to protected branches because github token can't
+        type: string
+      deploy_docs:
+        description: 'Deploy documentation to GitHub Pages'
         required: false
+        type: boolean
+        default: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
-    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
     permissions:
-      contents: write
-      actions: write
-      id-token: write # to verify the deployment originates from an appropriate source
+      contents: write # Create GitHub releases
+      id-token: write # NPM provenance
+      pages: write # Deploy GitHub Pages
     steps:
-      # Checkout project repository
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ inputs.tag || github.ref }}
 
-      # Configure Git
-      - name: Git configuration
-        run: |
-          git config user.name $GITHUB_ACTOR
-          git config user.email gh-actions-${GITHUB_ACTOR}@github.com
-          #
-          # git config --global user.name "Vadym Parakonnyi"
-          # git config --global user.email ${{ secrets.PA_EMAIL }}
-          # git remote set-url origin https://x-access-token/:${{ secrets.PA_TOKEN }}@github.com/${{ github.repository }}
-
-      # Setup Node.js environment
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          registry-url: https://registry.npmjs.org/
           node-version: 22
+          registry-url: https://registry.npmjs.org/
 
-      # Install dependencies (required by Run tests step)
       - name: Install dependencies
         run: npm ci
 
-      # Bump package version
-      # Use tag latest
-      # Generates the changelog commit and tags and pushes them to Github.
-      # Use two post actions to Create a release in Github and for Publishing the package to NPM
-      - name: Bump release version
-        if: startsWith(github.event.inputs.release-type, 'pre') != true
-        run: |
-          # echo "NEW_VERSION=$(npm --no-git-tag-version version $RELEASE_TYPE)" >> $GITHUB_ENV
-          # echo "RELEASE_TAG=latest" >> $GITHUB_ENV
-          npx nx run rxdb:version --releaseAs=$RELEASE_TYPE
+      - name: Determine release type
+        id: release-type
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TYPE: ${{ github.event.inputs.release-type }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      # Bump package pre-release version
-      # Use tag dev for pre-release versions
-      # Generates the changelog commit and tags and pushes them to Github.
-      # Use two post actions to Create a release in Github and for Publishing the package to NPM
-      - name: Bump pre-release version
-        if: startsWith(github.event.inputs.release-type, 'pre')
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_DEPLOY_DOCS: ${{ inputs.deploy_docs }}
         run: |
-          # echo "NEW_VERSION=$(npm --no-git-tag-version --preid=dev version $RELEASE_TYPE
-          # echo "RELEASE_TAG=dev" >> $GITHUB_ENV
-          npx nx run rxdb:version --releaseAs=$RELEASE_TYPE --preid=dev
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TYPE: ${{ github.event.inputs.release-type }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Get tag from workflow input or git ref
+          if [ -n "$INPUT_TAG" ]; then
+            TAG="$INPUT_TAG"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
 
-      # Build
-      - name: Build
-        run: npx nx run rxdb:build
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-      # Publish version to public repository
-      - name: Publish release version
-        if: startsWith(github.event.inputs.release-type, 'pre') != true
+          if [[ "$TAG" == *"-dev"* ]]; then
+            echo "type=prerelease" >> $GITHUB_OUTPUT
+            echo "npm_tag=dev" >> $GITHUB_OUTPUT
+          else
+            echo "type=release" >> $GITHUB_OUTPUT
+            echo "npm_tag=latest" >> $GITHUB_OUTPUT
+          fi
+
+          # Get the commit message for the tag
+          COMMIT_MESSAGE=$(git tag -l --format='%(contents:subject)' "$TAG" || git log -1 --format=%s "$TAG")
+          echo "commit_message=$COMMIT_MESSAGE" >> $GITHUB_OUTPUT
+
+          # Determine if docs should be deployed
+          # Priority: workflow input > commit message marker > release type
+          if [ "$INPUT_DEPLOY_DOCS" = "true" ]; then
+            echo "deploy_docs=true" >> $GITHUB_OUTPUT
+            echo "📚 Docs deployment: enabled via workflow input"
+          elif [[ "$COMMIT_MESSAGE" == *"(+docs)"* ]]; then
+            echo "deploy_docs=true" >> $GITHUB_OUTPUT
+            echo "📚 Docs deployment: enabled via commit message marker (+docs)"
+          elif [[ "$TAG" != *"-dev"* ]]; then
+            # Auto-deploy docs for regular releases
+            echo "deploy_docs=true" >> $GITHUB_OUTPUT
+            echo "📚 Docs deployment: enabled for regular release"
+          else
+            echo "deploy_docs=false" >> $GITHUB_OUTPUT
+            echo "📚 Docs deployment: skipped (pre-release without marker)"
+          fi
+
+      - name: Build library
+        run: npx nx run rxdb:build --configuration=production
+
+      - name: Publish to NPM
         working-directory: dist/packages/rxdb
         run: |
           npm pack
-          npm publish --access public --non-interactive --no-git-tag-version --tag latest
+          npm publish --access public --tag ${{ steps.release-type.outputs.npm_tag }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
 
-      # Publish version to public repository
-      - name: Publish pre-release version
-        if: startsWith(github.event.inputs.release-type, 'pre')
-        working-directory: dist/packages/rxdb
+      - name: Create GitHub Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = '${{ steps.release-type.outputs.tag }}';
+            const isPrerelease = tag.includes('-dev');
+
+            // Get the changelog from the tag annotation or generate from commits
+            let body = 'Release ' + tag;
+
+            try {
+              const release = await github.rest.repos.createRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_name: tag,
+                name: tag,
+                body: body,
+                draft: false,
+                prerelease: isPrerelease
+              });
+              console.log('Created release:', release.data.html_url);
+            } catch (error) {
+              console.error('Error creating release:', error);
+              throw error;
+            }
+
+      - name: Build & Deploy Demo
+        if: steps.release-type.outputs.deploy_docs == 'true'
         run: |
-          npm pack
-          npm publish --access public --non-interactive --no-git-tag-version --tag dev
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm run build:demo
+          npm run compodoc
+
+      - name: Upload demo artifact
+        if: steps.release-type.outputs.deploy_docs == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'dist/demo'
+
+      - name: Deploy to GitHub Pages
+        if: steps.release-type.outputs.deploy_docs == 'true'
+        uses: actions/deploy-pages@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}

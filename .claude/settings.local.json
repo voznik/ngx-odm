@@ -15,7 +15,8 @@
       "Bash(npx nx migrate:*)",
       "Bash(npm install:*)",
       "Bash(npx nx test:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(npm show:*)"
     ]
   },
   "enableAllProjectMcpServers": false

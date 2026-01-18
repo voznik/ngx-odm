@@ -8,6 +8,7 @@
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:application",
+      "dependsOn": ["^build"],
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/standalone",
@@ -36,6 +37,12 @@
               "maximumError": "4kb"
             }
           ],
+          "fileReplacements": [
+            {
+              "replace": "examples/shared/environment.ts",
+              "with": "examples/shared/environment.prod.ts"
+            }
+          ],
           "outputHashing": "all",
           "extractLicenses": false
         },
@@ -51,6 +58,7 @@
     },
     "serve": {
       "executor": "@angular-devkit/build-angular:dev-server",
+      "dependsOn": ["rxdb:build"],
       "configurations": {
         "production": {
           "buildTarget": "standalone:build:production"
