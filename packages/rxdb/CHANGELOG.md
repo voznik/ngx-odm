@@ -1,3 +1,7 @@
+## 7.0.0-dev.4 (2026-01-18)
+
+This was a version bump only for rxdb to align it with other projects, there were no code changes.
+
 ## 7.0.0-dev.3 (2026-01-18)
 
 This was a version bump only for rxdb to align it with other projects, there were no code changes.
