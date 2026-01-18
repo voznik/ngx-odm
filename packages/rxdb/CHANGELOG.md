@@ -1,3 +1,9 @@
+## 7.0.0-dev.6 (2026-01-18)
+
+### 🩹 Fixes
+
+- **ci:** release pipeline ([89d1872](https://github.com/voznik/ngx-odm/commit/89d1872))
+
 ## 7.0.0-dev.5 (2026-01-18)
 
 This was a version bump only for rxdb to align it with other projects, there were no code changes.
