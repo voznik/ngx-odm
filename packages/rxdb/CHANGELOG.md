@@ -1,3 +1,9 @@
+## 7.0.0-dev.1 (2026-01-18)
+
+### 🩹 Fixes
+
+- handle async-in-constructor properly, signalstore typescript fixes for standalone, tree-shake dev-mode from prod, improve "release" flow ([#91](https://github.com/voznik/ngx-odm/pull/91))
+
 # Changelog
 
 This file was generated using [@jscutlery/semver](https://github.com/jscutlery/semver).
