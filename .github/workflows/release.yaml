@@ -90,6 +90,7 @@ jobs:
         run: npx nx run rxdb:build --configuration=production
 
       - name: Publish to NPM
+        continue-on-error: true
         working-directory: dist/packages/rxdb
         run: |
           npm pack
@@ -104,6 +105,22 @@ jobs:
           script: |
             const tag = '${{ steps.release-type.outputs.tag }}';
             const isPrerelease = tag.includes('-dev');
+
+            // Check if release already exists (nx release may have created it)
+            try {
+              const existingRelease = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: tag
+              });
+              console.log('Release already exists:', existingRelease.data.html_url);
+              return;
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+              // Release doesn't exist, create it
+            }
 
             // Get the changelog from the tag annotation or generate from commits
             let body = 'Release ' + tag;
