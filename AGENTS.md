@@ -12,7 +12,7 @@ The main library is located in `packages/rxdb`. The repository also includes exa
 Current development prioritizes:
 
 - **Standalone components** (not NgModules)
-- **Zoneless Angular** (using `ɵNoopNgZone`)
+- **Zoneless Angular** (using `provideZonelessChangeDetection()`)
 - **Signal-based state management** (`@ngrx/signals` with `withCollectionService`)
 - **Latest Angular best practices**
 
@@ -25,7 +25,7 @@ When making changes, prefer the standalone/zoneless/signals approach over the le
 - **Nx:** Used for managing the monorepo, including building, testing, and linting.
 - **TypeScript:** The primary language used in the project.
 - **NgRx (Signals):** The standalone example demonstrates usage with NgRx signals for state management.
-- **Zoneless Angular:** The standalone example uses `ɵNoopNgZone`.
+- **Zoneless Angular:** The standalone example uses `provideZonelessChangeDetection()`.
 
 ## Nx Workspace
 

@@ -12,9 +12,7 @@ import { withEntities } from '@ngrx/signals/entities';
 import { withCollectionService } from '@ngx-odm/rxdb/signals';
 import { NgxRxdbUtils } from '@ngx-odm/rxdb/utils';
 import { Todo, TodosFilter } from '@shared';
-import { derivedFrom } from 'ngxtension/derived-from';
 import { firstPropertyValueOfObject } from 'rxdb/plugins/utils';
-import { map, pipe } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 
 const { isEmpty, isValidNumber } = NgxRxdbUtils;
@@ -58,17 +56,14 @@ export const TodoStore = signalStore(
 
     const remaining = computed(() => countFiltered());
 
-    const title = derivedFrom(
-      [countAll, remaining],
-      pipe(
-        map(([all, rem]) => {
-          if (!isValidNumber(all) || !isValidNumber(rem)) {
-            return '';
-          }
-          return `(${all - rem}/${all}) Todos done`;
-        })
-      )
-    );
+    const title = computed(() => {
+      const all = countAll();
+      const rem = remaining();
+      if (!isValidNumber(all) || !isValidNumber(rem)) {
+        return '';
+      }
+      return `(${all - rem}/${all}) Todos done`;
+    });
 
     const sortDir = computed(() => {
       const curQuery = query();

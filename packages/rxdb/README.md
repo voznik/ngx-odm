@@ -265,7 +265,7 @@ By using this module you can simplify your work with RxDB in Angular application
   - simple methods to work with local documents
   - simple methods to work with attachments
   - simple replication sync initialization
-- Work with signals and entities with `@ngrx/signals` and `@ngrx/entity` (optionally _zoneless_) (see [example](examples/standalone/src/app/todos/todos.store.ts))
+- Work with signals and entities with `@ngrx/signals` and `@ngrx/entity` (supports native zoneless via `provideZonelessChangeDetection()`) (see [example](examples/standalone/src/app/todos/todos.store.ts))
 - Persist collection query ([mango-query-syntax](https://github.com/cloudant/mango)) in URL with new plugin `query-params-plugin` (in demo, set localStorage `_ngx_rxdb_queryparams` )
   - provide Observable of current URL (automatically for Angular)
   - simple methods to set or patch filter, sort, limit, skip
