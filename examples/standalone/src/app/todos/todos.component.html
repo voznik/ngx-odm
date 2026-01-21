@@ -21,7 +21,7 @@
     />
     <label for="toggle-all" title="Mark all as complete">Mark all as complete</label>
     <ul [@listAnimation]="todoStore.filter()" class="todo-list">
-      @for (todo of todos; track trackByFn($index, todo)) {
+      @for (todo of todoStore.filtered(); track trackByFn($index, todo)) {
         <li [class.completed]="todo.completed">
           <div class="view">
             <input

@@ -1,5 +1,5 @@
 import { provideHttpClient } from '@angular/common/http';
-import { ApplicationConfig, NgZone, ɵNoopNgZone } from '@angular/core';
+import { ApplicationConfig } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter, withRouterConfig } from '@angular/router';
 import { provideRxDatabase } from '@ngx-odm/rxdb';
@@ -16,7 +16,7 @@ if (!environment.production) {
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    { provide: NgZone, useClass: ɵNoopNgZone },
+    // { provide: NgZone, useClass: ɵNoopNgZone },
     provideRouter(appRoutes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
     provideAnimationsAsync(),
     provideHttpClient(),
