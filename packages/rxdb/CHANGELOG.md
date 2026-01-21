@@ -1,3 +1,11 @@
+## 6.0.2 (2026-01-21)
+
+### 🩹 Fixes
+
+- **ci:** release pipeline ([89d1872](https://github.com/voznik/ngx-odm/commit/89d1872))
+- handle async-in-constructor properly, signalstore typescript fixes for standalone, tree-shake dev-mode from prod, improve "release" flow ([#91](https://github.com/voznik/ngx-odm/pull/91))
+- **ci:** release pipeline ([9ea2c89](https://github.com/voznik/ngx-odm/commit/9ea2c89))
+
 ## 7.0.0-dev.6 (2026-01-18)
 
 ### 🩹 Fixes
